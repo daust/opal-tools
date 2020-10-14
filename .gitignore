@@ -1,5 +1,25 @@
-.gradle
+# ignore all Mac OS specific hidden files
+**/.DS_Store
+
+# ignore all build files from eclipse
+bin/**
+
+# ignore all eclipse project files
+.project
+.classpath
+.settings/**
+
+# ignore all build files from gradle
+build/**
+.gradle/
+
+# ignore private custom file for each developer
+gradle.properties
 /build/
+/bin/
+
+/gradle/
+gradlew*
 
 # Ignore Gradle GUI config
 gradle-app.setting
@@ -12,3 +32,4 @@ gradle-app.setting
 
 # # Work around https://youtrack.jetbrains.com/issue/IDEA-116898
 # gradle/wrapper/gradle-wrapper.properties
+
