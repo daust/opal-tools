@@ -1,0 +1,21 @@
+{
+	"application": "",
+    "patch": "",
+    "author": "",
+    "version": "",
+    "packageDir": ".",
+    "sqlDir": "sql",
+    "connectionMappings": [],
+    "sqlFileRegEx": "\\.(sql|pks|pkb|trg)$",
+    "registryTargets": [],
+    "encodingMappings": [  /* most common ones: UTF8, Cp1252 */ 
+        { 
+            "encoding": "UTF8",
+            "matchRegEx": "\\\\sql\\\\.*apex.*\\\\.*f*sql"
+        }/*,
+        { // catch all 
+            "encoding": "Cp1252",
+            "matchRegEx": "\\\\sql\\\\.*"
+        }*/
+    ]	
+}
