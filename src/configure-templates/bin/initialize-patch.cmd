@@ -1,4 +1,4 @@
-@call #OPAL_INSTALLER_HOME_DIR#\bin\set-script-environment.cmd
+@call #OPAL_INSTALLER_USER_ENV_SCRIPT#
 
 @REM setting up the target patch directory, e.g. \Patches\2020\2020-04-23-<patch name>
 SET /P PATCH_NAME=Patch name, e.g. fac_123 or KapaPlaner-v2.5.0 : 

@@ -26,7 +26,37 @@ import de.opal.installer.util.Utils;
 public class Configurator {
 
 	public static final Logger log = LogManager.getLogger(Configurator.class.getName());
-	private String baseDir = ".";
+	private String projectRootDir = ".";
+	
+	private String swDirectory="";
+	private String localConfigDirectory="";
+	private String dbSourceDirectory="";
+	private String templateDirectory="";
+	private String patchDirectory="";
+	private String setProjectEnvironmentScript="";
+	private String schemaListString="";
+	private String environmentListString="";
+	
+	String localDir = System.getProperty("user.dir");
+
+	String tmpSourceDir="";
+	String tmpTargetDir = "";
+	String[] osScriptSuffixList=new String[]{getOsDependentScriptSuffix()};
+	FileFilter osFileFilter=new FileFilter() 
+	{
+	      //Override accept method
+	      public boolean accept(File file) {
+	              
+	             //if the file extension is .log return true, else false
+	             if (file.getName().endsWith("."+getOsDependentScriptSuffix())
+	            		 ||
+	            		 file.getName().endsWith(".txt") ) {
+	                return true;
+	             }
+	             return false;
+	      }
+	};
+	
 
 	public static void main(String[] args) {
 
@@ -59,7 +89,7 @@ public class Configurator {
 		return System.getProperty("os.name").toLowerCase().indexOf("win") >=0;
 	}
 
-	private String getOsScriptSuffix() {
+	private String getOsDependentScriptSuffix() {
 		if (osIsWindows()) {
 			return "cmd";
 		} else {
@@ -67,284 +97,51 @@ public class Configurator {
 		}
 			
 	}
-	
-	public void run() throws IOException, InterruptedException {
-		String localDir = System.getProperty("user.dir");
-		String[] osScriptSuffixList=new String[]{getOsScriptSuffix()};
-		FileFilter osFileFilter=new FileFilter() 
-		{
-		      //Override accept method
-		      public boolean accept(File file) {
-		              
-		             //if the file extension is .log return true, else false
-		             if (file.getName().endsWith("."+getOsScriptSuffix())
-		            		 ||
-		            		 file.getName().endsWith(".txt") ) {
-		                return true;
-		             }
-		             return false;
-		      }
-		};
-				
-		// String swDirectory="";
-		// String swDirectoryDefault=""; //baseDir + File.pathSeparator + "";
-		// String templateDirectory="";
-		// String templateDirectoryDefault=baseDir + File.separatorChar +
-		// "patch-template";
-		// String localConfigDirectory="";
-
-		log.info("running configure");
-
-		Scanner kbd = new Scanner(System.in); // Create a Scanner object
-		String swDirectory = promptForInput(kbd, "\nSW install directory (use '.' for local files)", baseDir);
-		String templateDirectory = promptForInput(kbd, "Patch template directory",
-				baseDir + File.separatorChar + "patch-template");
-		String localConfigDirectory = promptForInput(kbd,
-				"Local configuration directory (connection pools, user dependent config)",
-				baseDir + File.separatorChar + "conf-user");
-		String dbSourceDirectory = promptForInput(kbd,
-				"Database source directory (sql, has subdirectories e.g. sql/oracle_schema/tables, sql/oracle_schema/packages, etc.)",
-				baseDir + File.separatorChar + "sql");
-		String patchDirectory = promptForInput(kbd,
-				"Patch directory (patches, has subdirectories e.g. year/patch_name)",
-				baseDir + File.separatorChar + "patches");
-		String schemaListString = promptForInput(kbd, "List of database schemas (comma-separated, e.g. HR,SCOTT)",
-				"HR,SCOTT");
-		String environmentListString = promptForInput(kbd, "List of environments (comma-separated, e.g. DEV,INT,PROD)",
-				"DEV,INT,PROD");
-		//String environmentColorListString = promptForInput(kbd, "List of shell colors for environments (comma-separated, e.g. green,yellow,red)",
-		//		"green,yellow,red");		
-
-		log.debug("***");
-		log.debug("SW install directory: " + swDirectory);
-		log.debug("Patch template directory: " + templateDirectory);
-		log.debug("Local configuration directory: " + localConfigDirectory);
-		log.debug("Database source directory: " + dbSourceDirectory);
-		log.debug("Patch directory: " + patchDirectory);
-		log.debug("List of database schemas: " + schemaListString);
-		log.debug("List of environments: " + environmentListString);
-		log.debug("***");
-
-		// ----------------------------------------------------------
-		// transform directories from relative paths to absolute paths
-		// ----------------------------------------------------------
-		swDirectory = new File(swDirectory).getCanonicalPath();
-		templateDirectory = new File(templateDirectory).getCanonicalPath();
-		localConfigDirectory = new File(localConfigDirectory).getCanonicalPath();
-		dbSourceDirectory = new File(dbSourceDirectory).getCanonicalPath();
-		patchDirectory = new File(patchDirectory).getCanonicalPath();
-		
-		
-		log.debug("\nLocal configuration directory (after transformation to absolute path): " + localConfigDirectory);
-		log.debug("***");
-		log.debug("SW install directory: " + swDirectory);
-		log.debug("Patch template directory: " + templateDirectory);
-		log.debug("Local configuration directory: " + localConfigDirectory);
-		log.debug("Database source directory: " + dbSourceDirectory);
-		log.debug("Patch directory: " + patchDirectory);
-		log.debug("***");
-		
-		
-		Utils.waitForEnter("Please press <enter> to proceed ...");
-
-		// ----------------------------------------------------------
-		// software installation
-		// ----------------------------------------------------------
-		Msg.println("\n----------------------------------------------------------\n");
-		Msg.println("copy sw files from: " + localDir + File.separatorChar + "lib" + "\n              to  : "
-				+ swDirectory + File.separatorChar + "lib" + "\n");
-		// Utils.waitForEnter("Please press <enter> to proceed ...");
-		//Boolean isIdentical=new File(localDir).getAbsoluteFile().compareTo(new File(swDirectory).getAbsoluteFile())==0;
-		/*
-		Boolean isIdentical=Paths.get(localDir).toRealPath().compareTo(Paths.get(swDirectory).toRealPath())==0;
-
-		// DON't copy the ./lib directory onto itself, when the src and target path are identical
-		// all other parts can simply be overwritten.
-		if (!isIdentical) {
-			FileUtils.copyDirectory(new File(localDir + File.separatorChar + "lib"),
-					new File(swDirectory + File.separatorChar + "lib"));			
-		}
-		*/
-		try {
-			FileUtils.copyDirectory(new File(localDir + File.separatorChar + "lib"),
-				new File(swDirectory + File.separatorChar + "lib"));
-		} catch (IOException e){
-			Msg.println("Files will NOT be copied because an error occured: " + e.getMessage() + "\n");
-		}
-
-		// ----------------------------------------------------------
-		// conf directory
-		// ----------------------------------------------------------
-		Msg.println("\n----------------------------------------------------------\n");
-		Msg.println("copy sw files from :" + localDir + File.separatorChar + "conf" + "\n              to  : "
-				+ swDirectory + File.separatorChar + "conf" + "\n");
-		// Utils.waitForEnter("Please press <enter> to proceed ...");
-		try {
-			FileUtils.copyDirectory(new File(localDir + File.separatorChar + "conf"),
-				new File(swDirectory + File.separatorChar + "conf"));
-		} catch (IOException e){
-			Msg.println("Files will NOT be copied because an error occured: " + e.getMessage() + "\n");
-		}
-
-		// ----------------------------------------------------------
-		// patch template directory
-		// ----------------------------------------------------------
-		Msg.println("copy template directory from: " + localDir + File.separatorChar + "configure-templates"
-				+ File.separatorChar + "patch-template" + "\n                        to  : " + templateDirectory + "\n");
-		// Utils.waitForEnter("Please press <enter> to proceed ...");
-		// FileUtils.copyDirectory(new
-		// File(localDir+File.separatorChar+"configure-templates"+File.separatorChar+"patch-template"),
-		// new File(templateDirectory));
-		FileUtils.forceMkdir(new File(templateDirectory));
-
-		// loop over all schemas to create sql subdirectories
-		for (String schema : schemaListString.split(",")) {
-			FileUtils.copyDirectory(
-					new File(localDir + File.separatorChar + "configure-templates" + File.separatorChar
-							+ "patch-template-sql"),
-					new File(templateDirectory + File.separator + "sql" + File.separator + schema));
-		}
-
-		// create new patch-install files for each environment
-		// copy / replace all files but the #VAR#... files
-		String patchFileHeader="";
-		String patchFileContent="";
-		
-		Iterator<File> it = FileUtils.iterateFiles(
-				new File(localDir + File.separatorChar + "configure-templates" + File.separatorChar + "patch-template"),
-				null, false);
-		int i = 2; // start counter for #NO# files with 3
-		while (it.hasNext()) {
-			File f = (File) it.next();
-			Path path = Paths.get(f.getName());
-			String filename = path.getFileName().toString();
-
-			// filter for operating system
-			// on *nix process .sh files, on Windows process *.cmd files
-			if (filename.endsWith(getOsScriptSuffix())
-					|| (!filename.endsWith(".cmd")&&!filename.endsWith(".sh"))) {
-
-				Msg.println("  process file " + filename);
-
-				String contents = FileUtils.readFileToString(f, Charset.defaultCharset());
-				contents = contents.replace("#OPAL_INSTALLER_USER_CONFIG_DIR#", localConfigDirectory);
-				contents = contents.replace("#OPAL_INSTALLER_HOME_DIR#", swDirectory);
-				contents = contents.replace("#OPAL_SQL_SOURCE_DIR", dbSourceDirectory);
-				
-				if (filename.contains("#")) {
-					// do nothing ... will be processed later
-				} else if (filename.startsWith("PatchFiles-header.txt")){
-					// add the header to the beginning of the content
-					patchFileHeader = FileUtils.readFileToString(new File(localDir + File.separatorChar + "configure-templates" + File.separatorChar + "patch-template" + File.separator + path.getFileName()), Charset.defaultCharset());
-				} else if (filename.startsWith("PatchFiles-body.txt")){
-					String templateMapping = FileUtils.readFileToString(new File(localDir + File.separatorChar + "configure-templates" + File.separatorChar + "patch-template" + File.separator + path.getFileName()), Charset.defaultCharset());
-					// loop over all schemas and create a mapping for each one
-					for (String schema : schemaListString.split(",")) {
-						patchFileContent+=templateMapping.replace("#SCHEMA#",schema);
-					}
-
-				} else {
-					// nothing special here
-					FileUtils.writeStringToFile(new File(templateDirectory + File.separator + path.getFileName()), contents,
-							Charset.defaultCharset());
-				}
-				// write the patchFile.txt 
-				FileUtils.writeStringToFile(new File(templateDirectory + File.separator + "PatchFiles.txt"), patchFileHeader + "\n" + patchFileContent,
-						Charset.defaultCharset());
-			}			
-		}
-		// process validation files and installation files "#var#..."
-		// special handling for each environment
-		i=2;
-		for (String env : environmentListString.split(",")) {
-			File f = new File(localDir + File.separatorChar + "configure-templates" + File.separatorChar + "patch-template"+ File.separatorChar + "3.install-patch-#ENV#."+getOsScriptSuffix());
-			Path path = Paths.get(f.getName());
-			String filename = path.getFileName().toString();
-			String contents = FileUtils.readFileToString(f, Charset.defaultCharset());
-
-			String newFilename = filename.replace("#NO#", "" + i++).replace("#ENV#", env);
-			contents = contents.replace("#ENV#", env);
-			contents = contents.replace("#OPAL_INSTALLER_HOME_DIR#", swDirectory);
-			FileUtils.writeStringToFile(new File(templateDirectory + File.separator + newFilename), contents,
-					Charset.defaultCharset());
-		}
-		// process installation files and installation files "#NO#..."
-		// special handling for each environment
-		i=2;
-		for (String env : environmentListString.split(",")) {
-			File f = new File(localDir + File.separatorChar + "configure-templates" + File.separatorChar + "patch-template"+ File.separatorChar + "2.validate-patch-#ENV#."+getOsScriptSuffix());
-			Path path = Paths.get(f.getName());
-			String filename = path.getFileName().toString();
-			String contents = FileUtils.readFileToString(f, Charset.defaultCharset());
-
-			String newFilename = filename.replace("#NO#", "" + i++).replace("#ENV#", env);
-			contents = contents.replace("#ENV#", env);
-			contents = contents.replace("#OPAL_INSTALLER_HOME_DIR#", swDirectory);
-			FileUtils.writeStringToFile(new File(templateDirectory + File.separator + newFilename), contents,
-					Charset.defaultCharset());
-		}
-
-		// add connection pool mappings to file system paths
-		// read opal-installer.json file
-		//ConfigData configDataInst = new ConfigData();
-		//configDataInst.clearDefaults();
-		String fileContents="{\n" + 
-				"	\"application\": \"\",\n" + 
-				"    \"patch\": \"\",\n" + 
-				"    \"author\": \"\",\n" + 
-				"    \"version\": \"\",\n" + 
-				"    \"connectionMappings\": [],\n" + 
-				"	 \"waitAfterEachStatement\": \"true\"," +
-				"    \"sqlFileRegEx\": \"\\\\.(sql|pks|pkb|trg)$\",\n" + 
-				"    \"registryTargets\": [],\n" + 
-				"    \"encodingMappings\": [ ]	\n" + 
-				"}";
-		FileUtils.writeStringToFile(new File(templateDirectory + File.separator + "opal-installer.json"), fileContents, Charset.defaultCharset());
-		ConfigManager confMgrInst = new ConfigManager(templateDirectory + File.separator + "opal-installer.json");
-		
-		// loop over all schemas for the current environment
-		for (String schema : schemaListString.split(",")) {
-			ConfigConnectionMapping map=null;
-			if (osIsWindows()) {
-				map=new ConfigConnectionMapping(schema, "\\\\sql\\\\.*"+schema+".*");
-			} else {
-				map=new ConfigConnectionMapping(schema, "/sql/.*"+schema+".*");
-			}
-			
-			// add connection to configFile
-			confMgrInst.getConfigData().connectionMappings.add(map);
-		}
-		// add encoding mapping
-		ConfigEncodingMapping map=null;
+	private String getOsDependentProjectRootVariable() {
 		if (osIsWindows()) {
-			map=new ConfigEncodingMapping("UTF8", "\\\\sql\\\\.*apex.*/.*f*sql");
+			return "%PROJECT_ROOT%";
 		} else {
-			map=new ConfigEncodingMapping("UTF8", "/sql/.*apex.*/.*f*sql");
+			return "${PROJECT_ROOT}";
 		}
-		confMgrInst.getConfigData().encodingMappings.add(map);
+			
+	}
+	
+	private String getFullPathResolveVariables(String path) {
+		String newPath=path;
 		
-		// write opal-installer.json file
-		confMgrInst.writeJSONConfInitFile();
+		// replace variables
+		if (osIsWindows()) {
+			newPath = newPath.replace("%PROJECT_ROOT%", this.projectRootDir);
+		}else {
+			newPath = newPath.replace("${PROJECT_ROOT}", this.projectRootDir);			
+		}
+		// resolve path and make it absolute
+		try {
+			newPath = new File(newPath).getCanonicalPath();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return newPath;
+	}
+	
+	private void processUserConfDir(Scanner kbd) throws IOException {
+		String tmpSourceDir = getFullPathResolveVariables(localDir + File.separatorChar + "configure-templates" + File.separatorChar + "conf-user");
+		String tmpTargetDir = getFullPathResolveVariables(localConfigDirectory);
 
-		// ----------------------------------------------------------
-		// conf-user directory
-		// ----------------------------------------------------------
-		Msg.println("\nprocess local conf directory in: " + localConfigDirectory + "\n");
-		// Utils.waitForEnter("Please press <enter> to proceed ...");
+		Msg.println("\nprocess local conf directory in: " + tmpTargetDir + "\n");
 		FileUtils.copyDirectory(
-				new File(localDir + File.separatorChar + "configure-templates" + File.separatorChar + "conf-user"),
-				new File(localConfigDirectory), osFileFilter);
+				new File(tmpSourceDir),
+				new File(tmpTargetDir), osFileFilter);
 
 		// loop over all environments, create a new file for each one
 		for (String env : environmentListString.split(",")) {
 
 			// create connection pool file
-			String confFilename = localConfigDirectory + File.separator + "connections-" + env + ".json";
+			String confFilename = tmpTargetDir + File.separator + "connections-" + env + ".json";
 			Msg.println("  Process environment: " + env + " => " + confFilename);
 
-			// FileUtils.copyFile(new
-			// File(localDir+File.separator+"conf-user"+File.separator+"connections-#ENV#.json"),
-			// new File(localConfigDirectory+File.separator+"connections-"+env+".json"));
 			// first we create an empty file
 			FileUtils.writeStringToFile(new File(confFilename), "{}", Charset.defaultCharset());
 
@@ -371,41 +168,228 @@ public class Configurator {
 
 			confMgr.writeJSONConfPool();
 		}
-		Msg.println("");
+		// replace contents in setProjectEnvironment script
+		File f = new File(getFullPathResolveVariables(this.setProjectEnvironmentScript));
+		
+		Path path = Paths.get(f.getName());
+		String filename = path.getFileName().toString();
+		String contents = FileUtils.readFileToString(f, Charset.defaultCharset());
+		contents = replaceAllVariables(contents);
+		
+		FileUtils.writeStringToFile(new File(getFullPathResolveVariables(this.setProjectEnvironmentScript)), contents,
+				Charset.defaultCharset());
 
-		// ----------------------------------------------------------
-		// db source directory
-		// ----------------------------------------------------------
-		Msg.println("db source directory from: " + localDir + File.separatorChar + "configure-templates"
-				+ File.separatorChar + "src-sql" + "\n                    to  : " + dbSourceDirectory + "\n");
-		// Utils.waitForEnter("Please press <enter> to proceed ...");
-		// FileUtils.copyDirectory(new File(localDir+File.separatorChar+"src"), new
-		// File(dbSourceDirectory));
+		Msg.println("");
+		
+	}
+
+	private void processSoftwareInstallation(Scanner kbd) throws IOException {
+
+		tmpSourceDir = getFullPathResolveVariables(localDir + File.separatorChar + "lib");
+		tmpTargetDir = getFullPathResolveVariables(swDirectory + File.separatorChar + "lib");
+
+		Msg.println("\n----------------------------------------------------------\n");
+		Msg.println("copy sw files from: " + tmpSourceDir + "\n              to  : " + tmpTargetDir + "\n");
+		try {
+			FileUtils.copyDirectory(new File(tmpSourceDir), new File(tmpTargetDir));
+		} catch (IOException e) {
+			Msg.println("Files will NOT be copied because an error occured: " + e.getMessage() + "\n");
+		}
+	}
+
+	private void processConfDirectory(Scanner kbd) {
+		tmpSourceDir = getFullPathResolveVariables(localDir + File.separatorChar + "conf");
+		tmpTargetDir = getFullPathResolveVariables(swDirectory + File.separatorChar + "conf");
+		
+		Msg.println("\n----------------------------------------------------------\n");
+		Msg.println("copy sw files from :" + tmpSourceDir + "\n              to  : "
+				+ tmpTargetDir + "\n");
+		try {
+			FileUtils.copyDirectory(new File(tmpSourceDir),
+				new File(tmpTargetDir));
+		} catch (IOException e){
+			Msg.println("Files will NOT be copied because an error occured: " + e.getMessage() + "\n");
+		}
+
+	}
+	
+	private void processPatchTemplateDirectory(Scanner kbd) throws IOException {
+		tmpSourceDir = getFullPathResolveVariables(localDir + File.separatorChar + "configure-templates" + File.separatorChar + "patch-template");
+		tmpTargetDir = getFullPathResolveVariables(templateDirectory);
+		
+		Msg.println("copy template directory from: " + tmpSourceDir + "\n                        to  : " + tmpTargetDir + "\n");
+		FileUtils.forceMkdir(new File(tmpTargetDir));
+
+		// loop over all schemas to create sql subdirectories
+		for (String schema : schemaListString.split(",")) {
+			tmpSourceDir = getFullPathResolveVariables(localDir + File.separatorChar + "configure-templates" + File.separatorChar + "patch-template-sql");
+			tmpTargetDir = getFullPathResolveVariables(templateDirectory + File.separator + "sql" + File.separator + schema);
+			
+			FileUtils.copyDirectory(
+					new File(tmpSourceDir),
+					new File(tmpTargetDir));
+		}
+
+		// create new patch-install files for each environment
+		// copy / replace all files but the #VAR#... files
+		String patchFileHeader="";
+		String patchFileContent="";
+		
+		tmpSourceDir = getFullPathResolveVariables(localDir + File.separatorChar + "configure-templates" + File.separatorChar + "patch-template");
+		tmpTargetDir = getFullPathResolveVariables(templateDirectory);
+		
+		Iterator<File> it = FileUtils.iterateFiles(
+				new File(tmpSourceDir),
+				null, false);
+		int i = 2; // start counter for #NO# files with 3
+		while (it.hasNext()) {
+			File f = (File) it.next();
+			Path path = Paths.get(f.getName());
+			String filename = path.getFileName().toString();
+
+			// filter for operating system
+			// on *nix process .sh files, on Windows process *.cmd files
+			if (filename.endsWith(getOsDependentScriptSuffix())
+					|| (!filename.endsWith(".cmd")&&!filename.endsWith(".sh"))) {
+
+				Msg.println("  process file " + filename);
+
+				String contents = FileUtils.readFileToString(f, Charset.defaultCharset());
+				contents = replaceAllVariables(contents);
+				
+				if (filename.contains("#")) {
+					// do nothing ... will be processed later
+				} else if (filename.startsWith("PatchFiles-header.txt")){
+					// add the header to the beginning of the content
+					patchFileHeader = FileUtils.readFileToString(new File(tmpSourceDir + File.separator + path.getFileName()), Charset.defaultCharset());
+				} else if (filename.startsWith("PatchFiles-body.txt")){
+					String templateMapping = FileUtils.readFileToString(new File(tmpSourceDir + File.separator + path.getFileName()), Charset.defaultCharset());
+					// loop over all schemas and create a mapping for each one
+					for (String schema : schemaListString.split(",")) {
+						patchFileContent+=templateMapping.replace("#SCHEMA#",schema);
+					}
+
+				} else {
+					// nothing special here
+					FileUtils.writeStringToFile(new File(tmpTargetDir + File.separator + path.getFileName()), contents,
+							Charset.defaultCharset());
+				}
+				// write the patchFile.txt 
+				FileUtils.writeStringToFile(new File(tmpTargetDir + File.separator + "PatchFiles.txt"), patchFileHeader + "\n" + patchFileContent,
+						Charset.defaultCharset());
+			}			
+		}
+		// process validation files and installation files "#var#..."
+		// special handling for each environment
+		i=2;
+		for (String env : environmentListString.split(",")) {
+			File f = new File(tmpSourceDir+ File.separatorChar + "3.install-patch-#ENV#."+getOsDependentScriptSuffix());
+			Path path = Paths.get(f.getName());
+			String filename = path.getFileName().toString();
+			String contents = FileUtils.readFileToString(f, Charset.defaultCharset());
+
+			String newFilename = filename.replace("#NO#", "" + i++).replace("#ENV#", env);
+			contents = contents.replace("#ENV#", env);
+			contents = replaceAllVariables(contents);
+			
+			FileUtils.writeStringToFile(new File(tmpTargetDir + File.separator + newFilename), contents,
+					Charset.defaultCharset());
+		}
+		// process installation files and installation files "#NO#..."
+		// special handling for each environment
+		i=2;
+		for (String env : environmentListString.split(",")) {
+			File f = new File(tmpSourceDir+ File.separatorChar + "2.validate-patch-#ENV#."+getOsDependentScriptSuffix());
+			Path path = Paths.get(f.getName());
+			String filename = path.getFileName().toString();
+			String contents = FileUtils.readFileToString(f, Charset.defaultCharset());
+
+			String newFilename = filename.replace("#NO#", "" + i++).replace("#ENV#", env);
+			contents = contents.replace("#ENV#", env);
+			contents = replaceAllVariables(contents);
+			FileUtils.writeStringToFile(new File(tmpTargetDir + File.separator + newFilename), contents,
+					Charset.defaultCharset());
+		}
+
+		// add connection pool mappings to file system paths
+		// read opal-installer.json file
+		//ConfigData configDataInst = new ConfigData();
+		//configDataInst.clearDefaults();
+		String fileContents="{\n" + 
+				"	\"application\": \"\",\n" + 
+				"    \"patch\": \"\",\n" + 
+				"    \"author\": \"\",\n" + 
+				"    \"version\": \"\",\n" + 
+				"    \"connectionMappings\": [],\n" + 
+				"	 \"waitAfterEachStatement\": \"true\"," +
+				"    \"sqlFileRegEx\": \"\\\\.(sql|pks|pkb|trg)$\",\n" + 
+				"    \"registryTargets\": [],\n" + 
+				"    \"encodingMappings\": [ ]	\n" + 
+				"}";
+		FileUtils.writeStringToFile(new File(tmpTargetDir + File.separator + "opal-installer.json"), fileContents, Charset.defaultCharset());
+		ConfigManager confMgrInst = new ConfigManager(tmpTargetDir + File.separator + "opal-installer.json");
+		
+		// loop over all schemas for the current environment
+		for (String schema : schemaListString.split(",")) {
+			ConfigConnectionMapping map=null;
+			if (osIsWindows()) {
+				map=new ConfigConnectionMapping(schema, "\\\\sql\\\\.*"+schema+".*");
+			} else {
+				map=new ConfigConnectionMapping(schema, "/sql/.*"+schema+".*");
+			}
+			
+			// add connection to configFile
+			confMgrInst.getConfigData().connectionMappings.add(map);
+		}
+		// add encoding mapping
+		ConfigEncodingMapping map=null;
+		if (osIsWindows()) {
+			map=new ConfigEncodingMapping("UTF8", "\\\\sql\\\\.*apex.*\\\\.*f*sql");
+		} else {
+			map=new ConfigEncodingMapping("UTF8", "/sql/.*apex.*/.*f*sql");
+		}
+		confMgrInst.getConfigData().encodingMappings.add(map);
+		
+		// write opal-installer.json file
+		confMgrInst.writeJSONConfInitFile();
+
+	}
+	
+    private void processDBSourceDirectory(Scanner kbd) throws IOException {
+		tmpSourceDir = getFullPathResolveVariables(localDir + File.separatorChar + "configure-templates" + File.separatorChar + "src-sql");
+		
+		Msg.println("db source directory from: " + tmpSourceDir + "\n                    to  : " + dbSourceDirectory + "\n");
 
 		// loop over all schemas
 		for (String schema : schemaListString.split(",")) {
+			tmpTargetDir = getFullPathResolveVariables(dbSourceDirectory + File.separator + schema);
+			
 			FileUtils.copyDirectory(
-					new File(localDir + File.separatorChar + "configure-templates" + File.separatorChar + "src-sql"),
-					new File(dbSourceDirectory + File.separator + schema));
+					new File(tmpSourceDir),
+					new File(tmpTargetDir));
 		}
+    }
+	
+    private void processPatchDirectory(Scanner kbd) throws IOException {
+		tmpSourceDir = getFullPathResolveVariables(localDir + File.separatorChar + "patches");
+		tmpTargetDir = getFullPathResolveVariables(patchDirectory);
 
-		// ----------------------------------------------------------
-		// patch directory
-		// ----------------------------------------------------------
 		Msg.println("patch directory from: " + localDir + File.separatorChar + "patches" + "\n                to  : "
-				+ patchDirectory + "\n");
+				+ tmpTargetDir + "\n");
 		// Utils.waitForEnter("Please press <enter> to proceed ...");
-		FileUtils.forceMkdir(new File(patchDirectory));
+		FileUtils.forceMkdir(new File(tmpTargetDir));
 
-		// ----------------------------------------------------------
-		// bin directory
-		// ----------------------------------------------------------
+    }
+    
+    private void processBinDirectory(Scanner kbd) throws IOException {
+		tmpSourceDir = getFullPathResolveVariables(localDir + File.separatorChar + "configure-templates" + File.separatorChar + "bin");
+		tmpTargetDir = getFullPathResolveVariables(swDirectory + File.separator + "bin");
+
 		Msg.println("process bin directory\n");
-		// Utils.waitForEnter("Please press <enter> to proceed ...");
 
 		// copy / replace all files in the bin directory
 		Iterator<File> it1 = FileUtils.iterateFiles(
-				new File(localDir + File.separatorChar + "configure-templates" + File.separatorChar + "bin"), osScriptSuffixList,
+				new File(tmpSourceDir), osScriptSuffixList,
 				false);
 		while (it1.hasNext()) {
 			File f = (File) it1.next();
@@ -413,14 +397,10 @@ public class Configurator {
 			Msg.println("  process file " + path.getFileName());
 
 			String contents = FileUtils.readFileToString(f, Charset.defaultCharset());
-			contents = contents.replace("#OPAL_INSTALLER_USER_CONFIG_DIR#", localConfigDirectory);
-			contents = contents.replace("#OPAL_INSTALLER_HOME_DIR#", swDirectory);
-			contents = contents.replace("#OPAL_INSTALLER_PATCH_TEMPLATE_DIR#", templateDirectory);
-			contents = contents.replace("#OPAL_INSTALLER_SRC_SQL_DIR#", dbSourceDirectory);
-			contents = contents.replace("#OPAL_INSTALLER_PATCH_DIR#", patchDirectory);
+			contents = replaceAllVariables(contents);
 			
 			FileUtils.writeStringToFile(
-					new File(swDirectory + File.separator + "bin" + File.separator + path.getFileName()), contents,
+					new File(tmpTargetDir + File.separator + path.getFileName()), contents,
 					Charset.defaultCharset());
 		}
 		
@@ -433,7 +413,7 @@ public class Configurator {
 		} else {
 			Msg.println("\nset privileges for *.sh files\n");
 			ProcessBuilder builder = new ProcessBuilder();
-			builder.command("bash", "-c", "find " + localConfigDirectory + " " + swDirectory + " " + templateDirectory + " -type f -iname \"*.sh\" -exec chmod +x {} \\;");			
+			builder.command("bash", "-c", "find " + getFullPathResolveVariables(localConfigDirectory) + " " + getFullPathResolveVariables(swDirectory) + " " + getFullPathResolveVariables(templateDirectory) + " -type f -iname \"*.sh\" -exec chmod +x {} \\;");			
 			try {
 				Process process = builder.start();
 
@@ -455,6 +435,103 @@ public class Configurator {
 	        }
 		}
 
+    }
+    
+	
+	private String replaceAllVariables(String contents) {
+		String newContents=contents;
+		
+		newContents = newContents.replace("#PROJECT_ROOT#", this.projectRootDir);
+		newContents = newContents.replace("#OPAL_INSTALLER_USER_CONFIG_DIR#", this.localConfigDirectory);
+		newContents = newContents.replace("#OPAL_INSTALLER_USER_ENV_SCRIPT#", this.setProjectEnvironmentScript);
+		
+		newContents = newContents.replace("#OPAL_INSTALLER_HOME_DIR#", this.swDirectory);
+		newContents = newContents.replace("#OPAL_INSTALLER_SRC_SQL_DIR", this.dbSourceDirectory);
+		newContents = newContents.replace("#OPAL_INSTALLER_PATCH_TEMPLATE_DIR#", templateDirectory);
+		newContents = newContents.replace("#OPAL_INSTALLER_PATCH_DIR#", patchDirectory);
+		
+		return newContents;
+	}
+	
+	public void run() throws IOException, InterruptedException {
+						
+		log.info("running configure");
+
+		Scanner kbd = new Scanner(System.in); // Create a Scanner object
+		
+		projectRootDir = promptForInput(kbd, "\nProject root directory, typically the target of a GIT or SVN export", projectRootDir);
+		swDirectory = promptForInput(kbd, "SW install directory (contains bin and lib directories, use '.' for local files)", getOsDependentProjectRootVariable()+File.separatorChar+"opal-installer");
+		templateDirectory = promptForInput(kbd, "Patch template directory",
+				getOsDependentProjectRootVariable() + File.separatorChar + "patch-template");
+		localConfigDirectory = promptForInput(kbd,
+				"Local configuration directory (connection pools, user dependent config)",
+				projectRootDir + File.separatorChar + "conf-user");
+		setProjectEnvironmentScript = promptForInput(kbd,
+				"Local script to initialize the user environment for this project",
+				localConfigDirectory + File.separatorChar + "setProjectEnvironment."+getOsDependentScriptSuffix());
+		dbSourceDirectory = promptForInput(kbd,
+				"Database source directory (sql, has subdirectories e.g. sql/oracle_schema/tables, sql/oracle_schema/packages, etc.)",
+				getOsDependentProjectRootVariable() + File.separatorChar + "sql");
+		patchDirectory = promptForInput(kbd,
+				"Patch directory (patches, has subdirectories e.g. year/patch_name)",
+				getOsDependentProjectRootVariable() + File.separatorChar + "patches");
+		schemaListString = promptForInput(kbd, "List of database schemas (comma-separated, e.g. HR,SCOTT)",
+				"HR,SCOTT");
+		environmentListString = promptForInput(kbd, "List of environments (comma-separated, e.g. DEV,INT,PROD)",
+				"DEV,INT,PROD");
+		//String environmentColorListString = promptForInput(kbd, "List of shell colors for environments (comma-separated, e.g. green,yellow,red)",
+		//		"green,yellow,red");		
+
+		log.debug("***");
+		log.debug("Project root directory, typically the target of a GIT or SVN export: " + projectRootDir);
+		log.debug("SW install directory (contains bin and lib directories): " + swDirectory);
+		log.debug("Patch template directory: " + templateDirectory);
+		log.debug("Local configuration directory: " + localConfigDirectory);
+		log.debug("Local script to initialize the user environment for this project: " + setProjectEnvironmentScript);
+		log.debug("Database source directory: " + dbSourceDirectory);
+		log.debug("Patch directory: " + patchDirectory);
+		log.debug("List of database schemas: " + schemaListString);
+		log.debug("List of environments: " + environmentListString);
+		log.debug("***");
+
+		
+		Utils.waitForEnter("Please press <enter> to proceed ...");
+
+		// ----------------------------------------------------------
+		// software installation
+		// ----------------------------------------------------------
+		processSoftwareInstallation(kbd);
+	
+		// ----------------------------------------------------------
+		// conf directory
+		// ----------------------------------------------------------
+		processConfDirectory(kbd);
+
+		// ----------------------------------------------------------
+		// patch template directory
+		// ----------------------------------------------------------
+		processPatchTemplateDirectory(kbd);
+		
+		// ----------------------------------------------------------
+		// conf-user directory
+		// ----------------------------------------------------------
+		processUserConfDir(kbd);
+		
+		// ----------------------------------------------------------
+		// db source directory
+		// ----------------------------------------------------------
+		processDBSourceDirectory(kbd);
+		
+		// ----------------------------------------------------------
+		// patch directory
+		// ----------------------------------------------------------
+		processPatchDirectory(kbd);
+
+		// ----------------------------------------------------------
+		// bin directory
+		// ----------------------------------------------------------
+		processBinDirectory(kbd);
+		
 		// close keyboard input scanner
 		kbd.close();
 	}
@@ -468,7 +545,7 @@ public class Configurator {
 		// read command line parameters and exit if no know command found
 		if (args.length == 0 || args.length == 1) {
 			if (args.length == 1) {
-				this.baseDir = args[0];
+				this.projectRootDir = args[0];
 			}
 //			
 //			this.sourcePathName = args[1];

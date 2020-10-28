@@ -1,5 +1,5 @@
 #!/bin/bash
-source #OPAL_INSTALLER_HOME_DIR#/bin/set-script-environment.sh
+source #OPAL_INSTALLER_USER_ENV_SCRIPT#
 
 SCRIPT_DIR=`dirname $0`
 

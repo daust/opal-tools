@@ -4,6 +4,7 @@
 #--------------------------------------------------------------------------
 
 # export variables used in the various scripts for the installer
+export PROJECT_ROOT=#PROJECT_ROOT#
 export OPAL_INSTALLER_HOME_DIR=#OPAL_INSTALLER_HOME_DIR#
 export OPAL_INSTALLER_JAVA_ARGS="-Dlog4j.configurationFile=${OPAL_INSTALLER_HOME_DIR}/conf/log4j2.xml -Djava.util.logging.config.file=${OPAL_INSTALLER_HOME_DIR}/conf/log4j.properties"
 
@@ -15,8 +16,9 @@ export OPAL_INSTALLER_SRC_SQL_DIR=#OPAL_INSTALLER_SRC_SQL_DIR#
 export OPAL_INSTALLER_PATCH_TEMPLATE_DIR=#OPAL_INSTALLER_PATCH_TEMPLATE_DIR#
 export OPAL_INSTALLER_PATCH_DIR=#OPAL_INSTALLER_PATCH_DIR#
 
-#@REM call user specific settings for java environment or other user specific variables
-source ${OPAL_INSTALLER_USER_CONFIG_DIR}/setUserEnvironment.sh
+# --- change if needed ---
+# export ORACLE_HOME=c:\Progs\Oracle\Client\12.1\Home
+# export JAVA_HOME=c:\Program Files (x86)\Java\jdk1.8.0_251 
 
 # --- typically unchanged ---
 # Date Strings to be used in scripts
@@ -26,7 +28,3 @@ export DATE_STRING=`date +"%Y-%m-%d"`
 #echo YEAR: $YEAR
 
 export PATH=${OPAL_INSTALLER_HOME_DIR}/bin:${PATH}
-
-
-
-

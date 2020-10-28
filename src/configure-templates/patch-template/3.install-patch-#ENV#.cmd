@@ -1,4 +1,4 @@
-@call #OPAL_INSTALLER_HOME_DIR#\bin\set-script-environment.cmd
+@call #OPAL_INSTALLER_USER_ENV_SCRIPT#
 
 SET CURRDIR=%~dp0
 

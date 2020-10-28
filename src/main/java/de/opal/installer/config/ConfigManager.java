@@ -84,6 +84,7 @@ public class ConfigManager {
 			// relative path, so do concatenate from packageDir
 			sqlDirPath = this.packageDir.toPath().resolve(sqlDirPathName);
 			log.trace("packageDirPath: " + packageDirPath);
+			log.trace("sqlDirPath: " + sqlDirPath);
 		}
 
 		try {
@@ -91,6 +92,7 @@ public class ConfigManager {
 			this.sqlDir = sqlDirPath.toRealPath().toFile();
 		} catch (IOException ex) {
 			// ignore for connection pools
+			/* TODO: separate config files and throw error message when file not found */
 		}
 
 		log.debug("traversalType: " + this.configData.traversalType);

@@ -1,5 +1,5 @@
 #!/bin/bash
-source #OPAL_INSTALLER_HOME_DIR#/bin/set-script-environment.sh
+source #OPAL_INSTALLER_USER_ENV_SCRIPT#
 
 # setting up the target patch directory, e.g. \Patches\2020\2020-04-23-<patch name>
 read -p 'Patch name, e.g. fac_123 or KapaPlaner-v2.5.0 :: ' PATCH_NAME
