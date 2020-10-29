@@ -21,7 +21,7 @@ import org.gradle.internal.os.OperatingSystem
 //-----------------------------------------------------------------------------
 
   project.description       = "OPAL Installer - more details here: https://github.com/daust/opal-installer"
-  project.version           = '1.0.0'
+  project.version           = '1.1.0'
   
   sourceCompatibility       = 1.8
   targetCompatibility       = 1.8

@@ -11,6 +11,7 @@
 @echo OFF
 
 @REM set variables used in the various scripts for the installer
+set PROJECT_ROOT=#PROJECT_ROOT#
 set OPAL_INSTALLER_HOME_DIR=#OPAL_INSTALLER_HOME_DIR#
 set OPAL_INSTALLER_JAVA_ARGS=-Dlog4j.configurationFile=%OPAL_INSTALLER_HOME_DIR%\conf\log4j2.xml -Djava.util.logging.config.file=%OPAL_INSTALLER_HOME_DIR%\conf\log4j.properties
 

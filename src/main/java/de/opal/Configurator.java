@@ -131,9 +131,9 @@ public class Configurator {
 		String tmpTargetDir = getFullPathResolveVariables(localConfigDirectory);
 
 		Msg.println("\nprocess local conf directory in: " + tmpTargetDir + "\n");
-		FileUtils.copyDirectory(
-				new File(tmpSourceDir),
-				new File(tmpTargetDir), osFileFilter);
+		//FileUtils.copyDirectory(
+		//		new File(tmpSourceDir),
+		//		new File(tmpTargetDir), osFileFilter);
 
 		// loop over all environments, create a new file for each one
 		for (String env : environmentListString.split(",")) {
@@ -169,7 +169,7 @@ public class Configurator {
 			confMgr.writeJSONConfPool();
 		}
 		// replace contents in setProjectEnvironment script
-		File f = new File(getFullPathResolveVariables(this.setProjectEnvironmentScript));
+		File f = new File(getFullPathResolveVariables(tmpSourceDir + File.separator + "setProjectEnvironment."+getOsDependentScriptSuffix()));
 		
 		Path path = Paths.get(f.getName());
 		String filename = path.getFileName().toString();
@@ -178,7 +178,7 @@ public class Configurator {
 		
 		FileUtils.writeStringToFile(new File(getFullPathResolveVariables(this.setProjectEnvironmentScript)), contents,
 				Charset.defaultCharset());
-
+		
 		Msg.println("");
 		
 	}
