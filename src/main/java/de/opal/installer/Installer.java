@@ -4,6 +4,7 @@ import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
@@ -11,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Properties;
 import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
@@ -32,7 +34,7 @@ import oracle.dbtools.raptor.newscriptrunner.ScriptRunnerContext;
 public class Installer {
 	public static final Logger log = LogManager.getLogger(Installer.class.getName());
 
-	private String version = "0.8.0";
+	private String version = ""; // will be loaded from file version.txt which will be populated by the gradle build process
 
 	private ConfigManager configManager;
 	private ConfigManager configManagerConnectionPools;
@@ -63,13 +65,6 @@ public class Installer {
 		return _instance;
 	}
 
-//	public static void main(String[] args) throws Exception {
-//
-//		Installer inst = new Installer(args);
-//		inst.run();
-//
-//	}
-
 	/**
 	 * Constructor
 	 * 
@@ -78,6 +73,20 @@ public class Installer {
 	 * @throws IOException
 	 */
 	public Installer(String[] args) throws IOException {
+		Properties prop = new Properties();
+        String result = "";
+
+		try (InputStream inputStream = getClass().getResourceAsStream("version.properties")) {
+
+            prop.load(inputStream);
+            result = prop.getProperty("version");
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+		this.version=result;
+		
 		readConfig(args);
 		this.connectionManager = ConnectionManager.getInstance();
 		// store definitions but don't create connections

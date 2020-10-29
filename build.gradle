@@ -119,6 +119,14 @@ distributions {
     }
 }
 
+task postCompileJava {
+    doLast{
+      println 'do it before jar'
+      new File("${project.buildDir}/classes/java/main/de/opal/installer/version.properties").text="version="+project.version
+    }
+}
+jar.dependsOn postCompileJava
+
 println "\n***********************************************"
 println "Version: " + project.version
 println "Source-Compatibility: " + project.sourceCompatibility

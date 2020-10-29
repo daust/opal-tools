@@ -184,6 +184,42 @@ set YEAR=%DTS:~0,4%
 set PATH=%OPAL_INSTALLER_HOME_DIR%\bin;%PATH%
 </pre>
 
+# Usage
+
+## 1. Initialize a new patch
+
+*tbd*
+
+## 2. Configure the opal-installer.json file
+
+*tbd*
+
+## 3. Put all files into the subdirectories of the patch directory
+
+*tbd*
+
+## 4. Execute the batch files in the patch directory 
+
+*tbd*
+
+# Configuration
+
+## ``opal-installer.json`` configuration file
+
+*tbd*
+
 # Troubleshooting
 
-## Getting a warning 
+### Warning message: ``Unable to get Charset 'cp65001' for property 'sun.stdout.encoding', using default windows-1250 and continuing``.
+
+This message only indicates that the character set for the console output cannot be determined from the current shell environment. See more details and workarounds here: https://github.com/daust/opal-installer/issues/8. 
+
+# Special use cases
+
+### Using the installer with multiple developers on the same operating system
+
+*tbd*
+
+### Using the installer with multiple developers on different operating systems 
+
+*tbd*

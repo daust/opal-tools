@@ -13,8 +13,6 @@ import de.opal.installer.util.Msg;
 public class PatchInit {
 	public static final Logger log = LogManager.getLogger(PatchInit.class.getName());
 
-	//private static final String version = "0.5.0";
-
 	private String sourcePathName = "";
 	private String targetPathName = "";
 
