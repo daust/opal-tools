@@ -34,7 +34,8 @@ import oracle.dbtools.raptor.newscriptrunner.ScriptRunnerContext;
 public class Installer {
 	public static final Logger log = LogManager.getLogger(Installer.class.getName());
 
-	private String version = ""; // will be loaded from file version.txt which will be populated by the gradle build process
+	private String version = ""; // will be loaded from file version.txt which will be populated by the gradle
+									// build process
 
 	private ConfigManager configManager;
 	private ConfigManager configManagerConnectionPools;
@@ -74,23 +75,47 @@ public class Installer {
 	 */
 	public Installer(String[] args) throws IOException {
 		Properties prop = new Properties();
-        String result = "";
+		String result = "";
 
 		try (InputStream inputStream = getClass().getResourceAsStream("version.properties")) {
 
-            prop.load(inputStream);
-            result = prop.getProperty("version");
+			prop.load(inputStream);
+			result = prop.getProperty("version");
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 
-		this.version=result;
-		
+		this.version = result;
+
 		readConfig(args);
 		this.connectionManager = ConnectionManager.getInstance();
+		
 		// store definitions but don't create connections
 		this.connectionManager.initialize(this.configManagerConnectionPools.getConfigData().connectionPools);
+		
+	}
+
+	private String generateLogFileName(String logFileDir, String runMode, String env) {
+		String logFileName = "";
+		String runModeString="";
+
+		switch (runMode) {
+		case "EXECUTE":
+			runModeString="install";
+			break;
+		case "VALIDATE_ONLY":
+			runModeString="validate";
+			break;
+
+		default:
+			runModeString="run";
+			break;
+		}
+		logFileName = logFileDir + File.separator + env + "-" + runModeString + "-"
+				+ new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss").format(new Date()) + ".log";
+
+		return logFileName;
 	}
 
 	/**
@@ -104,18 +129,18 @@ public class Installer {
 	 */
 	public void run() throws Exception {
 		List<FileNode> fsTree, fsTreeFull;
-		//String baseDir=this.configManager.getPackageDir().getAbsolutePath();
+		// String baseDir=this.configManager.getPackageDir().getAbsolutePath();
 		String logFileDir = this.configManager.getPackageDir().getAbsolutePath() + File.separator + "logs";
-		String logfileName = logFileDir + File.separator + "install_"
-				+ new SimpleDateFormat("yyyy-MM-dd-HH_mm_ss").format(new Date()) + ".log";
-		
+		String logfileName = generateLogFileName(logFileDir, this.configManager.getConfigData().runMode,
+				this.configManagerConnectionPools.getConfigData().targetSystem);
+
 		// create logfile directory if it does not exist
 		File logFileDirFile = new File(logFileDir);
 		if (!logFileDirFile.exists()) {
 			logFileDirFile.mkdir();
-			log.debug("create log directory: "+logFileDir);
+			log.debug("create log directory: " + logFileDir);
 		}
-		
+
 		log.debug("logfile: " + logfileName);
 
 		log.debug("run()");
@@ -139,7 +164,7 @@ public class Installer {
 			Msg.println("**");
 			Msg.println("** File Encoding (System): " + System.getProperty("file.encoding"));
 			Msg.println("*************************\n");
-			
+
 			logfile.appendln("OPAL Installer version " + this.version);
 			logfile.appendln("*************************");
 			logfile.appendln("** Application           : " + this.configManager.getConfigData().application);
@@ -147,7 +172,8 @@ public class Installer {
 			logfile.appendln("** Version               : " + this.configManager.getConfigData().version);
 			logfile.appendln("** Author                : " + this.configManager.getConfigData().author);
 			logfile.appendln("**");
-			logfile.appendln("** Target system         : " + this.configManagerConnectionPools.getConfigData().targetSystem);
+			logfile.appendln(
+					"** Target system         : " + this.configManagerConnectionPools.getConfigData().targetSystem);
 			logfile.appendln("** Run mode              : " + this.configManager.getConfigData().runMode);
 			logfile.appendln("**");
 			logfile.appendln("** Config File           : " + this.configManager.getConfigFileName());
@@ -155,7 +181,7 @@ public class Installer {
 			logfile.appendln("**");
 			logfile.appendln("** File Encoding (System): " + System.getProperty("file.encoding"));
 			logfile.appendln("*************************\n");
-			
+
 			Utils.waitForEnter("Please press <enter> to list the files to be installed ...");
 
 			// scan all files in tree and store in TreeFull
@@ -165,11 +191,13 @@ public class Installer {
 			if (configManager.getTraversalType() == ConfigManager.TraversalType.STATIC_FILES) {
 				fsTree = fs.filterTreeStaticFiles(fsTreeFull, configManager.getConfigData().staticFiles);
 			} else {
-				fsTree = fs.filterTreeInorder(fsTreeFull, configManager.getConfigData().sqlFileRegEx, logfile, configManager);
+				fsTree = fs.filterTreeInorder(fsTreeFull, configManager.getConfigData().sqlFileRegEx, logfile,
+						configManager);
 			}
 			logfile.append("\n");
-			Utils.waitForEnter("\nPlease press <enter> to start the process ("+ this.configManager.getConfigData().runMode+") ...");
-			
+			Utils.waitForEnter("\nPlease press <enter> to start the process ("
+					+ this.configManager.getConfigData().runMode + ") ...");
+
 			/*
 			 * now process all files one by one
 			 */
@@ -202,7 +230,7 @@ public class Installer {
 			}
 
 			processTree(fsTree);
-			
+
 			/*
 			 * Finalize patch, update column pat_ended_on
 			 */
@@ -255,6 +283,14 @@ public class Installer {
 		// now read the connection pools from a different file
 		// both have the same structure
 		this.configManagerConnectionPools = new ConfigManager(args[2]);
+		// encrypt passwords if required
+		if (this.configManagerConnectionPools.hasUnencryptedPasswords()) {
+			this.configManagerConnectionPools.encryptPasswords();
+			// dump JSON file
+			this.configManagerConnectionPools.writeJSONConfPool();
+		}
+		// now decrypt the passwords so that they can be used internally in the program
+		this.configManagerConnectionPools.decryptPasswords();
 
 	}
 
@@ -342,7 +378,7 @@ public class Installer {
 				log.debug("  no match with regex: " + configConnectionMapping.matchRegEx);
 			}
 		}
-		
+
 		// look for existing ScriptExecutor for this dataSource
 		sqlcl = this.sqlcls.get(dsName);
 		if (sqlcl == null) {
@@ -410,36 +446,37 @@ public class Installer {
 				this.patchRegistry.registerFile(file);
 			}
 		}
-		
+
 		String overrideEncoding = configManager.getEncoding(file.toString());
 
 		// # run a whole file
-		//String cmd = "@" + file.getAbsolutePath();
-	    this.logfile.append("\n***");
-	    if (overrideEncoding.isEmpty()) {
-			this.logfile.append("\n*** User:" + sqlcl.getConn().getSchema() + "; " + file.getAbsolutePath());	    	
-	    }else {
-			this.logfile.append("\n*** Override encoding: " + overrideEncoding + "; User:" + sqlcl.getConn().getSchema() + "; " + file.getAbsolutePath());	    		    	
-	    }
-	    this.logfile.append("\n***\n\n");
+		// String cmd = "@" + file.getAbsolutePath();
+		this.logfile.append("\n***");
+		if (overrideEncoding.isEmpty()) {
+			this.logfile.append("\n*** User:" + sqlcl.getConn().getSchema() + "; " + file.getAbsolutePath());
+		} else {
+			this.logfile.append("\n*** Override encoding: " + overrideEncoding + "; User:" + sqlcl.getConn().getSchema()
+					+ "; " + file.getAbsolutePath());
+		}
+		this.logfile.append("\n***\n\n");
 
-	    Msg.print("\n***");
-	    if (overrideEncoding.isEmpty()) {
-	    	Msg.print("\n*** User:" + sqlcl.getConn().getSchema() + "; " + file.getAbsolutePath());	    	
-	    }else {
-	    	Msg.print("\n*** Override encoding: " + overrideEncoding + "; User:" + sqlcl.getConn().getSchema() + "; " + file.getAbsolutePath());	    		    	
-	    }
+		Msg.print("\n***");
+		if (overrideEncoding.isEmpty()) {
+			Msg.print("\n*** User:" + sqlcl.getConn().getSchema() + "; " + file.getAbsolutePath());
+		} else {
+			Msg.print("\n*** Override encoding: " + overrideEncoding + "; User:" + sqlcl.getConn().getSchema() + "; "
+					+ file.getAbsolutePath());
+		}
 		Msg.print("\n***\n\n");
 
 		// only execute if flag is set in config file
 		if (this.configManager.getConfigData().runMode.equals("EXECUTE")) {
-			//sqlcl.setStmt(new FileInputStream(file));
+			// sqlcl.setStmt(new FileInputStream(file));
 			String fileContents = "";
 
-			
 			if (overrideEncoding.isEmpty()) {
 				fileContents = FileUtils.readFileToString(file, System.getProperty("file.encoding"));
-			}else {
+			} else {
 				fileContents = FileUtils.readFileToString(file, overrideEncoding);
 			}
 			sqlcl.setStmt(fileContents);
@@ -480,11 +517,11 @@ public class Installer {
 
 		String results = bout.toString("UTF8");
 		results = results.replaceAll(" force_print\n", "");
-		
+
 		// suppress output when "name is already used by existing object
 		if (!results.contains("ORA-00955")) {
 			this.logfile.append(results);
-			Msg.println(results);			
+			Msg.println(results);
 		}
 	}
 

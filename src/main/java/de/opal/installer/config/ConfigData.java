@@ -25,18 +25,22 @@ public class ConfigData {
 	public String targetSystem = ""; // e.g. DEVELOPMENT,INTEGRATION,PRODUCTION
 	@Expose(serialize = true, deserialize = true)
 	public ArrayList<ConfigConnectionPool> connectionPools;
-	@Expose(serialize = true, deserialize = true)
+	@Expose(serialize = false, deserialize = true)
 	public ArrayList<String> staticFiles;
 	@Expose(serialize = true, deserialize = true)
 	public String sqlFileRegEx = "\\.(sql|pks|pkb)$";
 	@Expose(serialize = true, deserialize = true)
 	public String waitAfterEachStatement = "false";
-	@Expose(serialize = true, deserialize = true)
+	@Expose(serialize = false, deserialize = true)
 	public String runMode = "EXECUTE"; // EXECUTE | VALIDATE_ONLY
 	@Expose(serialize = true, deserialize = true)
 	public ArrayList<RegistryTarget> registryTargets;
 	@Expose(serialize = true, deserialize = true)
 	public ArrayList<ConfigEncodingMapping> encodingMappings;
+
+//	@Expose(serialize = false, deserialize = true)
+//	public String logFileNamingScheme="##-#CONN-POOL#";
+
 	
 	// settings only read but not written back
 	// upon writing back ... we could introduce absolute paths
@@ -68,5 +72,6 @@ public class ConfigData {
 		this.waitAfterEachStatement=null;
 		this.runMode=null;
 		this.connectionPools=new ArrayList<ConfigConnectionPool>();
+//		this.logFileNamingScheme=null;
 	}
 }

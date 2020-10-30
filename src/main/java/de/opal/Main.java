@@ -10,7 +10,7 @@ public class Main {
 
 	public static final Logger log = LogManager.getLogger(Main.class.getName());
 
-	private static final String version = "0.5.0";
+	//private static final String version = "0.5.0";
 
 	public static void main(String[] args) throws Exception {
 
@@ -78,8 +78,6 @@ public class Main {
 	}
 
 	private static void showUsage() {
-		Msg.println("");
-		Msg.println("OPAL Installer version " + version);
 		Msg.println("");
 		Msg.println("Usage: ");
 		Msg.println("");

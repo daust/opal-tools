@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.regex.Pattern;
 
 import org.apache.logging.log4j.LogManager;
@@ -19,6 +20,7 @@ import org.apache.logging.log4j.Logger;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import de.oc.utils.EncryptorWrapper;
 import de.opal.installer.util.Msg;
 
 /**
@@ -101,6 +103,37 @@ public class ConfigManager {
 		// this.dumpConfig();
 	}
 
+	public boolean hasUnencryptedPasswords() {
+		EncryptorWrapper enc = new EncryptorWrapper();
+		boolean hasUnencryptedPasswords=false;
+		
+		for (ConfigConnectionPool pool : this.configData.connectionPools) {
+			if (!enc.isEncrypted(pool.password)) {
+				hasUnencryptedPasswords=true;
+			}
+		}
+		return hasUnencryptedPasswords;
+
+	}
+	public void encryptPasswords() {
+		EncryptorWrapper enc = new EncryptorWrapper();
+		
+		for (ConfigConnectionPool pool : this.configData.connectionPools) {
+			if (!enc.isEncrypted(pool.password)) {
+				pool.password = enc.encryptPWD(pool.password);
+			}
+		}
+	}
+	public void decryptPasswords() {
+		EncryptorWrapper enc = new EncryptorWrapper();
+		
+		for (ConfigConnectionPool pool : this.configData.connectionPools) {
+			if (enc.isEncrypted(pool.password)) {
+				pool.password = enc.decryptPWD(pool.password);
+			}
+		}
+	}
+
 	public void dumpConfig() {
 		Msg.println("*** Dump config ***");
 		Msg.println("packageDir: " + this.packageDirName);
@@ -167,13 +200,13 @@ public class ConfigManager {
 		/* clean defaults if requested */
 		configData.traversalType = configData.traversalType == "INORDER" ? null : configData.traversalType;
 		configData.sqlDir = "sql".contentEquals(configData.sqlDir) ? null : configData.sqlDir;
-		configData.targetSystem=null;
-		
+		configData.targetSystem = null;
+
 		// can't remove wait statement, because when installing the patch it won't wait
-		//configData.waitAfterEachStatement=null;
-		
-		configData.runMode=null;
-		
+		// configData.waitAfterEachStatement=null;
+
+		configData.runMode = null;
+
 		// now write it generically
 		writeJSONConf();
 	}
