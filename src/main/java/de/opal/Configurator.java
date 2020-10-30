@@ -1,6 +1,7 @@
 package de.opal;
 
 import java.io.BufferedReader;
+import java.io.Console;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -163,9 +164,19 @@ public class Configurator {
 
 			// loop over all schemas for the current environment
 			for (String schema : schemaListArr) {
-				String password = promptForInput(kbd,
-						"    Password for schema " + schema + " in environment " + env + ": ", "");
-
+				String password = "";
+				
+				Console con = System.console();
+				// hide password on real console
+				if (con!=null) {
+					System.out.println("    Password for schema " + schema + " in environment " + env + ": ");   
+			        char[] ch=con.readPassword();   
+			        password=String.valueOf(ch);					
+				} else {
+					// input password in Eclipse
+					password = promptForInput(kbd,
+					"    Password for schema " + schema + " in environment " + env + ": ", "");
+				}
 				ConfigConnectionPool conn = new ConfigConnectionPool(schema, schema, password, envJDBCUrl);
 				// add connection to configFile
 				configData.connectionPools.add(conn);
@@ -173,6 +184,7 @@ public class Configurator {
 
 			ConfigManager confMgr = new ConfigManager(confFilename);
 			confMgr.setConfigData(configData);
+			confMgr.encryptPasswords();
 
 			confMgr.writeJSONConfPool();
 		}
@@ -568,9 +580,9 @@ public class Configurator {
 		patchDirectory = promptForInput(kbd,
 				"Patch directory (patches, has subdirectories e.g. year/patch_name)",
 				getOsDependentProjectRootVariable() + File.separatorChar + "patches");
-		schemaListString = promptForInput(kbd, "List of database schemas (comma-separated, e.g. HR,SCOTT)",
+		schemaListString = promptForInput(kbd, "List of database schemas (comma-separated, e.g. hr,scott)",
 				"hr,scott");
-		environmentListString = promptForInput(kbd, "List of environments (comma-separated, e.g. DEV,INT,PROD)",
+		environmentListString = promptForInput(kbd, "List of environments (comma-separated, e.g. dev,int,prod)",
 				"dev,int,prod");
 		environmentColorListString = promptForInput(kbd, "List of shell colors for the environments (comma-separated, e.g. green,yellow,red)",
 				"green,yellow,red");		

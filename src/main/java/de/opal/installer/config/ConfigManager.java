@@ -139,7 +139,7 @@ public class ConfigManager {
 		Msg.println("packageDir: " + this.packageDirName);
 		Msg.println("configFileName: " + this.configFileName);
 
-		Msg.println(this.configData.toString());
+		//Msg.println(this.configData.toString());
 	}
 
 	// @SuppressWarnings("unchecked")
