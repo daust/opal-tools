@@ -10,6 +10,8 @@ SET CURRDIR=%~dp0
 @REM yellow: "color 0E"
 @REM red   : "color 0C"
 
+#OPAL_INSTALLER_SET_COLOR_COMMAND#
+
 @call opal-installer.cmd executePatch EXECUTE "%CURRDIR%opal-installer.json" "%OPAL_INSTALLER_USER_CONFIG_DIR%\connections-#ENV#.json"
 
 cmd /k

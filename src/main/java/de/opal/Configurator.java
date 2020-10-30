@@ -8,7 +8,9 @@ import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Scanner;
 
 import org.apache.commons.io.FileUtils;
@@ -35,7 +37,12 @@ public class Configurator {
 	private String patchDirectory="";
 	private String setProjectEnvironmentScript="";
 	private String schemaListString="";
+	private String schemaListArr[]=null;
 	private String environmentListString="";
+	private String environmentListArr[]=null;
+	
+	private String environmentColorListString="";
+	private String environmentColorListArr[]=null;
 	
 	String localDir = System.getProperty("user.dir");
 
@@ -136,7 +143,8 @@ public class Configurator {
 		//		new File(tmpTargetDir), osFileFilter);
 
 		// loop over all environments, create a new file for each one
-		for (String env : environmentListString.split(",")) {
+		// create CONNECTION POOL files
+		for (String env : environmentListArr) {
 
 			// create connection pool file
 			String confFilename = tmpTargetDir + File.separator + "connections-" + env + ".json";
@@ -154,7 +162,7 @@ public class Configurator {
 			configData.targetSystem = env;
 
 			// loop over all schemas for the current environment
-			for (String schema : schemaListString.split(",")) {
+			for (String schema : schemaListArr) {
 				String password = promptForInput(kbd,
 						"    Password for schema " + schema + " in environment " + env + ": ", "");
 
@@ -168,6 +176,7 @@ public class Configurator {
 
 			confMgr.writeJSONConfPool();
 		}
+		// process SET PROJECT ENVIRONMENT script
 		// replace contents in setProjectEnvironment script
 		File f = new File(getFullPathResolveVariables(tmpSourceDir + File.separator + "setProjectEnvironment."+getOsDependentScriptSuffix()));
 		
@@ -221,7 +230,7 @@ public class Configurator {
 		FileUtils.forceMkdir(new File(tmpTargetDir));
 
 		// loop over all schemas to create sql subdirectories
-		for (String schema : schemaListString.split(",")) {
+		for (String schema : schemaListArr) {
 			tmpSourceDir = getFullPathResolveVariables(localDir + File.separatorChar + "configure-templates" + File.separatorChar + "patch-template-sql");
 			tmpTargetDir = getFullPathResolveVariables(templateDirectory + File.separator + "sql" + File.separator + schema);
 			
@@ -265,7 +274,7 @@ public class Configurator {
 				} else if (filename.startsWith("PatchFiles-body.txt")){
 					String templateMapping = FileUtils.readFileToString(new File(tmpSourceDir + File.separator + path.getFileName()), Charset.defaultCharset());
 					// loop over all schemas and create a mapping for each one
-					for (String schema : schemaListString.split(",")) {
+					for (String schema : schemaListArr) {
 						patchFileContent+=templateMapping.replace("#SCHEMA#",schema);
 					}
 
@@ -282,7 +291,7 @@ public class Configurator {
 		// process validation files and installation files "#var#..."
 		// special handling for each environment
 		i=2;
-		for (String env : environmentListString.split(",")) {
+		for (String env : environmentListArr) {
 			File f = new File(tmpSourceDir+ File.separatorChar + "3.install-patch-#ENV#."+getOsDependentScriptSuffix());
 			Path path = Paths.get(f.getName());
 			String filename = path.getFileName().toString();
@@ -290,7 +299,7 @@ public class Configurator {
 
 			String newFilename = filename.replace("#NO#", "" + i++).replace("#ENV#", env);
 			contents = contents.replace("#ENV#", env);
-			contents = replaceAllVariables(contents);
+			contents = replaceAllVariables(contents, env);
 			
 			FileUtils.writeStringToFile(new File(tmpTargetDir + File.separator + newFilename), contents,
 					Charset.defaultCharset());
@@ -298,7 +307,7 @@ public class Configurator {
 		// process installation files and installation files "#NO#..."
 		// special handling for each environment
 		i=2;
-		for (String env : environmentListString.split(",")) {
+		for (String env : environmentListArr) {
 			File f = new File(tmpSourceDir+ File.separatorChar + "2.validate-patch-#ENV#."+getOsDependentScriptSuffix());
 			Path path = Paths.get(f.getName());
 			String filename = path.getFileName().toString();
@@ -306,7 +315,7 @@ public class Configurator {
 
 			String newFilename = filename.replace("#NO#", "" + i++).replace("#ENV#", env);
 			contents = contents.replace("#ENV#", env);
-			contents = replaceAllVariables(contents);
+			contents = replaceAllVariables(contents, env);
 			FileUtils.writeStringToFile(new File(tmpTargetDir + File.separator + newFilename), contents,
 					Charset.defaultCharset());
 		}
@@ -330,7 +339,7 @@ public class Configurator {
 		ConfigManager confMgrInst = new ConfigManager(tmpTargetDir + File.separator + "opal-installer.json");
 		
 		// loop over all schemas for the current environment
-		for (String schema : schemaListString.split(",")) {
+		for (String schema : schemaListArr) {
 			ConfigConnectionMapping map=null;
 			if (osIsWindows()) {
 				map=new ConfigConnectionMapping(schema, "\\\\sql\\\\.*"+schema+".*");
@@ -361,7 +370,7 @@ public class Configurator {
 		Msg.println("db source directory from: " + tmpSourceDir + "\n                    to  : " + dbSourceDirectory + "\n");
 
 		// loop over all schemas
-		for (String schema : schemaListString.split(",")) {
+		for (String schema : schemaListArr) {
 			tmpTargetDir = getFullPathResolveVariables(dbSourceDirectory + File.separator + schema);
 			
 			FileUtils.copyDirectory(
@@ -437,8 +446,28 @@ public class Configurator {
 
     }
     
-	
-	private String replaceAllVariables(String contents) {
+    private String getColor( String env) {
+    	String color=null;
+    	
+    	// determine index of environment list 
+    	// and get the corresponding entry from the environment color list based on the index
+    	// if there is no entry, return null;
+    	for (int i = 0; i < this.environmentListArr.length; i++) {
+    		if (environmentListArr[i].contentEquals(env)) {
+    			if (environmentColorListArr.length>i) {
+    				color=environmentColorListArr[i];
+    			}
+    		}
+		}
+    	
+    	return color;
+    }
+    
+	/*
+	 * replace all placeholders in a file/string. 
+	 * Sometimes it is dependent on the environment, sometimes not
+	 */
+	private String replaceAllVariables(String contents, String env) {
 		String newContents=contents;
 		
 		newContents = newContents.replace("#PROJECT_ROOT#", this.projectRootDir);
@@ -448,9 +477,73 @@ public class Configurator {
 		newContents = newContents.replace("#OPAL_INSTALLER_HOME_DIR#", this.swDirectory);
 		newContents = newContents.replace("#OPAL_INSTALLER_SRC_SQL_DIR", this.dbSourceDirectory);
 		newContents = newContents.replace("#OPAL_INSTALLER_PATCH_TEMPLATE_DIR#", templateDirectory);
-		newContents = newContents.replace("#OPAL_INSTALLER_PATCH_DIR#", patchDirectory);
+		newContents = newContents.replace("#OPAL_INSTALLER_PATCH_DIR#", patchDirectory);		
+
+		// only relevant if environment was passed
+		if (env!=null) {
+			String colorCommand="";
+			String color=getColor(env);
+			
+			
+			if (color!=null) {
+				if (osIsWindows()) {
+					Map<String, String> colorMap = new HashMap<String, String>() {{
+				        put("green", "0A");
+				        put("yellow", "0E");
+				        put("red", "0C");
+				    }};
+
+				    if (colorMap.containsKey(color)) {
+				    	colorCommand="color "+colorMap.get(color);
+				    } else {
+				    	colorCommand="color "+color;
+				    }
+					
+				}else {
+					Map<String, String> colorMap = new HashMap<String, String>() {{
+				        put("green", "2");
+				        put("yellow", "3");
+				        put("red", "1");
+				    }};
+
+				    if (colorMap.containsKey(color)) {
+				    	colorCommand="tput setaf "+colorMap.get(color);
+				    } else {
+				    	colorCommand="tput setaf "+color;
+				    }
+				}
+				
+				/* 
+				# Pick shell tput setaf using command "tput setaf color"
+				# e.g. green foreground: "tput setaf 2"
+				# 
+				# green : "tput setaf 2"
+				# yellow: "tput setaf 3"
+				# red   : "tput setaf 1"
+
+				@REM Pick shell color using command "color <background><foreground>"
+				@REM e.g. black background with green foreground: "color 0A"
+				@REM call help for details "color ?"
+				@REM 
+				@REM green : "color 0A"
+				@REM yellow: "color 0E"
+				@REM red   : "color 0C"
+
+				 */				
+			} else {
+				// no color wanted
+				colorCommand="";
+			}		
+
+			newContents = newContents.replace("#OPAL_INSTALLER_SET_COLOR_COMMAND#", colorCommand);
+			
+		}
 		
 		return newContents;
+	}
+	
+	private String replaceAllVariables(String contents) {
+		return replaceAllVariables(contents, null);
 	}
 	
 	public void run() throws IOException, InterruptedException {
@@ -476,11 +569,11 @@ public class Configurator {
 				"Patch directory (patches, has subdirectories e.g. year/patch_name)",
 				getOsDependentProjectRootVariable() + File.separatorChar + "patches");
 		schemaListString = promptForInput(kbd, "List of database schemas (comma-separated, e.g. HR,SCOTT)",
-				"HR,SCOTT");
+				"hr,scott");
 		environmentListString = promptForInput(kbd, "List of environments (comma-separated, e.g. DEV,INT,PROD)",
-				"DEV,INT,PROD");
-		//String environmentColorListString = promptForInput(kbd, "List of shell colors for environments (comma-separated, e.g. green,yellow,red)",
-		//		"green,yellow,red");		
+				"dev,int,prod");
+		environmentColorListString = promptForInput(kbd, "List of shell colors for the environments (comma-separated, e.g. green,yellow,red)",
+				"green,yellow,red");		
 
 		log.debug("***");
 		log.debug("Project root directory, typically the target of a GIT or SVN export: " + projectRootDir);
@@ -496,6 +589,11 @@ public class Configurator {
 
 		
 		Utils.waitForEnter("Please press <enter> to proceed ...");
+		
+		// 
+		environmentListArr = environmentListString.split(",");
+		schemaListArr = schemaListString.split(",");
+		environmentColorListArr=environmentColorListString.split(",");
 
 		// ----------------------------------------------------------
 		// software installation
