@@ -41,7 +41,6 @@ public class Exporter {
 	private HashMap<String, String> extensionMappingsMap;
 	private HashMap<String, String> directoryMappingsMap;
 
-
 	/**
 	 * 
 	 * @param user

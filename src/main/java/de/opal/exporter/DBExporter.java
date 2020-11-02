@@ -317,10 +317,9 @@ public class DBExporter {
 		sb.append("*" + lSep);
 		if (this.extensionMappings != null)
 			sb.append("* Extension Mapping     : " + this.extensionMappings + lSep);
-		sb.append("*" + lSep);
 		if (this.directoryMappings != null)
 			sb.append("* Directory Mapping     : " + this.directoryMappings + lSep);
-		
+		sb.append("*" + lSep);	
 		
 		sb.append("* SkipErrors?           : " + this.skipErrors + lSep);
 		sb.append("* Silent (no prompts)?  : " + this.isSilent + lSep);
