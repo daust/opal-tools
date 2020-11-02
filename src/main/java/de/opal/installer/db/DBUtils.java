@@ -14,52 +14,62 @@
 
 package de.opal.installer.db;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.Reader;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import de.opal.exporter.Exporter;
+
 public class DBUtils {
 
-	public static void closeQuietly(Connection conn){
-		if (conn!=null){
-			try{
+	private static final Logger log = LogManager.getLogger(DBUtils.class.getName());
+
+	public static void closeQuietly(Connection conn) {
+		if (conn != null) {
+			try {
 				conn.close();
-				conn=null;
-			} catch(SQLException e) {
+				conn = null;
+			} catch (SQLException e) {
 				/* ignored */
-			}			
+			}
 		}
-	}	
+	}
 
-	public static void closeQuietly(Statement stmt){
-		if (stmt!=null){
-			try{
+	public static void closeQuietly(Statement stmt) {
+		if (stmt != null) {
+			try {
 				stmt.close();
-				stmt=null;
-			} catch(SQLException e) {
+				stmt = null;
+			} catch (SQLException e) {
 				/* ignored */
-			}			
+			}
 		}
-	}	
+	}
 
-	public static void closeQuietly(ResultSet rs){
-		if (rs!=null){
-			try{
+	public static void closeQuietly(ResultSet rs) {
+		if (rs != null) {
+			try {
 				rs.close();
-				rs=null;
-			} catch(SQLException e) {
+				rs = null;
+			} catch (SQLException e) {
 				/* ignored */
-			}			
+			}
 		}
-	}	
+	}
 
-	public static void closeQuietly(Connection conn, Statement stmt, ResultSet rs){
+	public static void closeQuietly(Connection conn, Statement stmt, ResultSet rs) {
 		closeQuietly(rs);
 		closeQuietly(stmt);
 		closeQuietly(conn);
-	}	
-	
+	}
+
 	public static String nvl(String p, String defaultValue) {
 		if (p == null)
 			return defaultValue;
@@ -68,7 +78,7 @@ public class DBUtils {
 
 		return p;
 	}
-	
+
 	public static Boolean nvl(Boolean p, Boolean defaultValue) {
 		if (p == null)
 			return defaultValue;
@@ -87,5 +97,28 @@ public class DBUtils {
 		return p;
 	}
 
-}
+	public static String clobToString(java.sql.Clob data) {
+		final StringBuilder sb = new StringBuilder();
 
+		try {
+			final Reader reader = data.getCharacterStream();
+			final BufferedReader br = new BufferedReader(reader);
+
+			int b;
+			while (-1 != (b = br.read())) {
+				sb.append((char) b);
+			}
+
+			br.close();
+		} catch (SQLException e) {
+			log.error("SQL. Could not convert CLOB to string", e);
+			return e.toString();
+		} catch (IOException e) {
+			log.error("IO. Could not convert CLOB to string", e);
+			return e.toString();
+		}
+
+		return sb.toString();
+	}
+
+}

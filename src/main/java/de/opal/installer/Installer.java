@@ -129,7 +129,7 @@ public class Installer {
 	 */
 	public void run() throws Exception {
 		List<FileNode> fsTree, fsTreeFull;
-		// String baseDir=this.configManager.getPackageDir().getAbsolutePath();
+
 		String logFileDir = this.configManager.getPackageDir().getAbsolutePath() + File.separator + "logs";
 		String logfileName = generateLogFileName(logFileDir, this.configManager.getConfigData().runMode,
 				this.configManagerConnectionPools.getConfigData().targetSystem);
@@ -140,12 +140,12 @@ public class Installer {
 			logFileDirFile.mkdir();
 			log.debug("create log directory: " + logFileDir);
 		}
-
 		log.debug("logfile: " + logfileName);
-
-		log.debug("run()");
 		logfile = Logfile.getInstance();
 		logfile.open(logfileName);
+
+		// run application
+		log.debug("run()");
 		try {
 			Filesystem fs = new Filesystem(configManager.getSqlDir());
 
@@ -201,10 +201,9 @@ public class Installer {
 			/*
 			 * now process all files one by one
 			 */
-
-			// initialize registry targets if defined in config file and EXECUTE-mode, not
-			// SIMULATE
+			// initialize registry targets if defined in config file and EXECUTE-mode, not during VALIDATE_ONLY
 			if (this.configManager.getConfigData().runMode.equals("EXECUTE")) {
+				
 				if (this.configManager.getConfigData().registryTargets != null) {
 					log.debug("registryTargets:" + this.configManager.getConfigData().registryTargets.toString());
 
@@ -218,6 +217,7 @@ public class Installer {
 						log.debug("ReleaseNotes.txt : \n");
 					}
 
+					// initialize patch registry and register patch
 					this.patchRegistry = new PatchRegistry(this.configManager.getConfigData().registryTargets, this);
 					this.patchRegistry.registerPatch(configManager.getConfigData().application,
 							configManager.getConfigData().patch, configManager.getConfigData().version,

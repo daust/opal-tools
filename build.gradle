@@ -74,6 +74,10 @@ dependencies {
     // https://mvnrepository.com/artifact/com.googlecode.json-simple/json-simple
     compile group: 'com.googlecode.json-simple', name: 'json-simple', version: '+'
 
+    // parser for command line options: args4j
+    // https://mvnrepository.com/artifact/args4j/args4j
+    compile group: 'args4j', name: 'args4j', version: '+'
+
     // dependencies from sqlcl
     compile fileTree(dir: "lib/sqlcl-$sqlclVersion", include: ['*.jar'])
     compile fileTree(dir: "lib/sqlcl-$sqlclVersion/ext", include: ['*.jar'])
@@ -123,6 +127,7 @@ task postCompileJava {
     doLast{
       println 'do it before jar'
       new File("${project.buildDir}/classes/java/main/de/opal/installer/version.properties").text="version="+project.version
+      new File("${project.buildDir}/classes/java/main/de/opal/exporter/version.properties").text="version="+project.version
     }
 }
 jar.dependsOn postCompileJava

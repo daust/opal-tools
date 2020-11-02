@@ -26,9 +26,9 @@ import de.opal.installer.config.ConfigManager;
 import de.opal.installer.util.Msg;
 import de.opal.installer.util.Utils;
 
-public class Configurator {
+public class SetupManager {
 
-	public static final Logger log = LogManager.getLogger(Configurator.class.getName());
+	public static final Logger log = LogManager.getLogger(SetupManager.class.getName());
 	private String projectRootDir = ".";
 	
 	private String swDirectory="";
@@ -65,7 +65,6 @@ public class Configurator {
 	      }
 	};
 	
-
 	public static void main(String[] args) {
 
 	}
@@ -75,7 +74,7 @@ public class Configurator {
 	 * 
 	 * @param args - initialize with command line parameters
 	 */
-	public Configurator(String[] args) {
+	public SetupManager(String[] args) {
 		readConfig(args);
 	}
 
@@ -582,8 +581,8 @@ public class Configurator {
 				getOsDependentProjectRootVariable() + File.separatorChar + "patches");
 		schemaListString = promptForInput(kbd, "List of database schemas (comma-separated, e.g. hr,scott)",
 				"hr,scott");
-		environmentListString = promptForInput(kbd, "List of environments (comma-separated, e.g. dev,int,prod)",
-				"dev,int,prod");
+		environmentListString = promptForInput(kbd, "List of environments (comma-separated, e.g. dev,test,prod)",
+				"dev,test,prod");
 		environmentColorListString = promptForInput(kbd, "List of shell colors for the environments (comma-separated, e.g. green,yellow,red)",
 				"green,yellow,red");		
 
@@ -602,7 +601,7 @@ public class Configurator {
 		
 		Utils.waitForEnter("Please press <enter> to proceed ...");
 		
-		// 
+		// Split comma separated list into arrays
 		environmentListArr = environmentListString.split(",");
 		schemaListArr = schemaListString.split(",");
 		environmentColorListArr=environmentColorListString.split(",");

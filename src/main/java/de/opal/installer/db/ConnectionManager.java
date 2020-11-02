@@ -115,8 +115,8 @@ public class ConnectionManager {
 		}
 		
 		return conn;
-
 	}
+	
 
 	/**
 	 * retrieves a connection from the pool or creates a new one

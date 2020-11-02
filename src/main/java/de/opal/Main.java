@@ -67,7 +67,7 @@ public class Main {
 				
 				break;
 			case "configure":
-				Configurator config = new Configurator(parameters);
+				SetupManager config = new SetupManager(parameters);
 				config.run();
 				
 				break;
