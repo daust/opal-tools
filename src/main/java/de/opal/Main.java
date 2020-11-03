@@ -66,11 +66,6 @@ public class Main {
 				inst.run();
 				
 				break;
-			case "configure":
-				SetupManager config = new SetupManager(parameters);
-				config.run();
-				
-				break;
 			default:
 				showUsage();
 			}

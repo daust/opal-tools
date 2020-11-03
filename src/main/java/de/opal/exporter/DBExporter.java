@@ -21,6 +21,8 @@ import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.ParserProperties;
 
+import de.opal.installer.config.ConfigConnectionPool;
+import de.opal.installer.config.ConfigManager;
 import de.opal.installer.util.Msg;
 
 public class DBExporter {
@@ -29,10 +31,10 @@ public class DBExporter {
 	 * Other variables
 	 */
 	public static final Logger log = LogManager.getLogger(DBExporter.class.getName());
-	private String user = "";
-	private String pwd = "";
-	private String connectStr = "";
-	private String version = ""; // will be loaded from file version.txt which will be populated by the gradle
+	private String user;
+	private String pwd;
+	private String connectStr;
+	private String version; // will be loaded from file version.txt which will be populated by the gradle
 									// build process
 	private HashMap<String, ArrayList<String>> dependentObjectsMap = new HashMap<String, ArrayList<String>>();
 	private HashMap<String, String> extensionMappingsMap = new HashMap<String, String>();
@@ -44,8 +46,17 @@ public class DBExporter {
 	 * - https://args4j.kohsuke.org/args4j/apidocs 
 	 */
 
-	@Option(name = "-url", usage = "database connection jdbc url, e.g.: scott/tiger@localhost:1521:ORCL", metaVar = "<jdbc url>", required = true)
+	@Option(name = "-url", usage = "database connection jdbc url, \ne.g.: scott/tiger@localhost:1521:ORCL", metaVar = "<jdbc url>", forbids = {
+			"--connection-pool-file", "--connection-pool-name" })
 	private String jdbcURL;
+
+	@Option(name = "-cpf", aliases = "--connection-pool-file", usage = "connection pool file\ne.g.: connections-dev.json", metaVar = "<file>", forbids = {
+			"--url" })
+	private String connectionPoolFile;
+
+	@Option(name = "-cpn", aliases = "--connection-pool-name", usage = "connection pool name\ne.g.: scott", metaVar = "<connection pool name>", forbids = {
+			"--url" })
+	private String connectionPoolName;
 
 	@Option(name = "-o", usage = "output directory, e.g. '.' or '/u01/project/src/sql'", aliases = "--output-dir", metaVar = "<directory>", required = true)
 	private String outputDir;
@@ -70,15 +81,15 @@ public class DBExporter {
 	@Option(name = "-s", handler = WellBehavedStringArrayOptionHandler.class, usage = "schemas to be included, only relevant when connecting as DBA", aliases = "--schemas", metaVar = "<schema1> [<schema2>] ... [n]")
 	private List<String> schemas = new ArrayList<String>();
 
-	@Option(name = "-d", handler = WellBehavedStringArrayOptionHandler.class, usage = "dependent objects, e.g. TABLE:COMMENTS,INDEXES", aliases = "--dependent-objects", metaVar = "<type>:<deptype1>,<deptype2> ... [n]")
+	@Option(name = "-d", handler = WellBehavedStringArrayOptionHandler.class, usage = "dependent objects, e.g. TABLE:COMMENT,INDEX", aliases = "--dependent-objects", metaVar = "<type>:<deptype1>,<deptype2> ... [n]")
 	private List<String> dependentObjects = new ArrayList<String>();
 
 	@Option(name = "-em", handler = WellBehavedStringArrayOptionHandler.class, usage = "mapping of object types to filename suffixes, e.g.: DEFAULT:sql PACKAGE:pks", aliases = "--extension-map", metaVar = "<map1> [<map2>] ... [n]")
 	private List<String> extensionMappings = new ArrayList<String>();
-	
+
 	@Option(name = "-dm", handler = WellBehavedStringArrayOptionHandler.class, usage = "mapping of object types to directories, e.g.: PACKAGE:package \"package body:package\"", aliases = "--directory-map", metaVar = "<map1> [<map2>] ... [n]")
 	private List<String> directoryMappings = new ArrayList<String>();
-	
+
 	// receives other command line parameters than options
 	@Argument
 	private List<String> arguments = new ArrayList<String>();
@@ -95,14 +106,32 @@ public class DBExporter {
 	// "--template_dir", metaVar = "TEMPLATE DIRECTORY")
 	// private File templateDir;
 
-	@Option(name = "-cf", usage = "custom export file, e.g. ./apex.sql", aliases = "--custom-file", metaVar = "<sql script>")
-	private File customExportSQLFile;
+	@Option(name = "-pre", usage = "script (sqlplus/sqlcl) that is running to initialize the session, similar to the login.sql file for sqlplus, e.g. ./login.sql or ./init.sql", aliases = "--pre-script", metaVar = "<sqlplus/sqlcl script>")
+	private File preScript;
 
-	@Option(name = "-if", usage = "sql initialization file that is executed when the db session is initialized, similar to the login.sql file for sqlplus, e.g. ./login.sql or ./init.sql", aliases = "--init-file", metaVar = "<sql script>")
-	private File customSQLInitFile;
+	@Option(name = "-post", usage = "script (sqlplus/sqlcl) that is running in the end to export custom objects, e.g. ./apex.sql", aliases = "--post-script", metaVar = "<sqlplus/sqlcl script>")
+	private File postScript;
 
-	@Option(name = "--silent", usage = "turns of prompts")
+	@Option(name = "--silent", usage = "turns off prompts")
 	private boolean isSilent = false;
+
+	@Option(name = "-ft", usage = "template for constructing the filename\n"
+			+ "e.g.: #schema#/#object_type#/#object_name#.#ext#\n\n"
+			+ "#schema#             - schema name in lower case\n" 
+			+ "#object_type#        - lower case type name: 'table'\n"
+			+ "#object_type_plural# - lower case type name in plural: 'tables'\n" 
+			+ "#object_name#        - lower case object name\n"
+			+ "#ext#                - lower case extension: 'sql' or 'pks'\n" 
+			+ "#SCHEMA#             - upper case schema name\n"
+			+ "#OBJECT_TYPE#        - upper case object type name: 'TABLE' or 'INDEX'\n"
+			+ "#OBJECT_TYPE_PLURAL# - upper case object type name in plural: 'TABLES'\n"
+			+ "#OBJECT_NAME#        - upper case object name\n"
+			+ "#EXT#                - upper case extension: 'SQL' or 'PKS'"
+			, aliases = "--filename-template", metaVar = "<template structure>", required = false)
+	private String filenameTemplate = "#schema#/#object_type_plural#/#object_name#.#ext#";
+
+	@Option(name = "--filename-replace-blanks", usage = "replaces blanks in the filename with an _, e.g. PACKAGE BODY=>PACKAGE_BODY")
+	private boolean filenameReplaceBlanks = true;
 
 	// @Option(name = "-h", aliases = "--help", usage = "display this help page")
 	// private boolean showHelp = false;
@@ -142,8 +171,10 @@ public class DBExporter {
 		dbExporter.showHeaderInfo();
 
 		Exporter exporter = new Exporter(dbExporter.user, dbExporter.pwd, dbExporter.connectStr, dbExporter.outputDir,
-				dbExporter.skipErrors, dbExporter.dependentObjectsMap, dbExporter.isSilent,dbExporter.extensionMappingsMap, dbExporter.directoryMappingsMap);
-		exporter.export(dbExporter.customSQLInitFile, dbExporter.customExportSQLFile, dbExporter.includeFilters,
+				dbExporter.skipErrors, dbExporter.dependentObjectsMap, dbExporter.isSilent,
+				dbExporter.extensionMappingsMap, dbExporter.directoryMappingsMap, dbExporter.filenameTemplate,
+				dbExporter.filenameReplaceBlanks);
+		exporter.export(dbExporter.preScript, dbExporter.postScript, dbExporter.includeFilters,
 				dbExporter.excludeFilters, dbExporter.schemas, dbExporter.includeTypes, dbExporter.excludeTypes);
 
 		Msg.println("\n*** done.");
@@ -159,7 +190,7 @@ public class DBExporter {
 	 */
 	public void parseParameters(String[] args) throws IOException {
 		ParserProperties properties = ParserProperties.defaults();
-		properties.withUsageWidth(120);
+		properties.withUsageWidth(130);
 		properties.withOptionSorter(null);
 		CmdLineParser parser = new CmdLineParser(this, properties);
 
@@ -194,17 +225,64 @@ public class DBExporter {
 			// if (arguments.isEmpty())
 			// throw new CmdLineException(parser, "No argument is given");
 
-			// extract parts of jdbcURL into separate variables
-			Pattern p = Pattern.compile("^(.+)/(.+)@(.*)$");
-			Matcher m = p.matcher(this.jdbcURL);
+			// check whether jdbcURL OR connection pool is specified correctly
+			if (this.jdbcURL != null || (this.connectionPoolFile != null && this.connectionPoolName != null)) {
+				// ok
+			} else {
+				throw new CmdLineException(parser,
+						"Specify either --url or (--connection-pool-file and --connection-pool-name)");
+			}
 
-			// if an occurrence if a pattern was found in a given string...
-			if (m.find()) {
-				// ...then you can use group() methods.
-				// System.out.println(m.group(0)); // whole matched expression
-				this.user = m.group(1);
-				this.pwd = m.group(2);
-				this.connectStr = m.group(3);
+			// jdbcURL
+			if (this.jdbcURL != null) {
+				// extract parts of jdbcURL into separate variables
+				Pattern p = Pattern.compile("^(.+)/(.+)@(.*)$");
+				Matcher m = p.matcher(this.jdbcURL);
+
+				// if an occurrence if a pattern was found in a given string...
+				if (m.find()) {
+					// ...then you can use group() methods.
+					// System.out.println(m.group(0)); // whole matched expression
+					this.user = m.group(1);
+					this.pwd = m.group(2);
+					this.connectStr = m.group(3);
+				}
+			} else {
+				// conn pool
+				// both have the same structure
+				if (!new File(this.connectionPoolFile).exists()) {
+					throw new CmdLineException(parser,
+							"connection pool file " + this.connectionPoolFile + " not found");
+				}
+
+				ConfigManager configManagerConnectionPools = new ConfigManager(this.connectionPoolFile);
+
+				// encrypt passwords if required
+				if (configManagerConnectionPools.hasUnencryptedPasswords()) {
+					configManagerConnectionPools.encryptPasswords();
+					// dump JSON file
+					configManagerConnectionPools.writeJSONConfPool();
+				}
+				// now decrypt the passwords so that they can be used internally in the program
+				configManagerConnectionPools.decryptPasswords();
+
+				for (ConfigConnectionPool pool : configManagerConnectionPools.getConfigData().connectionPools) {
+					if (pool.name.toUpperCase().contentEquals(this.connectionPoolName.toUpperCase())) {
+						this.user = pool.user;
+						this.pwd = pool.password;
+						this.connectStr = pool.connectString.replace("jdbc:oracle:thin:@", "");
+					}
+				}
+				if (this.user == null)
+					throw new CmdLineException(parser, "connection pool " + this.connectionPoolName
+							+ " could not be found in file " + this.connectionPoolFile);
+
+				log.debug("get connection " + this.connectionPoolName + " from "
+						+ this.connectionPoolFile);
+				log.debug("user: " + this.user);
+				log.debug("pwd: " + this.pwd);
+				log.debug("connectStr: " + this.connectStr);
+
 			}
 
 		} catch (CmdLineException e) {
@@ -212,7 +290,7 @@ public class DBExporter {
 			// you'll get this exception. this will report
 			// an error message.
 			System.err.println(e.getMessage());
-			System.err.println("\njava de.opal.exporter.DBExporter [options...] arguments...");
+			System.err.println("\njava de.opal.exporter.DBExporter [options...]");
 			// print the list of available options
 			parser.printUsage(System.err);
 			System.err.println();
@@ -263,14 +341,14 @@ public class DBExporter {
 			String objectType = ext.split(":")[0];
 			String suffix = ext.split(":")[1];
 
-			this.extensionMappingsMap.put(objectType.toUpperCase(),suffix);
+			this.extensionMappingsMap.put(objectType.toUpperCase(), suffix);
 		}
 		// make directory mappings uppercase
 		for (String ext : this.directoryMappings) {
 			String objectType = ext.split(":")[0];
 			String directory = ext.split(":")[1];
 
-			this.directoryMappingsMap.put(objectType.toUpperCase(),directory);
+			this.directoryMappingsMap.put(objectType.toUpperCase(), directory);
 		}
 
 		// transform dependent object list into map
@@ -287,48 +365,53 @@ public class DBExporter {
 		StringBuilder sb = new StringBuilder();
 
 		sb.append("OPAL Exporter version " + this.version + lSep);
-		sb.append("*************************" + lSep);
-		sb.append("* User                  : " + this.user + lSep);
-		sb.append("* ConnectStr            : " + this.connectStr + lSep);
-		sb.append("* OutputDirectory       : " + this.outputDir + lSep);
+		sb.append("****************************" + lSep);
+		sb.append("* User                     : " + this.user + lSep);
+		sb.append("* ConnectStr               : " + this.connectStr + lSep);
+		sb.append("* OutputDirectory          : " + this.outputDir + lSep);
 
 		if (!this.includeFilters.isEmpty() || !this.excludeFilters.isEmpty() || !this.schemas.isEmpty())
 			sb.append("*" + lSep);
 		if (!this.includeFilters.isEmpty())
-			sb.append("* IncludeFilter         : " + this.includeFilters + lSep);
+			sb.append("* IncludeFilter            : " + this.includeFilters + lSep);
 		if (!this.includeTypes.isEmpty())
-			sb.append("* IncludeTypes          : " + this.includeTypes + lSep);
+			sb.append("* IncludeTypes             : " + this.includeTypes + lSep);
 		if (!this.excludeFilters.isEmpty())
-			sb.append("* ExcludeFilter         : " + this.excludeFilters + lSep);
+			sb.append("* ExcludeFilter            : " + this.excludeFilters + lSep);
 		if (!this.excludeTypes.isEmpty())
-			sb.append("* ExcludeTypes          : " + this.excludeTypes + lSep);
+			sb.append("* ExcludeTypes             : " + this.excludeTypes + lSep);
 		if (!this.schemas.isEmpty())
-			sb.append("* Schemas               : " + this.schemas + lSep);
+			sb.append("* Schemas                  : " + this.schemas + lSep);
 		if (!this.dependentObjects.isEmpty())
-			sb.append("* Dependent Objects     : " + this.dependentObjects + lSep);
+			sb.append("* Dependent Objects        : " + this.dependentObjects + lSep);
 
 		sb.append("*" + lSep);
 		// sb.append("* Arguments : " + this.arguments+lSep);
-		if (this.customSQLInitFile != null)
-			sb.append("* CustomSQLInitFile     : " + this.customSQLInitFile + lSep);
-		if (this.customExportSQLFile != null)
-			sb.append("* CustomExportSQLFile   : " + this.customExportSQLFile + lSep);
+		if (this.preScript != null)
+			sb.append("* CustomSQLInitFile        : " + this.preScript + lSep);
+		if (this.postScript != null)
+			sb.append("* CustomExportSQLFile      : " + this.postScript + lSep);
 
 		sb.append("*" + lSep);
 		if (this.extensionMappings != null)
-			sb.append("* Extension Mapping     : " + this.extensionMappings + lSep);
+			sb.append("* Extension Mapping        : " + this.extensionMappings + lSep);
 		if (this.directoryMappings != null)
-			sb.append("* Directory Mapping     : " + this.directoryMappings + lSep);
-		sb.append("*" + lSep);	
-		
-		sb.append("* SkipErrors?           : " + this.skipErrors + lSep);
-		sb.append("* Silent (no prompts)?  : " + this.isSilent + lSep);
-//		if (this.templateDir != null)
-//			sb.append("* Template Directory    : " + this.templateDir + lSep);
+			sb.append("* Directory Mapping        : " + this.directoryMappings + lSep);
+		if (!this.filenameTemplate.isEmpty()) {
+			sb.append("* Filename Template        : " + this.filenameTemplate + lSep);
+		}
+		sb.append("* Filename Replace Blanks? : " + this.filenameReplaceBlanks + lSep);
 
 		sb.append("*" + lSep);
-		sb.append("* File Encoding (System): " + System.getProperty("file.encoding") + lSep);
-		sb.append("*************************" + lSep);
+
+		sb.append("* SkipErrors?              : " + this.skipErrors + lSep);
+		sb.append("* Silent (no prompts)?     : " + this.isSilent + lSep);
+//		if (this.templateDir != null)
+//			sb.append("* Template Directory       : " + this.templateDir + lSep);
+
+		sb.append("*" + lSep);
+		sb.append("* File Encoding (System)   : " + System.getProperty("file.encoding") + lSep);
+		sb.append("****************************" + lSep);
 
 		Msg.println(sb.toString());
 	}
@@ -348,8 +431,8 @@ public class DBExporter {
 			log.debug("  - " + flt);
 		}
 
-		log.debug("--init_sql_file: " + this.customSQLInitFile);
-		log.debug("--custom_export: " + this.customExportSQLFile);
+		log.debug("--init_sql_file: " + this.preScript);
+		log.debug("--custom_export: " + this.postScript);
 		// log.debug("--template_dir: " + this.templateDir);
 
 		/*

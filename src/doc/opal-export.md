@@ -1,23 +1,39 @@
 Command line: 
 ```
-java de.opal.exporter.DBExporter [options...] arguments...
- -url <jdbc url>                                            : database connection jdbc url, e.g.:
-                                                              scott/tiger@localhost:1521:ORCL
- -o (--output-dir) <directory>                              : output directory, e.g. '.' or '/u01/project/src/sql'
- -i (--include) <filter1> [<filter2>] ... [n]               : include filter, e.g.: %XLIB%
- -it (--include-types) <type1> [<type2>] ... [n]            : include types, e.g.: TABLE PACKAGE
- -e (--exclude) <type1> [<type2>] ... [n]                   : exclude filter, e.g.: %AQ$% %SYS_%
- -et (--exclude-types) <type1> [<type2>] ... [n]            : exclude types, e.g.: JOB
- -s (--schemas) <schema1> [<schema2>] ... [n]               : schemas to be included, only relevant when connecting as
-                                                              DBA
- -d (--dependent-objects) <type>:<deptype1>,<deptype2> ...  : dependent objects, e.g. TABLE:COMMENTS,INDEXES
- [n]                                                           
- -se (--skip-errors)                                        : ORA- errors will not cause the program to abort (Vorgabe:
-                                                              false)
- -cf (--custom-file) <sql script>                           : custom export file, e.g. ./apex.sql
- -if (--init-file) <sql script>                             : sql initialization file that is executed when the db
-                                                              session is initialized, similar to the login.sql file for
-                                                              sqlplus, e.g. ./login.sql or ./init.sql
+java de.opal.exporter.DBExporter [options...]
+ -url <jdbc url>                                               : database connection jdbc url, 
+                                                                 e.g.: scott/tiger@localhost:1521:ORCL
+ -o (--output-dir) <directory>                                 : output directory, e.g. '.' or '/u01/project/src/sql'
+ -i (--include) <filter1> [<filter2>] ... [n]                  : include filter, e.g.: %XLIB%
+ -it (--include-types) <type1> [<type2>] ... [n]               : include types, e.g.: TABLE PACKAGE
+ -e (--exclude) <type1> [<type2>] ... [n]                      : exclude filter, e.g.: %AQ$% %SYS_%
+ -et (--exclude-types) <type1> [<type2>] ... [n]               : exclude types, e.g.: JOB
+ -s (--schemas) <schema1> [<schema2>] ... [n]                  : schemas to be included, only relevant when connecting as DBA
+ -d (--dependent-objects) <type>:<deptype1>,<deptype2> ... [n] : dependent objects, e.g. TABLE:COMMENT,INDEX
+ -em (--extension-map) <map1> [<map2>] ... [n]                 : mapping of object types to filename suffixes, e.g.: DEFAULT:sql
+                                                                 PACKAGE:pks
+ -dm (--directory-map) <map1> [<map2>] ... [n]                 : mapping of object types to directories, e.g.: PACKAGE:package
+                                                                 "package body:package"
+ -se (--skip-errors)                                           : ORA- errors will not cause the program to abort (Vorgabe: false)
+ -pre (--pre-script) <sqlplus/sqlcl script>                    : script (sqlplus/sqlcl) that is running to initialize the
+                                                                 session, similar to the login.sql file for sqlplus, e.g.
+                                                                 ./login.sql or ./init.sql
+ -post (--post-script) <sqlplus/sqlcl script>                  : script (sqlplus/sqlcl) that is running in the end to export
+                                                                 custom objects, e.g. ./apex.sql
+ --silent                                                      : turns off prompts (Vorgabe: false)
+ -ft (--filename-template) <template structure>                : template for constructing the filename
+                                                                 e.g.: schema/object_type/object_name.ext
+                                                                  
+                                                                 schema       - schema name in lower case
+                                                                 type         - lower case type name: 'table'
+                                                                 ext          - lower case extension: 'sql' or 'pks'
+                                                                 SCHEMA       - upper case schema name
+                                                                 TYPE         - upper case object type name: 'TABLE' or 'INDEX'
+                                                                 OBJECT_NAME  - upper case object name
+                                                                 EXT          - upper case extension: 'SQL' or 'PKS' (Vorgabe:
+                                                                 schema/object_type/object_name.ext)
+ --filename-replace-blanks                                     : replaces blanks in the filename with an _, e.g. PACKAGE
+                                                                 BODY=>PACKAGE_BODY (Vorgabe: true)
 ```
 cd /tmp/opal-installer/sql
 
@@ -60,7 +76,7 @@ opal-export.sh \
     -url jri_test/oracle1@vm1:1521:xe \
     --output-dir . \
     --include XLIB% \
-    --init-file ./init.sql 
+    --pre-script ./init.sql 
 
 # specify dependent objects
 # http://download.oracle.com/docs/cd/B19306_01/appdev.102/b14258/d_metada.htm#BGBIEDIA
@@ -68,60 +84,8 @@ opal-export.sh \
     -url jri_test/oracle1@vm1:1521:xe \
     --output-dir . \
     --include XLIB% \
-    --dependent-objects table:comment,index,object_grant,trigger view:comment,object_grant "materialized view:comment,index,materialized_view_log,object_grant" \
-    --init-file ./init.sql 
-
-# samples from scheme2ddl: 
-<util:map id="dependencies">
-        <entry key="TABLE"> 
-            <set>
-                <value>COMMENT</value>
-                <value>INDEX</value>
-                <value>OBJECT_GRANT</value>
-                <value>TRIGGER</value>
-            </set>
-        </entry>
-        <entry key="VIEW">
-            <set>
-                <value>COMMENT</value>
-                <value>OBJECT_GRANT</value>
-            </set>
-        </entry>
-        <entry key="MATERIALIZED VIEW">
-            <set>
-                <value>COMMENT</value>
-                <value>INDEX</value>
-                <value>MATERIALIZED_VIEW_LOG</value>
-                <value>OBJECT_GRANT</value>
-            </set>
-        </entry>
-        <entry key="FUNCTION">
-            <set>
-                <value>OBJECT_GRANT</value>
-            </set>
-        </entry>
-        <entry key="PROCEDURE">
-            <set>
-                <value>OBJECT_GRANT</value>
-            </set>
-        </entry>
-        <entry key="PACKAGE BODY">
-            <set>
-                <value>OBJECT_GRANT</value>
-            </set>
-        </entry>
-        <entry key="SYNONYM">
-            <set>
-                <value>OBJECT_GRANT</value>
-            </set>
-        </entry>
-        <entry key="TYPE">
-            <set>
-                <value>OBJECT_GRANT</value>
-            </set>
-        </entry>
-    </util:map>
-
+    --dependent-objects table:comment,index,object_grant,trigger view:comment,object_grant "materialized view:comment,index,materialized_view_log,object_grant" function:object_grant "package body:object_grant" synonym:object_grant type=object_grant \
+    --pre-script ./init.sql 
 
 # run custom apex export 
 # specify dependent objects
@@ -131,17 +95,17 @@ opal-export.sh \
     -url jri_test/oracle1@vm1:1521:xe \
     --output-dir . \
     --include XLIB% \
-    --dependent-objects table:comment,index,object_grant,trigger view:comment,object_grant "materialized view:comment,index,materialized_view_log,object_grant" \
-    --init-file ./init.sql \
-    --custom-file ./apex-export.sql
+    --dependent-objects table:comment,index,object_grant,trigger view:comment,object_grant "materialized view:comment,index,materialized_view_log,object_grant" function:object_grant "package body:object_grant" synonym:object_grant type=object_grant \
+    --pre-script ./init.sql \
+    --post-script ./apex-export.sql
 
 # restrict export to VIEWs only
 opal-export.sh \
     -url jri_test/oracle1@vm1:1521:xe \
     --output-dir . \
-    --dependent-objects table:comment,index,object_grant,trigger view:comment,object_grant "materialized view:comment,index,materialized_view_log,object_grant" \
-    --init-file ./init.sql \
-    --custom-file ./apex-export.sql \
+    --dependent-objects table:comment,index,object_grant,trigger view:comment,object_grant "materialized view:comment,index,materialized_view_log,object_grant" function:object_grant "package body:object_grant" synonym:object_grant type=object_grant \
+    --pre-script ./init.sql \
+    --post-script ./apex-export.sql \
     --include-types VIEW
 
 # export all xlib entries from multiple schemas
@@ -153,24 +117,31 @@ opal-export.sh \
     -url system/oracle1@vm1:1521:xe \
     --output-dir . \
     --include %XLIB_LOG% \
-    --dependent-objects table:comment,index,object_grant,trigger \
-    --init-file ./init.sql \
-    --custom-file ./apex-export.sql \
+    --dependent-objects table:comment,index,object_grant,trigger view:comment,object_grant "materialized view:comment,index,materialized_view_log,object_grant" function:object_grant "package body:object_grant" synonym:object_grant type=object_grant \
+    --pre-script ./init.sql \
+    --post-script ./apex-export.sql \
     --schemas training test jri_test \
     --include-types table
 
-file: apex-export.sql:
-
+file: post-script.sql:
+------------------------
 prompt *** exporting apex applications
 
+/*
 host mkdir ./apex
 cd ./apex
 
+-- export specific application
 apex export -applicationid 344
 apex export -applicationid 201
 
-file: init.sql
+-- export worksapce
+...
 
+*/
+
+file: pre-script.sql
+------------------------
 set sqlformat ansiconsole
 
 prompt *** set dbms_metadata transform parameter
@@ -184,5 +155,4 @@ begin
  DBMS_METADATA.SET_TRANSFORM_PARAM(DBMS_METADATA.SESSION_TRANSFORM,'PRETTY',true);
 end;
 /
-
 ```

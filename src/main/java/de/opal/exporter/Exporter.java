@@ -14,6 +14,7 @@ import java.util.List;
 import javax.sql.PooledConnection;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -40,6 +41,8 @@ public class Exporter {
 	private boolean isSilent;
 	private HashMap<String, String> extensionMappingsMap;
 	private HashMap<String, String> directoryMappingsMap;
+	private String filenameTemplate;
+	private boolean filenameReplaceBlanks;
 
 	/**
 	 * 
@@ -49,7 +52,8 @@ public class Exporter {
 	 */
 	public Exporter(String user, String pwd, String connectStr, String outputDir, boolean skipErrors,
 			HashMap<String, ArrayList<String>> dependentObjectsMap, boolean isSilent,
-			HashMap<String, String> extensionMappingsMap, HashMap<String, String> directoryMappingsMap) {
+			HashMap<String, String> extensionMappingsMap, HashMap<String, String> directoryMappingsMap,
+			String filenameTemplate, boolean filenameReplaceBlanks) {
 		super();
 		this.user = user;
 		this.pwd = pwd;
@@ -59,34 +63,79 @@ public class Exporter {
 		this.dependentObjectsMap = dependentObjectsMap;
 		this.isSilent = isSilent;
 		this.extensionMappingsMap = extensionMappingsMap;
-		this.directoryMappingsMap=directoryMappingsMap;
+		this.directoryMappingsMap = directoryMappingsMap;
+		this.filenameTemplate = filenameTemplate;
+		this.filenameReplaceBlanks=filenameReplaceBlanks;
+
 	}
 
 	private String computeExportFilename(String schemaName, String objectType, String objectName) {
-		String filename = "";
+		String filename = this.filenameTemplate;
 		String suffix = "sql";
-		String objectTypePath=objectType;
+		String objectTypePath = objectType;
+		String objectTypePlural = objectTypePath;
+		boolean objectTypePathChanged = false;
+		
+		// make plural form
+		if (objectTypePlural.endsWith("Y"))
+			objectTypePlural = StringUtils.chop(objectTypePlural)+"ie"; // remove last character
+		if (objectTypePlural.endsWith("X"))
+			objectTypePlural = objectTypePlural+"e"; // remove last character
+		
+		objectTypePlural += "s";
 
+		// map object types to suffixes
 		if (this.extensionMappingsMap.containsKey(objectType))
 			suffix = this.extensionMappingsMap.get(objectType);
 		else if (this.extensionMappingsMap.containsKey("DEFAULT"))
 			suffix = this.extensionMappingsMap.get("DEFAULT");
-		
-		if (this.directoryMappingsMap.containsKey(objectType))
-			objectTypePath = this.directoryMappingsMap.get(objectType);		
 
-		switch (objectType) {
-		case "TABLE":
-			filename = schemaName + File.separatorChar + objectTypePath + File.separatorChar + objectName + "." + suffix;
-
-			break;
-
-		default:
-			filename = schemaName + File.separatorChar + objectTypePath + File.separatorChar + objectName + "." + suffix;
-			break;
+		if (this.directoryMappingsMap.containsKey(objectType)) {
+			objectTypePath = this.directoryMappingsMap.get(objectType);
+			// override both variables later
+			objectTypePathChanged = true;
 		}
 
-		return filename.toLowerCase();
+		/*
+		 * schema - schema name in lower case type - lower case type name: 'table'
+		 * types_plural - lower case type name in plural: 'tables' object_name - lower
+		 * case object name ext - lower case extension: 'sql' or 'pks' SCHEMA - upper
+		 * case schema name TYPE - upper case object type name: 'TABLE' or 'INDEX'
+		 * TYPES_PLURAL - upper case object type name in plural: 'TABLES' OBJECT_NAME -
+		 * upper case object name EXT - upper case extension: 'SQL' or 'PKS'
+		 */
+
+		// use filename template to generate filename
+		filename = filename.replace("#schema#", schemaName.toLowerCase());
+		filename = filename.replace("#SCHEMA#", schemaName.toUpperCase());
+		filename = filename.replace("#object_name#", objectName.toLowerCase());
+		filename = filename.replace("#OBJECT_NAME#", objectName.toUpperCase());
+
+		// when it is overriden on the command line ...
+		// it will affect it completely .. AS IS
+		if (objectTypePathChanged) {
+			filename = filename.replace("#object_type_plural#", objectTypePath.toLowerCase());
+			filename = filename.replace("#OBJECT_TYPE_PLURAL#", objectTypePath.toUpperCase());
+			filename = filename.replace("#object_type#", objectTypePath.toLowerCase());
+			filename = filename.replace("#OBJECT_TYPE#", objectTypePath.toUpperCase());
+		} else {
+			filename = filename.replace("#object_type_plural#", objectTypePlural.toLowerCase());
+			filename = filename.replace("#OBJECT_TYPE_PLURAL#", objectTypePlural.toUpperCase());
+			filename = filename.replace("#object_type#", objectType.toLowerCase());
+			filename = filename.replace("#OBJECT_TYPE#", objectType.toUpperCase());
+		}
+
+		filename = filename.replace("#ext#", suffix.toLowerCase());
+		filename = filename.replace("#EXT#", suffix.toUpperCase());
+
+		filename = filename.replace("/", "" + File.separatorChar);
+
+		// filename = schemaName + File.separatorChar + objectTypePath +
+		// File.separatorChar + objectName + "." + suffix;
+		if (this.filenameReplaceBlanks)
+			filename=filename.replace(" ", "_");
+
+		return filename;
 	}
 
 	private String computeWhereClause(List<String> includeFilters, List<String> excludeFilters, List<String> schemas,
@@ -179,7 +228,7 @@ public class Exporter {
 	 * @param jdbcURL
 	 * @throws Exception
 	 */
-	public void export(File customSQLInitFile, File customExportSQLFile, List<String> includeFilters,
+	public void export(File preScript, File postScript, List<String> includeFilters,
 			List<String> excludeFilters, List<String> schemas, List<String> includeTypes, List<String> excludeTypes)
 			throws Exception {
 		SQLclUtil sqlclUtil = new SQLclUtil();
@@ -191,10 +240,10 @@ public class Exporter {
 		try {
 			// initialize connection
 			sqlcl = getScriptExecutor(user, pwd, connectStr);
-			if (customSQLInitFile != null) {
-				Msg.println("*** run custom export script: " + customExportSQLFile + "\n");
+			if (preScript != null) {
+				Msg.println("*** run pre script: " + postScript + "\n");
 
-				sqlclUtil.executeFile(customSQLInitFile, sqlcl, null);
+				sqlclUtil.executeFile(preScript, sqlcl, null);
 			}
 
 			Statement objectStmt = sqlcl.getConn().createStatement();
@@ -237,18 +286,13 @@ public class Exporter {
 				objectRS.close();
 
 				// run custom export file at the end
-				if (customExportSQLFile != null) {
-					Msg.println("\n*** run custom export script: " + customExportSQLFile + "\n");
-					
-					sqlclUtil.executeFile(customExportSQLFile, sqlcl, null);
+				if (postScript != null) {
+					Msg.println("\n*** run post script: " + postScript + "\n");
+
+					sqlclUtil.executeFile(postScript, sqlcl, null);
 				}
 
-			} else {
-				// query can be update or any query apart from select query
-				int count = objectStmt.getUpdateCount();
-				System.out.println("Total records updated: " + count);
 			}
-
 		} catch (Exception e) {
 			log.error(e.getMessage());
 			// close connection

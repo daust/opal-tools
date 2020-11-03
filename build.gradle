@@ -1,10 +1,11 @@
 /*
   File    : build.gradle
-  Purpose : Build file for opal-installer
+  Purpose : Build file for opal-tools
 
   Date        Author    Comment
   --------------------------------------------------
   14.10.2020  D. Aust   initial creation
+  03.11.2020  D. Aust   switch to opal-tools
  */
 
 plugins {
@@ -20,13 +21,13 @@ import org.gradle.internal.os.OperatingSystem
 //-- Configuration
 //-----------------------------------------------------------------------------
 
-  project.description       = "OPAL Installer - more details here: https://github.com/daust/opal-installer"
-  project.version           = '1.1.0'
+  project.description       = "OPAL Tools - more details here: https://github.com/daust/opal-tools"
+  project.version           = '1.1.1'
   
   sourceCompatibility       = 1.8
   targetCompatibility       = 1.8
 
-  archivesBaseName          = "opal-installer"
+  archivesBaseName          = "opal-tools"
 
   // version of sqlcl to be used
   // download files from : https://www.oracle.com/tools/downloads/sqlcl-downloads.html
@@ -60,6 +61,9 @@ dependencies {
     compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.+'
     // https://mvnrepository.com/artifact/commons-logging/commons-logging
     //implementation group: 'commons-logging', name: 'commons-logging', version: '1.2'
+
+    // https://mvnrepository.com/artifact/org.apache.commons/commons-lang3
+    compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.11'
 
     // https://mvnrepository.com/artifact/com.google.code.gson/gson
     compile group: 'com.google.code.gson', name: 'gson', version: '2.+'
@@ -105,7 +109,7 @@ distTar.setArchiveName("${archivesBaseName}-${project.version}-sqlcl-${sqlclVers
 
 distributions {
     main {
-        distributionBaseName = 'opal-installer'
+        distributionBaseName = 'opal-tools'
         println 'getName:' + Distribution.getName()
         contents {
             from('src/shell-scripts'){//exclude '*ConfigDir.*'

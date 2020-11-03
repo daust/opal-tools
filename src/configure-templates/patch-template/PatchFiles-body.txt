@@ -2,47 +2,47 @@
 # Schema: #SCHEMA# 
 #----------------------------------------------------------
 
-# Preinstall => #SCHEMA#\010_preinstall
+# Preinstall => #SCHEMA#/010_preinstall
 
 # Synonyms
-#SCHEMA#\synonyms => #SCHEMA#\010_preinstall
+#SCHEMA#/synonyms => #SCHEMA#/010_preinstall
 
 # Sequences
-#SCHEMA#\sequences => #SCHEMA#\020_sequences
+#SCHEMA#/sequences => #SCHEMA#/020_sequences
 
 # Types
-#SCHEMA#\types => #SCHEMA#\030_types
+#SCHEMA#/types => #SCHEMA#/030_types
 
 # Tables
-#SCHEMA#\tables => #SCHEMA#\040_tables
+#SCHEMA#/tables => #SCHEMA#/040_tables
 
 # Referential Constraints
-#SCHEMA#\ref_constraints => #SCHEMA#\050_ref_constraints
+#SCHEMA#/ref_constraints => #SCHEMA#/050_ref_constraints
 
 # Views
-#SCHEMA#\views => #SCHEMA#\060_views
+#SCHEMA#/views => #SCHEMA#/060_views
 
 # Procedures
-#SCHEMA#\procedures => #SCHEMA#\070_procedures
+#SCHEMA#/procedures => #SCHEMA#/070_procedures
 
 # Functions
-#SCHEMA#\functions => #SCHEMA#\080_functions
+#SCHEMA#/functions => #SCHEMA#/080_functions
 
 # Package Headers
-#SCHEMA#\packages => #SCHEMA#\090_packages
+#SCHEMA#/packages => #SCHEMA#/090_packages
 
 # Package Bodies
-#SCHEMA#\packages => #SCHEMA#\100_package_bodies
+#SCHEMA#/packages => #SCHEMA#/100_package_bodies
 
 # Trigger
-#SCHEMA#\triggers => #SCHEMA#\110_triggers
+#SCHEMA#/triggers => #SCHEMA#/110_triggers
 
-# Scripts, also data scripts - will be done manually => #SCHEMA#\120_scripts
+# Scripts, also data scripts - will be done manually => #SCHEMA#/120_scripts
 
 # APEX 
-..\apex => #SCHEMA#\130_apex
+../apex => #SCHEMA#/130_apex
 
-# Drop Scripts - will be done manually => #SCHEMA#\190_drop_scripts
+# Drop Scripts - will be done manually => #SCHEMA#/190_drop_scripts
 
-# Postinstall #SCHEMA#\200_postinstall
+# Postinstall #SCHEMA#/200_postinstall
 
