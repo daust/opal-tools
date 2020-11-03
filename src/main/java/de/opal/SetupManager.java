@@ -550,13 +550,13 @@ public class SetupManager {
 		String newContents = contents;
 
 		newContents = newContents.replace("#PROJECT_ROOT#", this.projectRootDir);
-		newContents = newContents.replace("#OPAL_INSTALLER_USER_CONFIG_DIR#", this.localConfigDirectory);
-		newContents = newContents.replace("#OPAL_INSTALLER_USER_ENV_SCRIPT#", this.setProjectEnvironmentScript);
+		newContents = newContents.replace("#OPAL_TOOLS_USER_CONFIG_DIR#", this.localConfigDirectory);
+		newContents = newContents.replace("#OPAL_TOOLS_USER_ENV_SCRIPT#", this.setProjectEnvironmentScript);
 
-		newContents = newContents.replace("#OPAL_INSTALLER_HOME_DIR#", this.swDirectory);
-		newContents = newContents.replace("#OPAL_INSTALLER_SRC_SQL_DIR#", this.dbSourceDirectory);
-		newContents = newContents.replace("#OPAL_INSTALLER_PATCH_TEMPLATE_DIR#", templateDirectory);
-		newContents = newContents.replace("#OPAL_INSTALLER_PATCH_DIR#", patchDirectory);
+		newContents = newContents.replace("#OPAL_TOOLS_HOME_DIR#", this.swDirectory);
+		newContents = newContents.replace("#OPAL_TOOLS_SRC_SQL_DIR#", this.dbSourceDirectory);
+		newContents = newContents.replace("#OPAL_TOOLS_PATCH_TEMPLATE_DIR#", templateDirectory);
+		newContents = newContents.replace("#OPAL_TOOLS_PATCH_DIR#", patchDirectory);
 
 		if (schema != null)
 			newContents = newContents.replace("#SCHEMA#", schema);
@@ -626,7 +626,7 @@ public class SetupManager {
 				colorCommand = "";
 			}
 
-			newContents = newContents.replace("#OPAL_INSTALLER_SET_COLOR_COMMAND#", colorCommand);
+			newContents = newContents.replace("#OPAL_TOOLS_SET_COLOR_COMMAND#", colorCommand);
 
 		}
 

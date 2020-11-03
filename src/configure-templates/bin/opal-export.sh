@@ -1,4 +1,4 @@
 #!/bin/bash
-source #OPAL_INSTALLER_USER_ENV_SCRIPT#
+source #OPAL_TOOLS_USER_ENV_SCRIPT#
 
-java $OPAL_INSTALLER_JAVA_ARGS -cp "${OPAL_INSTALLER_HOME_DIR}/lib/*" de.opal.exporter.DBExporter "$@"
+java $OPAL_TOOLS_JAVA_ARGS -cp "${OPAL_TOOLS_HOME_DIR}/lib/*" de.opal.exporter.DBExporter "$@"

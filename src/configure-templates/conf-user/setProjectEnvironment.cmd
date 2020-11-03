@@ -7,21 +7,21 @@
 @REM it MUST be a JDK, a JRE is NOT ENOUGH
 @REM set JAVA_HOME=c:\Program Files (x86)\Java\jdk1.8.0_251
 
-@REM DEBUG: For debugging, you can turn on ECHO again ... and also OPAL_INSTALLER_JAVA_ARGS below
+@REM DEBUG: For debugging, you can turn on ECHO again ... and also OPAL_TOOLS_JAVA_ARGS below
 @echo OFF
 
 @REM set variables used in the various scripts for the installer
 set PROJECT_ROOT=#PROJECT_ROOT#
-set OPAL_INSTALLER_HOME_DIR=#OPAL_INSTALLER_HOME_DIR#
-set OPAL_INSTALLER_JAVA_ARGS=-Dlog4j.configurationFile=%OPAL_INSTALLER_HOME_DIR%\conf\log4j2.xml -Djava.util.logging.config.file=%OPAL_INSTALLER_HOME_DIR%\conf\log4j.properties
+set OPAL_TOOLS_HOME_DIR=#OPAL_TOOLS_HOME_DIR#
+set OPAL_TOOLS_JAVA_ARGS=-Dlog4j.configurationFile=%OPAL_TOOLS_HOME_DIR%\conf\log4j2.xml -Djava.util.logging.config.file=%OPAL_TOOLS_HOME_DIR%\conf\log4j.properties
 
 @REM DEBUG: for debugging, use these log file settings
-@REM set OPAL_INSTALLER_JAVA_ARGS=-Dlog4j.configurationFile=%OPAL_INSTALLER_HOME_DIR%\conf\log4j2-debug.xml -Djava.util.logging.config.file=%OPAL_INSTALLER_HOME_DIR%\conf\log4j-debug.properties
+@REM set OPAL_TOOLS_JAVA_ARGS=-Dlog4j.configurationFile=%OPAL_TOOLS_HOME_DIR%\conf\log4j2-debug.xml -Djava.util.logging.config.file=%OPAL_TOOLS_HOME_DIR%\conf\log4j-debug.properties
 
-set OPAL_INSTALLER_USER_CONFIG_DIR=#OPAL_INSTALLER_USER_CONFIG_DIR#
-set OPAL_INSTALLER_SRC_SQL_DIR=#OPAL_INSTALLER_SRC_SQL_DIR#
-set OPAL_INSTALLER_PATCH_TEMPLATE_DIR=#OPAL_INSTALLER_PATCH_TEMPLATE_DIR#
-set OPAL_INSTALLER_PATCH_DIR=#OPAL_INSTALLER_PATCH_DIR#
+set OPAL_TOOLS_USER_CONFIG_DIR=#OPAL_TOOLS_USER_CONFIG_DIR#
+set OPAL_TOOLS_SRC_SQL_DIR=#OPAL_TOOLS_SRC_SQL_DIR#
+set OPAL_TOOLS_PATCH_TEMPLATE_DIR=#OPAL_TOOLS_PATCH_TEMPLATE_DIR#
+set OPAL_TOOLS_PATCH_DIR=#OPAL_TOOLS_PATCH_DIR#
 
 @REM --- typically unchanged ---
 @REM Date Strings to be used in scripts
@@ -34,6 +34,6 @@ set YEAR=%DTS:~0,4%
 @REM echo DATE_STRING: %DATE_STRING%
 @REM echo YEAR: %YEAR%
 
-set PATH=%OPAL_INSTALLER_HOME_DIR%\bin;%PATH%
+set PATH=%OPAL_TOOLS_HOME_DIR%\bin;%PATH%
 
 

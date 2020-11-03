@@ -1,5 +1,5 @@
 #!/bin/bash
-source #OPAL_INSTALLER_USER_ENV_SCRIPT#
+source #OPAL_TOOLS_USER_ENV_SCRIPT#
 
 SCRIPT_DIR=`dirname $0`
 
@@ -10,6 +10,6 @@ SCRIPT_DIR=`dirname $0`
 # yellow: "tput setaf 3"
 # red   : "tput setaf 1"
 
-#OPAL_INSTALLER_SET_COLOR_COMMAND#
+#OPAL_TOOLS_SET_COLOR_COMMAND#
 
-opal-installer.sh executePatch EXECUTE "${SCRIPT_DIR}/opal-installer.json" "${OPAL_INSTALLER_USER_CONFIG_DIR}/connections-#ENV#.json"
+opal-installer.sh executePatch EXECUTE "${SCRIPT_DIR}/opal-installer.json" "${OPAL_TOOLS_USER_CONFIG_DIR}/connections-#ENV#.json"

@@ -154,21 +154,21 @@ All environment variables are set up in the "Local script to initialize the user
 @REM it MUST be a JDK, a JRE is NOT ENOUGH
 @REM set JAVA_HOME=c:\Program Files (x86)\Java\jdk1.8.0_251
 
-@REM DEBUG: For debugging, you can turn on ECHO again ... and also OPAL_INSTALLER_JAVA_ARGS below
+@REM DEBUG: For debugging, you can turn on ECHO again ... and also OPAL_TOOLS_JAVA_ARGS below
 @echo OFF
 
 @REM set variables used in the various scripts for the installer
 set PROJECT_ROOT=c:\app\opal-installer
-set OPAL_INSTALLER_HOME_DIR=%PROJECT_ROOT%\opal-installer
-set OPAL_INSTALLER_JAVA_ARGS=-Dlog4j.configurationFile=%OPAL_INSTALLER_HOME_DIR%\conf\log4j2.xml -Djava.util.logging.config.file=%OPAL_INSTALLER_HOME_DIR%\conf\log4j.properties
+set OPAL_TOOLS_HOME_DIR=%PROJECT_ROOT%\opal-installer
+set OPAL_TOOLS_JAVA_ARGS=-Dlog4j.configurationFile=%OPAL_TOOLS_HOME_DIR%\conf\log4j2.xml -Djava.util.logging.config.file=%OPAL_TOOLS_HOME_DIR%\conf\log4j.properties
 
 @REM DEBUG: for debugging, use these log file settings
-@REM set OPAL_INSTALLER_JAVA_ARGS=-Dlog4j.configurationFile=%OPAL_INSTALLER_HOME_DIR%\conf\log4j2-debug.xml -Djava.util.logging.config.file=%OPAL_INSTALLER_HOME_DIR%\conf\log4j-debug.properties
+@REM set OPAL_TOOLS_JAVA_ARGS=-Dlog4j.configurationFile=%OPAL_TOOLS_HOME_DIR%\conf\log4j2-debug.xml -Djava.util.logging.config.file=%OPAL_TOOLS_HOME_DIR%\conf\log4j-debug.properties
 
-set OPAL_INSTALLER_USER_CONFIG_DIR=c:\app\opal-installer-local
-set OPAL_INSTALLER_SRC_SQL_DIR=%PROJECT_ROOT%\sql#
-set OPAL_INSTALLER_PATCH_TEMPLATE_DIR=%PROJECT_ROOT%\patch-template
-set OPAL_INSTALLER_PATCH_DIR=%PROJECT_ROOT%\patches
+set OPAL_TOOLS_USER_CONFIG_DIR=c:\app\opal-installer-local
+set OPAL_TOOLS_SRC_SQL_DIR=%PROJECT_ROOT%\sql#
+set OPAL_TOOLS_PATCH_TEMPLATE_DIR=%PROJECT_ROOT%\patch-template
+set OPAL_TOOLS_PATCH_DIR=%PROJECT_ROOT%\patches
 
 @REM --- typically unchanged ---
 @REM Date Strings to be used in scripts
@@ -181,7 +181,7 @@ set YEAR=%DTS:~0,4%
 @REM echo DATE_STRING: %DATE_STRING%
 @REM echo YEAR: %YEAR%
 
-set PATH=%OPAL_INSTALLER_HOME_DIR%\bin;%PATH%
+set PATH=%OPAL_TOOLS_HOME_DIR%\bin;%PATH%
 </pre>
 
 # Usage
