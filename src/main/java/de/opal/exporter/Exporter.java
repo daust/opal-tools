@@ -236,6 +236,10 @@ public class Exporter {
 		String objectType = "";
 		String objectName = "";
 
+		ArrayList<String> errorList = new ArrayList<String>();
+		int totalObjectCnt = 0;
+		long startTime = System.currentTimeMillis();
+
 		log.debug("start");
 		try {
 			// initialize connection
@@ -262,10 +266,11 @@ public class Exporter {
 				Utils.waitForEnter("\n*** Please press <enter> to start the process ");
 
 			boolean status = objectStmt.execute(objectQuery);
-			if (status) {
+			if (status) {				
 				// query is a select query.
 				ResultSet objectRS = objectStmt.getResultSet();
 				while (objectRS.next()) {
+					totalObjectCnt++;
 					schemaName = objectRS.getString(1);
 					objectName = objectRS.getString(2);
 					objectType = objectRS.getString(3);
@@ -278,6 +283,7 @@ public class Exporter {
 						// log.error("sql error: "+e.getErrorCode());
 						log.error("sql error: " + e.getLocalizedMessage());
 						// log.error("sql error: "+e.getMessage());
+						errorList.add(objectName + "[" + objectType + "]");
 
 						// re-raise error if errors should abort program
 						if (this.skipErrors == false)
@@ -292,12 +298,16 @@ public class Exporter {
 					Msg.println("\n*** run post script: " + postScript + "\n");
 
 					if (this.workingDirectorySQLcl != null) {
-						Msg.println("\ncurrent working directory: " + oracle.dbtools.common.utils.FileUtils.getCWD(sqlcl.getScriptRunnerContext()));
+						log.debug("\ncurrent working directory (before change): "
+								+ oracle.dbtools.common.utils.FileUtils.getCWD(sqlcl.getScriptRunnerContext()));
 						sqlclUtil.setWorkingDirectory(this.workingDirectorySQLcl, sqlcl);
-						Msg.println("\ncurrent working directory: " + oracle.dbtools.common.utils.FileUtils.getCWD(sqlcl.getScriptRunnerContext()));
+						log.debug("\ncurrent working directory (after change): "
+								+ oracle.dbtools.common.utils.FileUtils.getCWD(sqlcl.getScriptRunnerContext()));
 					}
 					sqlclUtil.executeFile(postScript, sqlcl, null);
 				}
+
+				displayStatsFooter(errorList, totalObjectCnt, startTime);
 
 			}
 		} catch (Exception e) {
@@ -312,6 +322,23 @@ public class Exporter {
 			closeConnection();
 		}
 		log.debug("end");
+	}
+
+	private void displayStatsFooter(ArrayList<String> errorList, int totalObjectCnt, long startTime) {
+		long finish = System.currentTimeMillis();
+		long timeElapsed = finish - startTime;
+		int minutes = (int) (timeElapsed / (60 * 1000));
+		int seconds = (int) ((timeElapsed / 1000) % 60);
+		String timeElapsedString = String.format("%d:%02d", minutes, seconds);
+
+		Msg.println("*** The export finished in " + timeElapsedString + " [mm:ss] and exported " + (totalObjectCnt
+				- errorList.size()) + "/"+totalObjectCnt+" objects successfully.");
+
+		Msg.println("");
+		Msg.println("*** The following objects could not be exported due to errors");
+		for (String error : errorList) {
+			Msg.println("  " + error);
+		}
 	}
 
 	/**
