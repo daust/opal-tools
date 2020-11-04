@@ -334,10 +334,12 @@ public class Exporter {
 		Msg.println("*** The export finished in " + timeElapsedString + " [mm:ss] and exported " + (totalObjectCnt
 				- errorList.size()) + "/"+totalObjectCnt+" objects successfully.");
 
-		Msg.println("");
-		Msg.println("*** The following objects could not be exported due to errors");
-		for (String error : errorList) {
-			Msg.println("  " + error);
+		if (errorList.size()>0) {
+			Msg.println("");
+			Msg.println("*** The following objects could not be exported due to errors");
+			for (String error : errorList) {
+				Msg.println("  " + error);
+			}			
 		}
 	}
 

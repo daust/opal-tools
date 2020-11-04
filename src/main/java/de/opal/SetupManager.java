@@ -463,13 +463,13 @@ public class SetupManager {
 			Path path = Paths.get(f.getName());
 			String filename = path.getFileName().toString();
 			Msg.println("  process file " + filename);
-			String contents = FileUtils.readFileToString(f, Charset.defaultCharset());
+			String templateContents = FileUtils.readFileToString(f, Charset.defaultCharset());
 
 			if (filename.contains("#ENV#")) {
 				// iterate over all environments
 				for (String env : environmentListArr) {
 					String newFilename = filename.replace("#ENV#", env);
-					contents = replaceAllVariables(contents, env, null);
+					String contents = replaceAllVariables(templateContents, env, null);
 					FileUtils.writeStringToFile(new File(tmpTargetDir + File.separator + newFilename), contents,
 							Charset.defaultCharset());
 				}
@@ -477,14 +477,14 @@ public class SetupManager {
 				// iterate over all schemas
 				for (String schema : schemaListArr) {
 					String newFilename = filename.replace("#SCHEMA#", schema);
-					contents = replaceAllVariables(contents, this.environmentExportConnection, schema);
+					String contents = replaceAllVariables(templateContents, this.environmentExportConnection, schema);
 					FileUtils.writeStringToFile(new File(tmpTargetDir + File.separator + newFilename), contents,
 							Charset.defaultCharset());
 				}
 
 			} else {
 				// write the single file back and replace placeholders
-				contents = replaceAllVariables(contents);
+				String contents = replaceAllVariables(templateContents);
 				FileUtils.writeStringToFile(new File(tmpTargetDir + File.separator + path.getFileName()), contents,
 						Charset.defaultCharset());
 			}
