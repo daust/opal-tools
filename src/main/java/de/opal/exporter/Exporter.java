@@ -210,14 +210,6 @@ public class Exporter {
 		return whereClause;
 	}
 
-	private String mapObjectTypeToMetadata(String objectType) {
-		String mapObjectType = objectType;
-
-		mapObjectType = mapObjectType.replace(" ", "_");
-
-		return mapObjectType;
-	}
-
 	public static String padRight(String s, int n) {
 		return String.format("%-" + n + "s", s);
 	}
@@ -368,12 +360,13 @@ public class Exporter {
 		String content = "";
 		Statement ddlStmt = null;
 		ResultSet ddlRS = null;
+		String actualObjectType=ObjectTypeMappingMetadata.map2TypeForDBMS(objectType);
 
 		// get object ddl
 		try {
 			ddlStmt = sqlcl.getConn().createStatement();
 			// The query can be update query or can be select query
-			String ddlQuery = "SELECT dbms_metadata.get_ddl(object_type=>'" + mapObjectTypeToMetadata(objectType)
+			String ddlQuery = "SELECT dbms_metadata.get_ddl(object_type=>'" + actualObjectType
 					+ "', name=>'" + objectName + "', schema=>'" + schemaName + "') ddl from dual";
 			boolean ddlQueryStatus = ddlStmt.execute(ddlQuery);
 			if (ddlQueryStatus) {
@@ -399,6 +392,9 @@ public class Exporter {
 		// export dependent objects
 		if (this.dependentObjectsMap.containsKey(objectType)) {
 			for (String depObjectType : this.dependentObjectsMap.get(objectType)) {
+				actualObjectType=ObjectTypeMappingMetadata.map2TypeForDBMS(depObjectType);
+				log.debug("object type mapping: " + depObjectType + " => " + actualObjectType);
+				
 				// get dependent DDL
 				try {
 					ddlStmt = sqlcl.getConn().createStatement();
@@ -410,7 +406,7 @@ public class Exporter {
 					 * VARCHAR2 DEFAULT 'DDL', object_count IN NUMBER DEFAULT 10000) RETURN CLOB;
 					 */
 					// Msg.println(" - " + depObjectType);
-					String ddlQuery = "SELECT dbms_metadata.get_dependent_ddl(object_type=>'" + depObjectType
+					String ddlQuery = "SELECT dbms_metadata.get_dependent_ddl(object_type=>'" + actualObjectType
 							+ "', base_object_name =>'" + objectName + "', base_object_schema=>'" + schemaName
 							+ "') ddl from dual";
 					boolean ddlQueryStatus = ddlStmt.execute(ddlQuery);
