@@ -313,9 +313,11 @@ public class DBExporter {
 	public void transformParams() {
 		this.user = this.user.toUpperCase();
 
+		// if no filter is given, everything should be exported
 		if (includeFilters.isEmpty()) {
 			includeFilters.add("%");
 		}
+		
 		// use user as first entry in empty schemas list
 		if (schemas.isEmpty()) {
 			schemas.add(user);
@@ -326,17 +328,18 @@ public class DBExporter {
 		}
 
 		// make filter uppercase
+		// replace *=>% for each filter
 		for (int i = 0; i < includeFilters.size(); i++) {
-			includeFilters.set(i, includeFilters.get(i).toUpperCase());
+			includeFilters.set(i, includeFilters.get(i).toUpperCase().replace("*", "%"));
 		}
 		for (int i = 0; i < excludeFilters.size(); i++) {
-			excludeFilters.set(i, excludeFilters.get(i).toUpperCase());
+			excludeFilters.set(i, excludeFilters.get(i).toUpperCase().replace("*", "%"));
 		}
 		for (int i = 0; i < this.includeTypes.size(); i++) {
-			includeTypes.set(i, includeTypes.get(i).toUpperCase());
+			includeTypes.set(i, includeTypes.get(i).toUpperCase().replace("*", "%"));
 		}
 		for (int i = 0; i < this.excludeTypes.size(); i++) {
-			excludeTypes.set(i, excludeTypes.get(i).toUpperCase());
+			excludeTypes.set(i, excludeTypes.get(i).toUpperCase().replace("*", "%"));
 		}
 
 		// make dependent objects uppercase

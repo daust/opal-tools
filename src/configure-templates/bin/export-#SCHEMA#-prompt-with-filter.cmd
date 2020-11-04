@@ -1,7 +1,7 @@
 @call #OPAL_TOOLS_USER_ENV_SCRIPT#
 
 @REM setting up the filter for exporting sources
-SET /P FILTER=Filter for DDL object names including wildcards (%% must be doubled), e.g. "xlib%%%%" : 
+SET /P FILTER=Filter for DDL object names including wildcards, e.g. "xlib*" : 
 
 @call opal-export.cmd --output-dir "%OPAL_TOOLS_SRC_SQL_DIR%" ^
     --dependent-objects table:comment,index,object_grant,trigger view:comment,object_grant "materialized view:comment,index,materialized_view_log,object_grant" ^
@@ -9,7 +9,7 @@ SET /P FILTER=Filter for DDL object names including wildcards (%% must be double
     --post-script "%OPAL_TOOLS_HOME_DIR%/conf/opal-export-post-script.sql" ^
     --skip-errors ^
     --include "%FILTER%" ^
-    --exclude SYS_%%%% AQ$%%%% ^
+    --exclude SYS_* AQ$* ^
     --extension-map package:pks "package body:pkb" ^
     --directory-map "package body:packages" ^
     --connection-pool-name #SCHEMA# ^

@@ -8,8 +8,8 @@ opal-export.sh --output-dir "$OPAL_TOOLS_SRC_SQL_DIR" \
     --pre-script ${OPAL_TOOLS_HOME_DIR}/conf/opal-export-pre-script.sql \
     --post-script ${OPAL_TOOLS_HOME_DIR}/conf/opal-export-post-script.sql \
     --skip-errors \
-    --include % \
-    --exclude SYS_% AQ$% \
+    --include * \
+    --exclude SYS_* AQ$* \
     --extension-map package:pks "package body:pkb" \
     --directory-map "package body:packages" \
     --connection-pool-name #SCHEMA# \
