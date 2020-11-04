@@ -13,7 +13,6 @@ import java.util.List;
 
 import javax.sql.PooledConnection;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -43,6 +42,7 @@ public class Exporter {
 	private HashMap<String, String> directoryMappingsMap;
 	private String filenameTemplate;
 	private boolean filenameReplaceBlanks;
+	private String workingDirectorySQLcl;
 
 	/**
 	 * 
@@ -53,7 +53,7 @@ public class Exporter {
 	public Exporter(String user, String pwd, String connectStr, String outputDir, boolean skipErrors,
 			HashMap<String, ArrayList<String>> dependentObjectsMap, boolean isSilent,
 			HashMap<String, String> extensionMappingsMap, HashMap<String, String> directoryMappingsMap,
-			String filenameTemplate, boolean filenameReplaceBlanks) {
+			String filenameTemplate, boolean filenameReplaceBlanks, String workingDirectorySQLcl) {
 		super();
 		this.user = user;
 		this.pwd = pwd;
@@ -65,7 +65,8 @@ public class Exporter {
 		this.extensionMappingsMap = extensionMappingsMap;
 		this.directoryMappingsMap = directoryMappingsMap;
 		this.filenameTemplate = filenameTemplate;
-		this.filenameReplaceBlanks=filenameReplaceBlanks;
+		this.filenameReplaceBlanks = filenameReplaceBlanks;
+		this.workingDirectorySQLcl = workingDirectorySQLcl;
 
 	}
 
@@ -75,13 +76,13 @@ public class Exporter {
 		String objectTypePath = objectType;
 		String objectTypePlural = objectTypePath;
 		boolean objectTypePathChanged = false;
-		
+
 		// make plural form
 		if (objectTypePlural.endsWith("Y"))
-			objectTypePlural = StringUtils.chop(objectTypePlural)+"ie"; // remove last character
+			objectTypePlural = StringUtils.chop(objectTypePlural) + "ie"; // remove last character
 		if (objectTypePlural.endsWith("X"))
-			objectTypePlural = objectTypePlural+"e"; // remove last character
-		
+			objectTypePlural = objectTypePlural + "e"; // remove last character
+
 		objectTypePlural += "s";
 
 		// map object types to suffixes
@@ -133,7 +134,7 @@ public class Exporter {
 		// filename = schemaName + File.separatorChar + objectTypePath +
 		// File.separatorChar + objectName + "." + suffix;
 		if (this.filenameReplaceBlanks)
-			filename=filename.replace(" ", "_");
+			filename = filename.replace(" ", "_");
 
 		return filename;
 	}
@@ -228,9 +229,8 @@ public class Exporter {
 	 * @param jdbcURL
 	 * @throws Exception
 	 */
-	public void export(File preScript, File postScript, List<String> includeFilters,
-			List<String> excludeFilters, List<String> schemas, List<String> includeTypes, List<String> excludeTypes)
-			throws Exception {
+	public void export(File preScript, File postScript, List<String> includeFilters, List<String> excludeFilters,
+			List<String> schemas, List<String> includeTypes, List<String> excludeTypes) throws Exception {
 		SQLclUtil sqlclUtil = new SQLclUtil();
 		String schemaName = "";
 		String objectType = "";
@@ -242,7 +242,9 @@ public class Exporter {
 			sqlcl = getScriptExecutor(user, pwd, connectStr);
 			if (preScript != null) {
 				Msg.println("*** run pre script: " + postScript + "\n");
-
+				if (this.workingDirectorySQLcl != null) {
+					sqlcl.setDirectory(this.workingDirectorySQLcl);
+				}
 				sqlclUtil.executeFile(preScript, sqlcl, null);
 			}
 
@@ -289,6 +291,11 @@ public class Exporter {
 				if (postScript != null) {
 					Msg.println("\n*** run post script: " + postScript + "\n");
 
+					if (this.workingDirectorySQLcl != null) {
+						Msg.println("\ncurrent working directory: " + oracle.dbtools.common.utils.FileUtils.getCWD(sqlcl.getScriptRunnerContext()));
+						sqlclUtil.setWorkingDirectory(this.workingDirectorySQLcl, sqlcl);
+						Msg.println("\ncurrent working directory: " + oracle.dbtools.common.utils.FileUtils.getCWD(sqlcl.getScriptRunnerContext()));
+					}
 					sqlclUtil.executeFile(postScript, sqlcl, null);
 				}
 
@@ -403,7 +410,7 @@ public class Exporter {
 
 		// output file in console
 		Msg.println(relativeFilename);
-		FileUtils.writeStringToFile(new File(filename), content, Charset.defaultCharset());
+		org.apache.commons.io.FileUtils.writeStringToFile(new File(filename), content, Charset.defaultCharset());
 
 	}
 

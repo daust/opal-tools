@@ -1,4 +1,4 @@
-package de.oc.utils;
+package de.opal.utils;
 
 import java.net.UnknownHostException;
 

@@ -223,3 +223,8 @@ This message only indicates that the character set for the console output cannot
 ### Using the installer with multiple developers on different operating systems 
 
 *tbd*
+
+
+https://docs.oracle.com/cd/B19306_01/appdev.102/b14258/d_metada.htm#BGBHHHBG
+https://ittutorial.org/dbms_metadata-get_ddl-get-ddl-create-script-of-any-object-in-oracle/
+

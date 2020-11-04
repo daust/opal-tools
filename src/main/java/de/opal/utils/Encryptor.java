@@ -1,4 +1,4 @@
-package de.oc.utils;
+package de.opal.utils;
 
 
 /*
@@ -47,7 +47,7 @@ public class Encryptor {
         return null;
     }
     
-    public static void main(String[] args) {
+    public static void test(String[] args) {
 
         String key1 = "Bar12345Bar12345"; // 128 bit key
         String key2 = "ThisIsASecretKet";

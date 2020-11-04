@@ -19,8 +19,7 @@ public class SQLclUtil {
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-	public void executeFile(File file, ScriptExecutor sqlcl, String overrideEncoding)
-			throws SQLException, IOException {
+	public void executeFile(File file, ScriptExecutor sqlcl, String overrideEncoding) throws SQLException, IOException {
 
 		// Capture the results without this it goes to STDOUT
 		ByteArrayOutputStream bout = new ByteArrayOutputStream();
@@ -31,7 +30,7 @@ public class SQLclUtil {
 		// sqlcl.setStmt(new FileInputStream(file));
 		String fileContents = "";
 
-		if (overrideEncoding!=null) {
+		if (overrideEncoding != null) {
 			fileContents = FileUtils.readFileToString(file, System.getProperty("file.encoding"));
 		} else {
 			fileContents = FileUtils.readFileToString(file, overrideEncoding);
@@ -69,5 +68,11 @@ public class SQLclUtil {
 		if (!results.contains("ORA-00955")) {
 			Msg.println(results);
 		}
+	}
+
+	// see: https://twitter.com/krisrice/status/1324020253865725952
+	public void setWorkingDirectory(String directory, ScriptExecutor sqlcl) {
+		sqlcl.setStmt("cd \"" + directory + "\"");
+		sqlcl.run();
 	}
 }

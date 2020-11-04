@@ -106,10 +106,10 @@ public class DBExporter {
 	// "--template_dir", metaVar = "TEMPLATE DIRECTORY")
 	// private File templateDir;
 
-	@Option(name = "-pre", usage = "script (sqlplus/sqlcl) that is running to initialize the session, similar to the login.sql file for sqlplus, e.g. ./login.sql or ./init.sql", aliases = "--pre-script", metaVar = "<sqlplus/sqlcl script>")
+	@Option(name = "-pre", usage = "script (sqlplus/sqlcl) that is running to initialize the session, similar to the login.sql file for sqlplus, e.g. ./login.sql or ./init.sql", aliases = "--pre-script", metaVar = "<script>")
 	private File preScript;
 
-	@Option(name = "-post", usage = "script (sqlplus/sqlcl) that is running in the end to export custom objects, e.g. ./apex.sql", aliases = "--post-script", metaVar = "<sqlplus/sqlcl script>")
+	@Option(name = "-post", usage = "script (sqlplus/sqlcl) that is running in the end to export custom objects, e.g. ./apex.sql", aliases = "--post-script", metaVar = "<script>")
 	private File postScript;
 
 	@Option(name = "--silent", usage = "turns off prompts")
@@ -132,6 +132,10 @@ public class DBExporter {
 
 	@Option(name = "--filename-replace-blanks", usage = "replaces blanks in the filename with an _, e.g. PACKAGE BODY=>PACKAGE_BODY")
 	private boolean filenameReplaceBlanks = true;
+
+	@Option(name = "-wd", usage = "working directory for running sqlcl scripts (-pre and -post), e.g. '.' or '/u01/project/src/sql'. The default is the environment variable OPAL_TOOLS_SRC_SQL_DIR", aliases = "--working-directory", metaVar = "<directory>", required = false)
+	private String workingDirectorySQLcl;
+
 
 	// @Option(name = "-h", aliases = "--help", usage = "display this help page")
 	// private boolean showHelp = false;
@@ -173,7 +177,7 @@ public class DBExporter {
 		Exporter exporter = new Exporter(dbExporter.user, dbExporter.pwd, dbExporter.connectStr, dbExporter.outputDir,
 				dbExporter.skipErrors, dbExporter.dependentObjectsMap, dbExporter.isSilent,
 				dbExporter.extensionMappingsMap, dbExporter.directoryMappingsMap, dbExporter.filenameTemplate,
-				dbExporter.filenameReplaceBlanks);
+				dbExporter.filenameReplaceBlanks, dbExporter.workingDirectorySQLcl);
 		exporter.export(dbExporter.preScript, dbExporter.postScript, dbExporter.includeFilters,
 				dbExporter.excludeFilters, dbExporter.schemas, dbExporter.includeTypes, dbExporter.excludeTypes);
 
@@ -284,7 +288,7 @@ public class DBExporter {
 				log.debug("connectStr: " + this.connectStr);
 
 			}
-
+			
 		} catch (CmdLineException e) {
 			// if there's a problem in the command line,
 			// you'll get this exception. this will report
@@ -358,6 +362,12 @@ public class DBExporter {
 
 			this.dependentObjectsMap.put(objType, new ArrayList<String>(Arrays.asList(depObj.split(","))));
 		}
+		
+		if (this.workingDirectorySQLcl==null) {
+			// set default to environment variable OPAL_TOOLS_SRC_SQL_DIR
+			log.debug("set default for workingDirectorySQLcl: "+this.workingDirectorySQLcl);
+			this.workingDirectorySQLcl=System.getenv("OPAL_TOOLS_SRC_SQL_DIR");
+		}
 	}
 
 	private void showHeaderInfo() {
@@ -385,12 +395,16 @@ public class DBExporter {
 		if (!this.dependentObjects.isEmpty())
 			sb.append("* Dependent Objects        : " + this.dependentObjects + lSep);
 
-		sb.append("*" + lSep);
-		// sb.append("* Arguments : " + this.arguments+lSep);
-		if (this.preScript != null)
-			sb.append("* CustomSQLInitFile        : " + this.preScript + lSep);
-		if (this.postScript != null)
-			sb.append("* CustomExportSQLFile      : " + this.postScript + lSep);
+		if (this.preScript != null || this.postScript!=null) {
+			sb.append("*" + lSep);
+			// sb.append("* Arguments : " + this.arguments+lSep);
+			if (this.workingDirectorySQLcl != null && (this.preScript != null || this.postScript!=null))
+				sb.append("* Script Working Directory : " + this.workingDirectorySQLcl + lSep);
+			if (this.preScript != null)
+				sb.append("* Pre Script               : " + this.preScript + lSep);
+			if (this.postScript != null)
+				sb.append("* Post Script              : " + this.postScript + lSep);			
+		}
 
 		sb.append("*" + lSep);
 		if (this.extensionMappings != null)

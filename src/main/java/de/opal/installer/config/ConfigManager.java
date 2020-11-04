@@ -20,8 +20,8 @@ import org.apache.logging.log4j.Logger;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-import de.oc.utils.EncryptorWrapper;
 import de.opal.installer.util.Msg;
+import de.opal.utils.EncryptorWrapper;
 
 /**
  * @author daust

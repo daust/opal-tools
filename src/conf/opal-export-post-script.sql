@@ -1,4 +1,10 @@
 
+prompt display version of sqlcl
+version
+
+prompt show current working directory
+pwd
+
 prompt *** exporting apex applications
 prompt *** configure opal-export-post-script.sql if required
 /*
