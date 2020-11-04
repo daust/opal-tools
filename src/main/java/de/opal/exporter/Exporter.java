@@ -43,6 +43,7 @@ public class Exporter {
 	private String filenameTemplate;
 	private boolean filenameReplaceBlanks;
 	private String workingDirectorySQLcl;
+	private boolean skipExport;
 
 	/**
 	 * 
@@ -53,7 +54,7 @@ public class Exporter {
 	public Exporter(String user, String pwd, String connectStr, String outputDir, boolean skipErrors,
 			HashMap<String, ArrayList<String>> dependentObjectsMap, boolean isSilent,
 			HashMap<String, String> extensionMappingsMap, HashMap<String, String> directoryMappingsMap,
-			String filenameTemplate, boolean filenameReplaceBlanks, String workingDirectorySQLcl) {
+			String filenameTemplate, boolean filenameReplaceBlanks, String workingDirectorySQLcl, boolean skipExport) {
 		super();
 		this.user = user;
 		this.pwd = pwd;
@@ -67,6 +68,7 @@ public class Exporter {
 		this.filenameTemplate = filenameTemplate;
 		this.filenameReplaceBlanks = filenameReplaceBlanks;
 		this.workingDirectorySQLcl = workingDirectorySQLcl;
+		this.skipExport = skipExport;
 
 	}
 
@@ -252,46 +254,51 @@ public class Exporter {
 				sqlclUtil.executeFile(preScript, sqlcl, null);
 			}
 
-			Statement objectStmt = sqlcl.getConn().createStatement();
-			// The query can be update query or can be select query
-			String whereClause = computeWhereClause(includeFilters, excludeFilters, schemas, includeTypes,
-					excludeTypes);
-			String objectQuery = "select owner, object_name, object_type \n" + "  from all_objects \n" + " where "
-					+ whereClause + "\n" + " order by 1,2,3";
-			log.debug("execute query: " + objectQuery);
-			Msg.println("*** The following objects will be exported:\n\n" + objectQuery);
-			Msg.println("");
+			if (!this.skipExport) {
+				Statement objectStmt = sqlcl.getConn().createStatement();
+				// The query can be update query or can be select query
+				String whereClause = computeWhereClause(includeFilters, excludeFilters, schemas, includeTypes,
+						excludeTypes);
+				String objectQuery = "select owner, object_name, object_type \n" + "  from all_objects \n" + " where "
+						+ whereClause + "\n" + " order by 1,2,3";
+				log.debug("execute query: " + objectQuery);
+				Msg.println("*** The following objects will be exported:\n\n" + objectQuery);
+				Msg.println("");
 
-			if (!this.isSilent)
-				Utils.waitForEnter("\n*** Please press <enter> to start the process ");
+				if (!this.isSilent)
+					Utils.waitForEnter("\n*** Please press <enter> to start the process ");
 
-			boolean status = objectStmt.execute(objectQuery);
-			if (status) {				
-				// query is a select query.
-				ResultSet objectRS = objectStmt.getResultSet();
-				while (objectRS.next()) {
-					totalObjectCnt++;
-					schemaName = objectRS.getString(1);
-					objectName = objectRS.getString(2);
-					objectType = objectRS.getString(3);
+				boolean status = objectStmt.execute(objectQuery);
+				if (status) {
+					// query is a select query.
+					ResultSet objectRS = objectStmt.getResultSet();
+					while (objectRS.next()) {
+						totalObjectCnt++;
+						schemaName = objectRS.getString(1);
+						objectName = objectRS.getString(2);
+						objectType = objectRS.getString(3);
 
-					// Msg.print(" export: " + objectName + "[" + objectType + "]: ");
-					Msg.print(padRight("  export: " + objectName + "[" + objectType + "]", 47) + "=> ");
-					try {
-						exportObject(schemaName, objectName, objectType);
-					} catch (SQLException e) {
-						// log.error("sql error: "+e.getErrorCode());
-						log.error("sql error: " + e.getLocalizedMessage());
-						// log.error("sql error: "+e.getMessage());
-						errorList.add(objectName + "[" + objectType + "]");
+						// Msg.print(" export: " + objectName + "[" + objectType + "]: ");
+						Msg.print(padRight("  export: " + objectName + "[" + objectType + "]", 47) + "=> ");
+						try {
+							exportObject(schemaName, objectName, objectType);
+						} catch (SQLException e) {
+							// log.error("sql error: "+e.getErrorCode());
+							log.error("sql error: " + e.getLocalizedMessage());
+							// log.error("sql error: "+e.getMessage());
+							errorList.add(objectName + "[" + objectType + "]");
 
-						// re-raise error if errors should abort program
-						if (this.skipErrors == false)
-							throw (e);
+							// re-raise error if errors should abort program
+							if (this.skipErrors == false)
+								throw (e);
+						}
+
 					}
-
+					objectRS.close();
 				}
-				objectRS.close();
+			} else {
+				if (!this.isSilent)
+					Utils.waitForEnter("\n*** Please press <enter> to start the process ");
 
 				// run custom export file at the end
 				if (postScript != null) {
@@ -331,15 +338,19 @@ public class Exporter {
 		int seconds = (int) ((timeElapsed / 1000) % 60);
 		String timeElapsedString = String.format("%d:%02d", minutes, seconds);
 
-		Msg.println("*** The export finished in " + timeElapsedString + " [mm:ss] and exported " + (totalObjectCnt
-				- errorList.size()) + "/"+totalObjectCnt+" objects successfully.");
+		if (!this.skipExport) {
+			Msg.println("*** The export finished in " + timeElapsedString + " [mm:ss] and exported "
+					+ (totalObjectCnt - errorList.size()) + "/" + totalObjectCnt + " objects successfully.");
 
-		if (errorList.size()>0) {
-			Msg.println("");
-			Msg.println("*** The following objects could not be exported due to errors");
-			for (String error : errorList) {
-				Msg.println("  " + error);
-			}			
+			if (errorList.size() > 0) {
+				Msg.println("");
+				Msg.println("*** The following objects could not be exported due to errors");
+				for (String error : errorList) {
+					Msg.println("  " + error);
+				}
+			}
+		} else {
+			Msg.println("*** The script finished in " + timeElapsedString + " [mm:ss].");
 		}
 	}
 

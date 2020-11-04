@@ -102,6 +102,9 @@ public class DBExporter {
 	@Option(name = "-se", aliases = "--skip-errors", usage = "ORA- errors will not cause the program to abort")
 	private boolean skipErrors = false;
 
+	@Option(name = "-sexp", aliases = "--skip-export", usage = "skip the export, this way only the pre- and post-scripts are run")
+	private boolean skipExport = false;
+
 	// @Option(name = "-t", usage = "template directory", aliases =
 	// "--template_dir", metaVar = "TEMPLATE DIRECTORY")
 	// private File templateDir;
@@ -177,7 +180,7 @@ public class DBExporter {
 		Exporter exporter = new Exporter(dbExporter.user, dbExporter.pwd, dbExporter.connectStr, dbExporter.outputDir,
 				dbExporter.skipErrors, dbExporter.dependentObjectsMap, dbExporter.isSilent,
 				dbExporter.extensionMappingsMap, dbExporter.directoryMappingsMap, dbExporter.filenameTemplate,
-				dbExporter.filenameReplaceBlanks, dbExporter.workingDirectorySQLcl);
+				dbExporter.filenameReplaceBlanks, dbExporter.workingDirectorySQLcl, dbExporter.skipExport);
 		exporter.export(dbExporter.preScript, dbExporter.postScript, dbExporter.includeFilters,
 				dbExporter.excludeFilters, dbExporter.schemas, dbExporter.includeTypes, dbExporter.excludeTypes);
 
@@ -380,21 +383,23 @@ public class DBExporter {
 		sb.append("* ConnectStr               : " + this.connectStr + lSep);
 		sb.append("* OutputDirectory          : " + this.outputDir + lSep);
 
-		if (!this.includeFilters.isEmpty() || !this.excludeFilters.isEmpty() || !this.schemas.isEmpty())
-			sb.append("*" + lSep);
-		if (!this.includeFilters.isEmpty())
-			sb.append("* IncludeFilter            : " + this.includeFilters + lSep);
-		if (!this.includeTypes.isEmpty())
-			sb.append("* IncludeTypes             : " + this.includeTypes + lSep);
-		if (!this.excludeFilters.isEmpty())
-			sb.append("* ExcludeFilter            : " + this.excludeFilters + lSep);
-		if (!this.excludeTypes.isEmpty())
-			sb.append("* ExcludeTypes             : " + this.excludeTypes + lSep);
-		if (!this.schemas.isEmpty())
-			sb.append("* Schemas                  : " + this.schemas + lSep);
-		if (!this.dependentObjects.isEmpty())
-			sb.append("* Dependent Objects        : " + this.dependentObjects + lSep);
-
+		if (!this.skipExport) {
+			if (!this.includeFilters.isEmpty() || !this.excludeFilters.isEmpty() || !this.schemas.isEmpty())
+				sb.append("*" + lSep);
+			if (!this.includeFilters.isEmpty())
+				sb.append("* IncludeFilter            : " + this.includeFilters + lSep);
+			if (!this.includeTypes.isEmpty())
+				sb.append("* IncludeTypes             : " + this.includeTypes + lSep);
+			if (!this.excludeFilters.isEmpty())
+				sb.append("* ExcludeFilter            : " + this.excludeFilters + lSep);
+			if (!this.excludeTypes.isEmpty())
+				sb.append("* ExcludeTypes             : " + this.excludeTypes + lSep);
+			if (!this.schemas.isEmpty())
+				sb.append("* Schemas                  : " + this.schemas + lSep);
+			if (!this.dependentObjects.isEmpty())
+				sb.append("* Dependent Objects        : " + this.dependentObjects + lSep);			
+		}
+		
 		if (this.preScript != null || this.postScript!=null) {
 			sb.append("*" + lSep);
 			// sb.append("* Arguments : " + this.arguments+lSep);
@@ -406,19 +411,23 @@ public class DBExporter {
 				sb.append("* Post Script              : " + this.postScript + lSep);			
 		}
 
-		sb.append("*" + lSep);
-		if (this.extensionMappings != null)
-			sb.append("* Extension Mapping        : " + this.extensionMappings + lSep);
-		if (this.directoryMappings != null)
-			sb.append("* Directory Mapping        : " + this.directoryMappings + lSep);
-		if (!this.filenameTemplate.isEmpty()) {
-			sb.append("* Filename Template        : " + this.filenameTemplate + lSep);
+		if (!this.skipExport) {
+			sb.append("*" + lSep);
+			if (this.extensionMappings != null)
+				sb.append("* Extension Mapping        : " + this.extensionMappings + lSep);
+			if (this.directoryMappings != null)
+				sb.append("* Directory Mapping        : " + this.directoryMappings + lSep);
+			if (!this.filenameTemplate.isEmpty()) {
+				sb.append("* Filename Template        : " + this.filenameTemplate + lSep);
+			}
+			sb.append("* Filename Replace Blanks? : " + this.filenameReplaceBlanks + lSep);
 		}
-		sb.append("* Filename Replace Blanks? : " + this.filenameReplaceBlanks + lSep);
 
 		sb.append("*" + lSep);
 
-		sb.append("* SkipErrors?              : " + this.skipErrors + lSep);
+		if (!this.skipExport) {
+			sb.append("* SkipErrors?              : " + this.skipErrors + lSep);
+		}
 		sb.append("* Silent (no prompts)?     : " + this.isSilent + lSep);
 //		if (this.templateDir != null)
 //			sb.append("* Template Directory       : " + this.templateDir + lSep);
