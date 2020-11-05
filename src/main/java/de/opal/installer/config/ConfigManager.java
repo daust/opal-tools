@@ -115,23 +115,27 @@ public class ConfigManager {
 		return hasUnencryptedPasswords;
 
 	}
-	public void encryptPasswords() {
+	public void encryptPasswords(String encryptionKeyFilename ) {
 		EncryptorWrapper enc = new EncryptorWrapper();
 		
 		for (ConfigConnectionPool pool : this.configData.connectionPools) {
 			if (!enc.isEncrypted(pool.password)) {
-				pool.password = enc.encryptPWD(pool.password);
+				pool.password = enc.encryptPWD(pool.password, encryptionKeyFilename);
 			}
 		}
 	}
-	public void decryptPasswords() {
+	public void decryptPasswords(String encryptionKeyFilename) {
 		EncryptorWrapper enc = new EncryptorWrapper();
 		
 		for (ConfigConnectionPool pool : this.configData.connectionPools) {
 			if (enc.isEncrypted(pool.password)) {
-				pool.password = enc.decryptPWD(pool.password);
+				pool.password = enc.decryptPWD(pool.password, encryptionKeyFilename);
 			}
 		}
+	}
+	// the encryption keys will be stored in the same directory as the connection pool
+	public String getEncryptionKeyFilename(String connPoolFilename) {
+		return new File(connPoolFilename).getParent()+File.separatorChar+"keys.txt";
 	}
 
 	public void dumpConfig() {
@@ -185,7 +189,7 @@ public class ConfigManager {
 			// Gson gson = new GsonBuilder().create();
 			// with pretty printing
 			GsonBuilder builder = new GsonBuilder();
-			Gson gson = builder.excludeFieldsWithoutExposeAnnotation().setPrettyPrinting().create();
+			Gson gson = builder.excludeFieldsWithoutExposeAnnotation().setPrettyPrinting().disableHtmlEscaping().create();
 
 			gson.toJson(configData, writer);
 

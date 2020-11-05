@@ -242,7 +242,7 @@ public class SetupManager {
 
 			ConfigManager confMgr = new ConfigManager(confFilename);
 			confMgr.setConfigData(configData);
-			confMgr.encryptPasswords();
+			confMgr.encryptPasswords(confMgr.getEncryptionKeyFilename(confFilename));
 
 			confMgr.writeJSONConfPool();
 		}

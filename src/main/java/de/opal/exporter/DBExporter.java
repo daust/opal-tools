@@ -35,7 +35,7 @@ public class DBExporter {
 	private String pwd;
 	private String connectStr;
 	private String version; // will be loaded from file version.txt which will be populated by the gradle
-									// build process
+							// build process
 	private HashMap<String, ArrayList<String>> dependentObjectsMap = new HashMap<String, ArrayList<String>>();
 	private HashMap<String, String> extensionMappingsMap = new HashMap<String, String>();
 	private HashMap<String, String> directoryMappingsMap = new HashMap<String, String>();
@@ -120,17 +120,16 @@ public class DBExporter {
 
 	@Option(name = "-ft", usage = "template for constructing the filename\n"
 			+ "e.g.: #schema#/#object_type#/#object_name#.#ext#\n\n"
-			+ "#schema#             - schema name in lower case\n" 
+			+ "#schema#             - schema name in lower case\n"
 			+ "#object_type#        - lower case type name: 'table'\n"
-			+ "#object_type_plural# - lower case type name in plural: 'tables'\n" 
+			+ "#object_type_plural# - lower case type name in plural: 'tables'\n"
 			+ "#object_name#        - lower case object name\n"
-			+ "#ext#                - lower case extension: 'sql' or 'pks'\n" 
+			+ "#ext#                - lower case extension: 'sql' or 'pks'\n"
 			+ "#SCHEMA#             - upper case schema name\n"
 			+ "#OBJECT_TYPE#        - upper case object type name: 'TABLE' or 'INDEX'\n"
 			+ "#OBJECT_TYPE_PLURAL# - upper case object type name in plural: 'TABLES'\n"
 			+ "#OBJECT_NAME#        - upper case object name\n"
-			+ "#EXT#                - upper case extension: 'SQL' or 'PKS'"
-			, aliases = "--filename-template", metaVar = "<template structure>", required = false)
+			+ "#EXT#                - upper case extension: 'SQL' or 'PKS'", aliases = "--filename-template", metaVar = "<template structure>", required = false)
 	private String filenameTemplate = "#schema#/#object_type_plural#/#object_name#.#ext#";
 
 	@Option(name = "--filename-replace-blanks", usage = "replaces blanks in the filename with an _, e.g. PACKAGE BODY=>PACKAGE_BODY")
@@ -138,7 +137,6 @@ public class DBExporter {
 
 	@Option(name = "-wd", usage = "working directory for running sqlcl scripts (-pre and -post), e.g. '.' or '/u01/project/src/sql'. The default is the environment variable OPAL_TOOLS_SRC_SQL_DIR", aliases = "--working-directory", metaVar = "<directory>", required = false)
 	private String workingDirectorySQLcl;
-
 
 	// @Option(name = "-h", aliases = "--help", usage = "display this help page")
 	// private boolean showHelp = false;
@@ -266,12 +264,14 @@ public class DBExporter {
 
 				// encrypt passwords if required
 				if (configManagerConnectionPools.hasUnencryptedPasswords()) {
-					configManagerConnectionPools.encryptPasswords();
+					configManagerConnectionPools.encryptPasswords(
+							configManagerConnectionPools.getEncryptionKeyFilename(this.connectionPoolFile));
 					// dump JSON file
 					configManagerConnectionPools.writeJSONConfPool();
 				}
 				// now decrypt the passwords so that they can be used internally in the program
-				configManagerConnectionPools.decryptPasswords();
+				configManagerConnectionPools.decryptPasswords(
+						configManagerConnectionPools.getEncryptionKeyFilename(this.connectionPoolFile));
 
 				for (ConfigConnectionPool pool : configManagerConnectionPools.getConfigData().connectionPools) {
 					if (pool.name.toUpperCase().contentEquals(this.connectionPoolName.toUpperCase())) {
@@ -284,14 +284,13 @@ public class DBExporter {
 					throw new CmdLineException(parser, "connection pool " + this.connectionPoolName
 							+ " could not be found in file " + this.connectionPoolFile);
 
-				log.debug("get connection " + this.connectionPoolName + " from "
-						+ this.connectionPoolFile);
+				log.debug("get connection " + this.connectionPoolName + " from " + this.connectionPoolFile);
 				log.debug("user: " + this.user);
 				log.debug("pwd: " + this.pwd);
 				log.debug("connectStr: " + this.connectStr);
 
 			}
-			
+
 		} catch (CmdLineException e) {
 			// if there's a problem in the command line,
 			// you'll get this exception. this will report
@@ -317,7 +316,7 @@ public class DBExporter {
 		if (includeFilters.isEmpty()) {
 			includeFilters.add("%");
 		}
-		
+
 		// use user as first entry in empty schemas list
 		if (schemas.isEmpty()) {
 			schemas.add(user);
@@ -368,11 +367,11 @@ public class DBExporter {
 
 			this.dependentObjectsMap.put(objType, new ArrayList<String>(Arrays.asList(depObj.split(","))));
 		}
-		
-		if (this.workingDirectorySQLcl==null) {
+
+		if (this.workingDirectorySQLcl == null) {
 			// set default to environment variable OPAL_TOOLS_SRC_SQL_DIR
-			log.debug("set default for workingDirectorySQLcl: "+this.workingDirectorySQLcl);
-			this.workingDirectorySQLcl=System.getenv("OPAL_TOOLS_SRC_SQL_DIR");
+			log.debug("set default for workingDirectorySQLcl: " + this.workingDirectorySQLcl);
+			this.workingDirectorySQLcl = System.getenv("OPAL_TOOLS_SRC_SQL_DIR");
 		}
 	}
 
@@ -400,18 +399,18 @@ public class DBExporter {
 			if (!this.schemas.isEmpty())
 				sb.append("* Schemas                  : " + this.schemas + lSep);
 			if (!this.dependentObjects.isEmpty())
-				sb.append("* Dependent Objects        : " + this.dependentObjects + lSep);			
+				sb.append("* Dependent Objects        : " + this.dependentObjects + lSep);
 		}
-		
-		if (this.preScript != null || this.postScript!=null) {
+
+		if (this.preScript != null || this.postScript != null) {
 			sb.append("*" + lSep);
 			// sb.append("* Arguments : " + this.arguments+lSep);
-			if (this.workingDirectorySQLcl != null && (this.preScript != null || this.postScript!=null))
+			if (this.workingDirectorySQLcl != null && (this.preScript != null || this.postScript != null))
 				sb.append("* Script Working Directory : " + this.workingDirectorySQLcl + lSep);
 			if (this.preScript != null)
 				sb.append("* Pre Script               : " + this.preScript + lSep);
 			if (this.postScript != null)
-				sb.append("* Post Script              : " + this.postScript + lSep);			
+				sb.append("* Post Script              : " + this.postScript + lSep);
 		}
 
 		if (!this.skipExport) {

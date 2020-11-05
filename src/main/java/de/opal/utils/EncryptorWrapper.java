@@ -1,9 +1,14 @@
 package de.opal.utils;
 
+import java.io.File;
+import java.io.IOException;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
+
+import org.apache.commons.lang3.RandomStringUtils;
 
 public class EncryptorWrapper {
-	private static final String key2 = "ThisIsASecretKet";
+	private static final String key2 = "FinxNA1Q#tEIFCAJ";
 	
 	private static String padRight(String s, int n) {
 	     return String.format("%1$-" + n + "s", s);  
@@ -15,26 +20,56 @@ public class EncryptorWrapper {
 
 	// if it is already encrypted, then do nothing
 	// if it is NOT already encrypted, then use method 1:
-	public String encryptPWD(String pwd) {
-		pwd = pwd.trim();
+	public String encryptPWD(String pwd, String encryptionKeyFilename) {
+		// check existence of key file
+		// if not exists, create and generate random key
+		File encryptionKeyFile=new File(encryptionKeyFilename);
 		
+		int length = 32;
+	    boolean useLetters = true;
+	    boolean useNumbers = false;
+	    String randomKey = RandomStringUtils.random(length, useLetters, useNumbers);
+			
+		try {
+			if (!encryptionKeyFile.exists()) {
+				org.apache.commons.io.FileUtils.writeStringToFile(encryptionKeyFile, randomKey, StandardCharsets.UTF_8);
+			}
+			// read file into
+			randomKey=org.apache.commons.io.FileUtils.readFileToString(encryptionKeyFile, StandardCharsets.UTF_8);			
+		} catch(IOException e) {
+			throw new RuntimeException("File "+encryptionKeyFilename+ " could not be accessed.");
+		}
+				
+		pwd = pwd.trim();
 		if (pwd.startsWith("1:")) {
 			// password is encrypted with method 1 ... do nothing
 		} else {
 			// not encrypted => ENCRYPT!
-			pwd = "1:" + Encryptor.encrypt(getKey1(), key2, pwd);
+			pwd = "1:" + Encryptor.encrypt(randomKey, key2, pwd);
 		}
+		
 		
 		return pwd;
 	}
 
-	public String decryptPWD(String pwd) {
-
+	public String decryptPWD(String pwd, String encryptionKeyFilename) {
+		pwd = pwd.trim();
 		if (pwd != null){
 			if (pwd.startsWith("1:")) {
+				
+				File encryptionKeyFile=new File(encryptionKeyFilename);
+				String randomKey="";
+				
+				try {
+					// read file into
+					randomKey=org.apache.commons.io.FileUtils.readFileToString(encryptionKeyFile, StandardCharsets.UTF_8);			
+				} catch(IOException e) {
+					throw new RuntimeException("File "+encryptionKeyFilename+ " could not be accessed.");
+				}
+				
 				// password is encrypted with method 1
 				String encPwd = pwd.substring("1:".length());
-				pwd = Encryptor.decrypt(getKey1(), key2, encPwd);
+				pwd = Encryptor.decrypt(randomKey, key2, encPwd);
 			} else {
 				// not encrypted => do nothing
 			}			
@@ -44,7 +79,7 @@ public class EncryptorWrapper {
 	}
 
 	
-	private String getKey1() {
+	private String getKeyIPAddress() {
 		String key1 = "";
 		String localhostname = "";
 

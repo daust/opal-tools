@@ -90,26 +90,26 @@ public class Installer {
 
 		readConfig(args);
 		this.connectionManager = ConnectionManager.getInstance();
-		
+
 		// store definitions but don't create connections
 		this.connectionManager.initialize(this.configManagerConnectionPools.getConfigData().connectionPools);
-		
+
 	}
 
 	private String generateLogFileName(String logFileDir, String runMode, String env) {
 		String logFileName = "";
-		String runModeString="";
+		String runModeString = "";
 
 		switch (runMode) {
 		case "EXECUTE":
-			runModeString="install";
+			runModeString = "install";
 			break;
 		case "VALIDATE_ONLY":
-			runModeString="validate";
+			runModeString = "validate";
 			break;
 
 		default:
-			runModeString="run";
+			runModeString = "run";
 			break;
 		}
 		logFileName = logFileDir + File.separator + env + "-" + runModeString + "-"
@@ -203,9 +203,10 @@ public class Installer {
 			/*
 			 * now process all files one by one
 			 */
-			// initialize registry targets if defined in config file and EXECUTE-mode, not during VALIDATE_ONLY
+			// initialize registry targets if defined in config file and EXECUTE-mode, not
+			// during VALIDATE_ONLY
 			if (this.configManager.getConfigData().runMode.equals("EXECUTE")) {
-				
+
 				if (this.configManager.getConfigData().registryTargets != null) {
 					log.debug("registryTargets:" + this.configManager.getConfigData().registryTargets.toString());
 
@@ -287,12 +288,14 @@ public class Installer {
 		this.configManagerConnectionPools = new ConfigManager(args[2]);
 		// encrypt passwords if required
 		if (this.configManagerConnectionPools.hasUnencryptedPasswords()) {
-			this.configManagerConnectionPools.encryptPasswords();
+			this.configManagerConnectionPools
+					.encryptPasswords(this.configManagerConnectionPools.getEncryptionKeyFilename(args[2]));
 			// dump JSON file
 			this.configManagerConnectionPools.writeJSONConfPool();
 		}
 		// now decrypt the passwords so that they can be used internally in the program
-		this.configManagerConnectionPools.decryptPasswords();
+		this.configManagerConnectionPools
+				.decryptPasswords(this.configManagerConnectionPools.getEncryptionKeyFilename(args[2]));
 
 	}
 
@@ -378,8 +381,11 @@ public class Installer {
 				break;
 			} else {
 				log.debug("  no match with regex: " + configConnectionMapping.matchRegEx);
-				throw new RuntimeException("no match found for regular expression: " + configConnectionMapping.matchRegEx);
 			}
+		}
+		if (dsName.isEmpty()) {
+			throw new RuntimeException("no match found for path: " + filename);
+
 		}
 
 		// look for existing ScriptExecutor for this dataSource
