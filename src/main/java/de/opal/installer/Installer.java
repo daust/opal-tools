@@ -163,6 +163,7 @@ public class Installer {
 			Msg.println("** Connection Pool File  : " + this.configManagerConnectionPools.getConfigFileName());
 			Msg.println("**");
 			Msg.println("** File Encoding (System): " + System.getProperty("file.encoding"));
+			Msg.println("** Current User          : " + System.getProperty("user.name"));
 			Msg.println("*************************\n");
 
 			logfile.appendln("OPAL Installer version " + this.version);
@@ -180,6 +181,7 @@ public class Installer {
 			logfile.appendln("** Connection Pool File  : " + this.configManagerConnectionPools.getConfigFileName());
 			logfile.appendln("**");
 			logfile.appendln("** File Encoding (System): " + System.getProperty("file.encoding"));
+			logfile.appendln("** Current User          : " + System.getProperty("user.name"));
 			logfile.appendln("*************************\n");
 
 			Utils.waitForEnter("Please press <enter> to list the files to be installed ...");
