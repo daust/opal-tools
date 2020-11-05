@@ -33,6 +33,7 @@ import de.opal.installer.config.ConfigEncodingMapping;
 import de.opal.installer.config.ConfigManager;
 import de.opal.installer.util.Msg;
 import de.opal.installer.util.Utils;
+import de.opal.utils.OSDetector;
 
 public class SetupManager {
 
@@ -513,7 +514,7 @@ public class SetupManager {
 				}
 
 				int exitCode = process.waitFor();
-				System.out.println("\nExited with error code : " + exitCode);
+				//System.out.println("\nExited with error code : " + exitCode);
 
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -727,6 +728,12 @@ public class SetupManager {
 
 		// close keyboard input scanner
 		kbd.close();
+		
+		// ----------------------------------------------------------
+		// open folder $PROJECT_ROOT
+		// ----------------------------------------------------------
+		Msg.println("\nOpen PROJECT_ROOT: " + projectRootDir + "...\n");
+		OSDetector.open(new File(projectRootDir));
 	}
 
 }

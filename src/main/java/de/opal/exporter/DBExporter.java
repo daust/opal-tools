@@ -66,13 +66,13 @@ public class DBExporter {
 	// @Option(name = "-p", handler=WellBehavedStringArrayOptionHandler.class)
 	// private List<String> pList=new ArrayList<String>();
 
-	@Option(name = "-i", handler = WellBehavedStringArrayOptionHandler.class, usage = "include filter, e.g.: %XLIB%", aliases = "--include", metaVar = "<filter1> [<filter2>] ... [n]")
+	@Option(name = "-i", handler = WellBehavedStringArrayOptionHandler.class, usage = "include filter, e.g.: %XLIB% or *XLIB*", aliases = "--include", metaVar = "<filter1> [<filter2>] ... [n]")
 	private List<String> includeFilters = new ArrayList<String>();
 
 	@Option(name = "-it", handler = WellBehavedStringArrayOptionHandler.class, usage = "include types, e.g.: TABLE PACKAGE", aliases = "--include-types", metaVar = "<type1> [<type2>] ... [n]")
 	private List<String> includeTypes = new ArrayList<String>();
 
-	@Option(name = "-e", handler = WellBehavedStringArrayOptionHandler.class, usage = "exclude filter, e.g.: %AQ$% %SYS_%", aliases = "--exclude", metaVar = "<type1> [<type2>] ... [n]")
+	@Option(name = "-e", handler = WellBehavedStringArrayOptionHandler.class, usage = "exclude filter, e.g.: %AQ$% %SYS_% or *SYS_*", aliases = "--exclude", metaVar = "<type1> [<type2>] ... [n]")
 	private List<String> excludeFilters = new ArrayList<String>();
 
 	@Option(name = "-et", handler = WellBehavedStringArrayOptionHandler.class, usage = "exclude types, e.g.: JOB", aliases = "--exclude-types", metaVar = "<type1> [<type2>] ... [n]")

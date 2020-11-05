@@ -2,6 +2,10 @@
 
 THIS IS STILL WORK IN PROGRESS ... not released yet. 
 
+* [opal-exporter](src/doc/opal-exporter.md)
+* opal-installer
+
+
 # What is the opal-installer?
 
 After 20+ years of developing Oracle software based on SQL, PL/SQL and APEX I have finally implemented a flexible and highly configurable mechanism to move code and code changes from one environment to the next. It has to be easy to use and easy to customize, because the file system layout is different in every project. 
