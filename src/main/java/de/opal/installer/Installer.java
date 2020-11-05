@@ -376,6 +376,7 @@ public class Installer {
 				break;
 			} else {
 				log.debug("  no match with regex: " + configConnectionMapping.matchRegEx);
+				throw new RuntimeException("no match found for regular expression: " + configConnectionMapping.matchRegEx);
 			}
 		}
 

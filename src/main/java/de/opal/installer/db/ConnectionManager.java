@@ -10,6 +10,7 @@ import javax.sql.PooledConnection;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import de.opal.db.ConnectionUtility;
 import de.opal.installer.config.ConfigConnectionPool;
 import de.opal.installer.util.Utils;
 import oracle.jdbc.pool.OracleConnectionPoolDataSource;
@@ -94,7 +95,7 @@ public class ConnectionManager {
 
 			    ocpds = new OracleConnectionPoolDataSource();
 			    
-				ocpds.setURL(configConnectionPool.connectString);
+				ocpds.setURL(ConnectionUtility.transformJDBCConnectString(configConnectionPool.connectString));
 				ocpds.setUser(configConnectionPool.user);
 				ocpds.setPassword(configConnectionPool.password);
 

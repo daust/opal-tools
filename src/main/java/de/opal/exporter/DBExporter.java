@@ -72,7 +72,7 @@ public class DBExporter {
 	@Option(name = "-it", handler = WellBehavedStringArrayOptionHandler.class, usage = "include types, e.g.: TABLE PACKAGE", aliases = "--include-types", metaVar = "<type1> [<type2>] ... [n]")
 	private List<String> includeTypes = new ArrayList<String>();
 
-	@Option(name = "-e", handler = WellBehavedStringArrayOptionHandler.class, usage = "exclude filter, e.g.: %AQ$% %SYS_% or *SYS_*", aliases = "--exclude", metaVar = "<type1> [<type2>] ... [n]")
+	@Option(name = "-e", handler = WellBehavedStringArrayOptionHandler.class, usage = "exclude filter, e.g.: %AQ$% %SYS_% or ", aliases = "--exclude", metaVar = "<type1> [<type2>] ... [n]")
 	private List<String> excludeFilters = new ArrayList<String>();
 
 	@Option(name = "-et", handler = WellBehavedStringArrayOptionHandler.class, usage = "exclude types, e.g.: JOB", aliases = "--exclude-types", metaVar = "<type1> [<type2>] ... [n]")
@@ -277,7 +277,7 @@ public class DBExporter {
 					if (pool.name.toUpperCase().contentEquals(this.connectionPoolName.toUpperCase())) {
 						this.user = pool.user;
 						this.pwd = pool.password;
-						this.connectStr = pool.connectString.replace("jdbc:oracle:thin:@", "");
+						this.connectStr = pool.connectString;
 					}
 				}
 				if (this.user == null)

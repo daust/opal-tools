@@ -1,5 +1,9 @@
 @call #OPAL_TOOLS_USER_ENV_SCRIPT#
 
+@REM Notes for shell scripting:
+@REM - if * is specified without characters around it (* vs. LOG* or *LOG) it needs to be put in quotes for the shell: "*"
+@REM - if using multiline commands, the ^ character MUST be the LAST character on the line, else you will get errors
+
 @REM setting up the filter for exporting sources
 SET /P FILTER=Filter for DDL object names including wildcards, e.g. "xlib*" : 
 
@@ -10,7 +14,7 @@ SET /P FILTER=Filter for DDL object names including wildcards, e.g. "xlib*" :
     --skip-errors ^
     --include "%FILTER%" ^
     --exclude SYS_YOID* SYS_PLSQL* AQ$*  ^
-    --exclude-types LOB "TABLE_PARTITION" "INDEX PARTITION" ^ 
+    --exclude-types LOB "TABLE_PARTITION" "INDEX PARTITION" ^
     --extension-map package:pks "package body:pkb" ^
     --directory-map "package body:packages" ^
     --connection-pool-name #SCHEMA# ^

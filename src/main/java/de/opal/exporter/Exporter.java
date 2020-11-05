@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -17,6 +18,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import de.opal.db.ConnectionUtility;
 import de.opal.db.SQLclUtil;
 import de.opal.installer.db.DBUtils;
 import de.opal.installer.util.Msg;
@@ -206,12 +208,12 @@ public class Exporter {
 			whereClause += " and object_type in /* include_types */ (" + includeTypesBuilder.toString() + ")";
 		if (excludeTypesBuilder.length() > 0)
 			whereClause += " and object_type not in /* exclude_types */ (" + excludeTypesBuilder.toString() + ")";
-		
+
 		// always exclude all generated objects
 		whereClause += "\n   and /* exclude generated objects */ generated='N'";
-		
+
 		// exclude nested tables
-		whereClause += " and /* exclude nested tables */ (owner,object_name,object_type) not in (select owner, table_name, 'TABLE' from all_nested_tables )";
+		whereClause += "\n   and /* exclude nested tables */ (owner,object_name,object_type) not in (select owner, table_name, 'TABLE' from all_nested_tables )";
 
 		return whereClause;
 	}
@@ -244,15 +246,20 @@ public class Exporter {
 		try {
 			// initialize connection
 			sqlcl = getScriptExecutor(user, pwd, connectStr);
+
+			// // run pre-script
 			if (preScript != null) {
 				Msg.println("*** run pre script: " + postScript + "\n");
-				if (this.workingDirectorySQLcl != null) {
+				if (this.workingDirectorySQLcl != null)
 					sqlcl.setDirectory(this.workingDirectorySQLcl);
-				}
+
 				sqlclUtil.executeFile(preScript, sqlcl, null);
 			}
 
 			if (!this.skipExport) {
+				/*------------------------------------------------------------
+				 * run object export
+				 */
 				Statement objectStmt = sqlcl.getConn().createStatement();
 				// The query can be update query or can be select query
 				String whereClause = computeWhereClause(includeFilters, excludeFilters, schemas, includeTypes,
@@ -276,14 +283,11 @@ public class Exporter {
 						objectName = objectRS.getString(2);
 						objectType = objectRS.getString(3);
 
-						// Msg.print(" export: " + objectName + "[" + objectType + "]: ");
 						Msg.print(padRight("  export: " + objectName + "[" + objectType + "]", 47) + "=> ");
 						try {
 							exportObject(schemaName, objectName, objectType);
 						} catch (SQLException e) {
-							// log.error("sql error: "+e.getErrorCode());
 							log.error("sql error: " + e.getLocalizedMessage());
-							// log.error("sql error: "+e.getMessage());
 							errorList.add(objectName + "[" + objectType + "]");
 
 							// re-raise error if errors should abort program
@@ -292,26 +296,32 @@ public class Exporter {
 						}
 
 					}
+					objectStmt.close();
 					objectRS.close();
 				}
 			} else {
+				/*------------------------------------------------------------
+				 *  skip object export
+				 */
+
 				if (!this.isSilent)
 					Utils.waitForEnter("\n*** Please press <enter> to start the process ");
-
-				// run custom export file at the end
-				if (postScript != null) {
-					Msg.println("\n*** run post script: " + postScript + "\n");
-
-					if (this.workingDirectorySQLcl != null) {
-						log.debug("\ncurrent working directory (before change): "
-								+ oracle.dbtools.common.utils.FileUtils.getCWD(sqlcl.getScriptRunnerContext()));
-						sqlclUtil.setWorkingDirectory(this.workingDirectorySQLcl, sqlcl);
-						log.debug("\ncurrent working directory (after change): "
-								+ oracle.dbtools.common.utils.FileUtils.getCWD(sqlcl.getScriptRunnerContext()));
-					}
-					sqlclUtil.executeFile(postScript, sqlcl, null);
-				}
 			}
+
+			// run custom export file at the end
+			if (postScript != null) {
+				Msg.println("\n*** run post script: " + postScript + "\n");
+
+				if (this.workingDirectorySQLcl != null) {
+					log.debug("\ncurrent working directory (before change): "
+							+ oracle.dbtools.common.utils.FileUtils.getCWD(sqlcl.getScriptRunnerContext()));
+					sqlclUtil.setWorkingDirectory(this.workingDirectorySQLcl, sqlcl);
+					log.debug("\ncurrent working directory (after change): "
+							+ oracle.dbtools.common.utils.FileUtils.getCWD(sqlcl.getScriptRunnerContext()));
+				}
+				sqlclUtil.executeFile(postScript, sqlcl, null);
+			}
+
 			displayStatsFooter(errorList, totalObjectCnt, startTime);
 		} catch (Exception e) {
 			log.error(e.getMessage());
@@ -362,17 +372,25 @@ public class Exporter {
 	private void exportObject(String schemaName, String objectName, String objectType)
 			throws SQLException, IOException {
 		String content = "";
-		Statement ddlStmt = null;
+		PreparedStatement ddlStmt = null;
+		PreparedStatement ddlStmtDependent = null;
 		ResultSet ddlRS = null;
-		String actualObjectType=ObjectTypeMappingMetadata.map2TypeForDBMS(objectType);
+		String actualObjectType = ObjectTypeMappingMetadata.map2TypeForDBMS(objectType);
 
 		// get object ddl
 		try {
-			ddlStmt = sqlcl.getConn().createStatement();
+			// ddlStmt = sqlcl.getConn().pre .createStatement();
 			// The query can be update query or can be select query
-			String ddlQuery = "SELECT dbms_metadata.get_ddl(object_type=>'" + actualObjectType
-					+ "', name=>'" + objectName + "', schema=>'" + schemaName + "') ddl from dual";
-			boolean ddlQueryStatus = ddlStmt.execute(ddlQuery);
+			// String ddlQuery = "SELECT dbms_metadata.get_ddl(object_type=>'" +
+			// actualObjectType + "', name=>'"
+			// + objectName + "', schema=>'" + schemaName + "') ddl from dual";
+			String ddlQuery = "SELECT dbms_metadata.get_ddl(object_type=>?, name=>?, schema=>?) ddl from dual";
+			ddlStmt = sqlcl.getConn().prepareStatement(ddlQuery);
+			ddlStmt.setString(1, actualObjectType);
+			ddlStmt.setString(2, objectName);
+			ddlStmt.setString(3, schemaName);
+
+			boolean ddlQueryStatus = ddlStmt.execute();
 			if (ddlQueryStatus) {
 				// query is a select query.
 				ddlRS = ddlStmt.getResultSet();
@@ -396,12 +414,11 @@ public class Exporter {
 		// export dependent objects
 		if (this.dependentObjectsMap.containsKey(objectType)) {
 			for (String depObjectType : this.dependentObjectsMap.get(objectType)) {
-				actualObjectType=ObjectTypeMappingMetadata.map2TypeForDBMS(depObjectType);
+				actualObjectType = ObjectTypeMappingMetadata.map2TypeForDBMS(depObjectType);
 				log.debug("object type mapping: " + depObjectType + " => " + actualObjectType);
-				
+
 				// get dependent DDL
 				try {
-					ddlStmt = sqlcl.getConn().createStatement();
 					// The query can be update query or can be select query
 					/*
 					 * DBMS_METADATA.GET_DEPENDENT_DDL ( object_type IN VARCHAR2, base_object_name
@@ -410,13 +427,19 @@ public class Exporter {
 					 * VARCHAR2 DEFAULT 'DDL', object_count IN NUMBER DEFAULT 10000) RETURN CLOB;
 					 */
 					// Msg.println(" - " + depObjectType);
-					String ddlQuery = "SELECT dbms_metadata.get_dependent_ddl(object_type=>'" + actualObjectType
-							+ "', base_object_name =>'" + objectName + "', base_object_schema=>'" + schemaName
-							+ "') ddl from dual";
-					boolean ddlQueryStatus = ddlStmt.execute(ddlQuery);
+//					String ddlQuery = "SELECT dbms_metadata.get_dependent_ddl(object_type=>'" + actualObjectType
+//							+ "', base_object_name =>'" + objectName + "', base_object_schema=>'" + schemaName
+//							+ "') ddl from dual";
+					String ddlQuery = "SELECT dbms_metadata.get_dependent_ddl(object_type=>?, base_object_name =>?, base_object_schema=>?) ddl from dual";
+					ddlStmtDependent = sqlcl.getConn().prepareStatement(ddlQuery);
+					ddlStmtDependent.setString(1, actualObjectType);
+					ddlStmtDependent.setString(2, objectName);
+					ddlStmtDependent.setString(3, schemaName);
+					
+					boolean ddlQueryStatus = ddlStmtDependent.execute();
 					if (ddlQueryStatus) {
 						// query is a select query.
-						ddlRS = ddlStmt.getResultSet();
+						ddlRS = ddlStmtDependent.getResultSet();
 						while (ddlRS.next()) {
 							content += "\n\n" + DBUtils.clobToString(ddlRS.getClob(1));
 							log.debug(content);
@@ -425,7 +448,7 @@ public class Exporter {
 						ddlRS.close();
 					} else {
 						// query can be update or any query apart from select query
-						int count = ddlStmt.getUpdateCount();
+						int count = ddlStmtDependent.getUpdateCount();
 						log.debug("Total records updated: " + count);
 					}
 				} catch (SQLException e) {
@@ -436,6 +459,10 @@ public class Exporter {
 						throw (e);
 					}
 				} finally {
+					if (ddlStmtDependent != null)
+						ddlStmtDependent.close();
+					if (ddlStmt != null)
+						ddlStmt.close();
 					if (ddlRS != null)
 						ddlRS.close();
 					if (ddlStmt != null)
@@ -498,7 +525,7 @@ public class Exporter {
 
 			ocpds = new OracleConnectionPoolDataSource();
 
-			ocpds.setURL("jdbc:oracle:thin:@" + connectStr);
+			ocpds.setURL(ConnectionUtility.transformJDBCConnectString(connectStr));
 			ocpds.setUser(user);
 			ocpds.setPassword(pwd);
 

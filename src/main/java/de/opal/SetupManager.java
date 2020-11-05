@@ -206,8 +206,8 @@ public class SetupManager {
 			FileUtils.writeStringToFile(new File(confFilename), "{}", Charset.defaultCharset());
 
 			// prompt for url for all connections in this file
-			String envJDBCUrl = promptForInput(kbd, "    JDBC url for environment " + env + ": ",
-					"jdbc:oracle:thin:@127.0.0.1:1521:xe");
+			String envJDBCUrl = promptForInput(kbd, "    JDBC url for environment " + env + " (hostname:port:sid or hostname:port/servicename): ",
+					"127.0.0.1:1521:xe");
 
 			ConfigData configData = new ConfigData();
 			configData.clearDefaults();
