@@ -206,6 +206,12 @@ public class Exporter {
 			whereClause += " and object_type in /* include_types */ (" + includeTypesBuilder.toString() + ")";
 		if (excludeTypesBuilder.length() > 0)
 			whereClause += " and object_type not in /* exclude_types */ (" + excludeTypesBuilder.toString() + ")";
+		
+		// always exclude all generated objects
+		whereClause += "\n   and /* exclude generated objects */ generated='N'";
+		
+		// exclude nested tables
+		whereClause += " and /* exclude nested tables */ (owner,object_name,object_type) not in (select owner, table_name, 'TABLE' from all_nested_tables )";
 
 		return whereClause;
 	}
@@ -258,7 +264,7 @@ public class Exporter {
 				Msg.println("");
 
 				if (!this.isSilent)
-					Utils.waitForEnter("\n*** Please press <enter> to start the process ");
+					Utils.waitForEnter("*** Please press <enter> to start the process ");
 
 				boolean status = objectStmt.execute(objectQuery);
 				if (status) {
@@ -305,10 +311,8 @@ public class Exporter {
 					}
 					sqlclUtil.executeFile(postScript, sqlcl, null);
 				}
-
-				displayStatsFooter(errorList, totalObjectCnt, startTime);
-
 			}
+			displayStatsFooter(errorList, totalObjectCnt, startTime);
 		} catch (Exception e) {
 			log.error(e.getMessage());
 			// close connection
@@ -331,7 +335,7 @@ public class Exporter {
 		String timeElapsedString = String.format("%d:%02d", minutes, seconds);
 
 		if (!this.skipExport) {
-			Msg.println("*** The export finished in " + timeElapsedString + " [mm:ss] and exported "
+			Msg.println("\n*** The export finished in " + timeElapsedString + " [mm:ss] and exported "
 					+ (totalObjectCnt - errorList.size()) + "/" + totalObjectCnt + " objects successfully.");
 
 			if (errorList.size() > 0) {
@@ -342,7 +346,7 @@ public class Exporter {
 				}
 			}
 		} else {
-			Msg.println("*** The script finished in " + timeElapsedString + " [mm:ss].");
+			Msg.println("\n*** The script finished in " + timeElapsedString + " [mm:ss].");
 		}
 	}
 

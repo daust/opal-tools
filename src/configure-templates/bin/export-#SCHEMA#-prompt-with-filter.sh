@@ -9,7 +9,8 @@ opal-export.sh --output-dir "$OPAL_TOOLS_SRC_SQL_DIR" \
     --post-script ${OPAL_TOOLS_HOME_DIR}/conf/opal-export-post-script.sql \
     --skip-errors \
     --include "${FILTER}" \
-    --exclude SYS_* AQ$* \
+    --exclude SYS_YOID* SYS_PLSQL* AQ$*  \
+    --exclude-types LOB "TABLE_PARTITION" "INDEX PARTITION" \
     --extension-map package:pks "package body:pkb" \
     --directory-map "package body:packages" \
     --connection-pool-name #SCHEMA# \
