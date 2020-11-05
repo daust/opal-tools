@@ -9,14 +9,13 @@ import java.io.FileFilter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Scanner;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -53,6 +52,14 @@ public class SetupManager {
 	private String environmentColorListArr[] = null;
 	
 	private String environmentExportConnection=null;
+	
+	// File encoding in Java, UTF8, Cp1252, etc.
+	// See column "Canonical Name for java.io and java.lang API" here: 
+	// https://docs.oracle.com/javase/8/docs/technotes/guides/intl/encoding.doc.html
+	// both UTF8 and UTF-8 work, but UTF-8 seems to be the default - confusing, doesn't match the documentation
+	// it is different on Windows and Mac ... the value is not in the same column!
+	private String fileEncoding=null;
+	private String utf8_default=StandardCharsets.UTF_8.toString();
 
 	String localDir = System.getProperty("user.dir");
 
@@ -413,9 +420,9 @@ public class SetupManager {
 		// add encoding mapping
 		ConfigEncodingMapping map = null;
 		if (osIsWindows()) {
-			map = new ConfigEncodingMapping("UTF8", "\\\\sql\\\\.*apex.*\\\\.*f*sql");
+			map = new ConfigEncodingMapping(utf8_default, "\\\\sql\\\\.*apex.*\\\\.*f*sql");
 		} else {
-			map = new ConfigEncodingMapping("UTF8", "/sql/.*apex.*/.*f*sql");
+			map = new ConfigEncodingMapping(utf8_default, "/sql/.*apex.*/.*f*sql");
 		}
 		confMgrInst.getConfigData().encodingMappings.add(map);
 
@@ -630,6 +637,8 @@ public class SetupManager {
 			newContents = newContents.replace("#OPAL_TOOLS_SET_COLOR_COMMAND#", colorCommand);
 
 		}
+		
+		newContents = newContents.replace("#FILE.ENCODING#", this.fileEncoding);
 
 		return newContents;
 	}
@@ -669,6 +678,7 @@ public class SetupManager {
 				"List of shell colors for the environments (comma-separated, e.g. green,yellow,red)",
 				"green,yellow,red");
 		environmentExportConnection = promptForInput(kbd, "which is your developement environment? This is used for the export: ", environmentListString.split(",")[0]);
+		fileEncoding = promptForInput(kbd, "file encoding (e.g. UTF-8 or Cp1252, default is current system encoding): ", System.getProperty("file.encoding"));
 
 		log.debug("***");
 		log.debug("Project root directory, typically the target of a GIT or SVN export: " + projectRootDir);
@@ -682,6 +692,7 @@ public class SetupManager {
 		log.debug("List of environments: " + environmentListString);
 		log.debug("List of shell colors: " + environmentColorListString);
 		log.debug("Environment export connection: " + environmentExportConnection);
+		log.debug("File encoding: " + fileEncoding);
 		log.debug("***");
 
 		Utils.waitForEnter("Please press <enter> to proceed ...");

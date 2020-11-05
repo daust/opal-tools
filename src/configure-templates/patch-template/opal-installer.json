@@ -8,9 +8,9 @@
     "connectionMappings": [],
     "sqlFileRegEx": "\\.(sql|pks|pkb|trg)$",
     "registryTargets": [],
-    "encodingMappings": [  /* most common ones: UTF8, Cp1252 */ 
+    "encodingMappings": [  /* most common ones: UTF-8, Cp1252 */ 
         { 
-            "encoding": "UTF8",
+            "encoding": "UTF-8",
             "matchRegEx": "\\\\sql\\\\.*apex.*\\\\.*f*sql"
         }/*,
         { // catch all 

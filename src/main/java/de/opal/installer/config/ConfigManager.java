@@ -151,7 +151,7 @@ public class ConfigManager {
 
 		try (Reader reader = new InputStreamReader(new FileInputStream(configFile), StandardCharsets.UTF_8)) {
 			GsonBuilder builder = new GsonBuilder();
-			Gson gson = builder.excludeFieldsWithoutExposeAnnotation().setPrettyPrinting().create();
+			Gson gson = builder.excludeFieldsWithoutExposeAnnotation().setPrettyPrinting().disableHtmlEscaping().create();
 
 			configData = gson.fromJson(reader, ConfigData.class);
 
