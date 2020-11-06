@@ -231,7 +231,7 @@ public class Exporter {
 	 * @param jdbcURL
 	 * @throws Exception
 	 */
-	public void export(File preScript, File postScript, List<String> includeFilters, List<String> excludeFilters,
+	public void export(List<File> preScripts, List<File> postScripts, List<String> includeFilters, List<String> excludeFilters,
 			List<String> schemas, List<String> includeTypes, List<String> excludeTypes) throws Exception {
 		SQLclUtil sqlclUtil = new SQLclUtil();
 		String schemaName = "";
@@ -247,13 +247,15 @@ public class Exporter {
 			// initialize connection
 			sqlcl = getScriptExecutor(user, pwd, connectStr);
 
-			// // run pre-script
-			if (preScript != null) {
-				Msg.println("*** run pre script: " + postScript + "\n");
-				if (this.workingDirectorySQLcl != null)
-					sqlcl.setDirectory(this.workingDirectorySQLcl);
+			// run pre-script(s)
+			if (preScripts.size()>0) {
+				for (File preScript : preScripts) {
+					Msg.println("*** run pre script: " + preScript + "\n");
+					if (this.workingDirectorySQLcl != null)
+						sqlcl.setDirectory(this.workingDirectorySQLcl);
 
-				sqlclUtil.executeFile(preScript, sqlcl, null);
+					sqlclUtil.executeFile(preScript, sqlcl, null);
+				}
 			}
 
 			if (!this.skipExport) {
@@ -308,19 +310,19 @@ public class Exporter {
 					Utils.waitForEnter("\n*** Please press <enter> to start the process ");
 			}
 
-			// run custom export file at the end
-			if (postScript != null) {
-				Msg.println("\n*** run post script: " + postScript + "\n");
+			// run post-script(s)
+			if (postScripts.size()>0) {
+				for (File postScript : postScripts) {
+					Msg.println("*** run post script: " + postScript + "\n");
+					if (this.workingDirectorySQLcl != null)
+						sqlcl.setDirectory(this.workingDirectorySQLcl);
 
-				if (this.workingDirectorySQLcl != null) {
-					log.debug("\ncurrent working directory (before change): "
-							+ oracle.dbtools.common.utils.FileUtils.getCWD(sqlcl.getScriptRunnerContext()));
-					sqlclUtil.setWorkingDirectory(this.workingDirectorySQLcl, sqlcl);
-					log.debug("\ncurrent working directory (after change): "
-							+ oracle.dbtools.common.utils.FileUtils.getCWD(sqlcl.getScriptRunnerContext()));
+					sqlclUtil.executeFile(postScript, sqlcl, null);
 				}
-				sqlclUtil.executeFile(postScript, sqlcl, null);
 			}
+			//sqlclUtil.setWorkingDirectory(this.workingDirectorySQLcl, sqlcl);
+			//log.debug("\ncurrent working directory (after change): "
+			//+ oracle.dbtools.common.utils.FileUtils.getCWD(sqlcl.getScriptRunnerContext()));
 
 			displayStatsFooter(errorList, totalObjectCnt, startTime);
 		} catch (Exception e) {

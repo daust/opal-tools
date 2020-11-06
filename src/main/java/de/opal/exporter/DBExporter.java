@@ -109,11 +109,11 @@ public class DBExporter {
 	// "--template_dir", metaVar = "TEMPLATE DIRECTORY")
 	// private File templateDir;
 
-	@Option(name = "-pre", usage = "script (sqlplus/sqlcl) that is running to initialize the session, similar to the login.sql file for sqlplus, e.g. ./login.sql or ./init.sql", aliases = "--pre-script", metaVar = "<script>")
-	private File preScript;
+	@Option(name = "-pre", usage = "script (sqlplus/sqlcl) that is running to initialize the session, similar to the login.sql file for sqlplus, e.g. ./login.sql or ./init.sql", aliases = "--pre-script", metaVar = "<script> [<script2>] ...")
+	private List<File> preScripts = new ArrayList<File>();
 
-	@Option(name = "-post", usage = "script (sqlplus/sqlcl) that is running in the end to export custom objects, e.g. ./apex.sql", aliases = "--post-script", metaVar = "<script>")
-	private File postScript;
+	@Option(name = "-post", usage = "script (sqlplus/sqlcl) that is running in the end to export custom objects, e.g. ./apex.sql", aliases = "--post-script", metaVar = "<script> [<script2>] ...")
+	private List<File> postScripts = new ArrayList<File>();
 
 	@Option(name = "--silent", usage = "turns off prompts")
 	private boolean isSilent = false;
@@ -179,7 +179,7 @@ public class DBExporter {
 				dbExporter.skipErrors, dbExporter.dependentObjectsMap, dbExporter.isSilent,
 				dbExporter.extensionMappingsMap, dbExporter.directoryMappingsMap, dbExporter.filenameTemplate,
 				dbExporter.filenameReplaceBlanks, dbExporter.workingDirectorySQLcl, dbExporter.skipExport);
-		exporter.export(dbExporter.preScript, dbExporter.postScript, dbExporter.includeFilters,
+		exporter.export(dbExporter.preScripts, dbExporter.postScripts, dbExporter.includeFilters,
 				dbExporter.excludeFilters, dbExporter.schemas, dbExporter.includeTypes, dbExporter.excludeTypes);
 
 		Msg.println("\n*** done.");
@@ -402,15 +402,15 @@ public class DBExporter {
 				sb.append("* Dependent Objects        : " + this.dependentObjects + lSep);
 		}
 
-		if (this.preScript != null || this.postScript != null) {
+		if (this.preScripts.size() >0 || this.postScripts.size()> 0) {
 			sb.append("*" + lSep);
 			// sb.append("* Arguments : " + this.arguments+lSep);
-			if (this.workingDirectorySQLcl != null && (this.preScript != null || this.postScript != null))
+			if (this.workingDirectorySQLcl != null && (this.preScripts.size() >0 || this.postScripts.size()> 0))
 				sb.append("* Script Working Directory : " + this.workingDirectorySQLcl + lSep);
-			if (this.preScript != null)
-				sb.append("* Pre Script               : " + this.preScript + lSep);
-			if (this.postScript != null)
-				sb.append("* Post Script              : " + this.postScript + lSep);
+			if (this.preScripts.size() >0)
+				sb.append("* Pre Scripts              : " + this.preScripts.toString() + lSep);
+			if (this.postScripts.size() > 0 )
+				sb.append("* Post Scripts             : " + this.postScripts.toString() + lSep);
 		}
 
 		if (!this.skipExport) {
@@ -456,8 +456,8 @@ public class DBExporter {
 			log.debug("  - " + flt);
 		}
 
-		log.debug("--init_sql_file: " + this.preScript);
-		log.debug("--custom_export: " + this.postScript);
+		log.debug("--init_sql_file: " + this.preScripts.toString());
+		log.debug("--custom_export: " + this.postScripts.toString());
 		// log.debug("--template_dir: " + this.templateDir);
 
 		/*

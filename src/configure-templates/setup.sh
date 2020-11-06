@@ -3,5 +3,5 @@
 # setting important environment variables for the scripts to be used. 
 #--------------------------------------------------------------------------
 
-java -cp "lib/*" de.opal.SetupManager $*
+java -cp "lib/*" de.opal.setup.SetupManager $*
 
