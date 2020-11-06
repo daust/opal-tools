@@ -1,4 +1,4 @@
-package setup;
+package de.opal.setup;
 
 import static org.kohsuke.args4j.ExampleMode.ALL;
 

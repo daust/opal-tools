@@ -5,6 +5,7 @@ import static org.kohsuke.args4j.ExampleMode.ALL;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -19,6 +20,7 @@ import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
+import org.kohsuke.args4j.OptionHandlerFilter;
 import org.kohsuke.args4j.ParserProperties;
 
 import de.opal.installer.config.ConfigConnectionPool;
@@ -46,19 +48,22 @@ public class DBExporter {
 	 * - https://args4j.kohsuke.org/args4j/apidocs 
 	 */
 
-	@Option(name = "-url", usage = "database connection jdbc url, \ne.g.: scott/tiger@localhost:1521:ORCL", metaVar = "<jdbc url>", forbids = {
+	@Option(name = "-h", aliases = "--help", usage = "show this help page", help=true)
+	private boolean showHelp;
+
+	@Option(name = "--url", usage = "database connection jdbc url, \ne.g.: scott/tiger@localhost:1521:ORCL", metaVar = "<jdbc url>", forbids = {
 			"--connection-pool-file", "--connection-pool-name" })
 	private String jdbcURL;
 
-	@Option(name = "-cpf", aliases = "--connection-pool-file", usage = "connection pool file\ne.g.: connections-dev.json", metaVar = "<file>", forbids = {
+	@Option(name = "--connection-pool-file", usage = "connection pool file\ne.g.: connections-dev.json", metaVar = "<file>", forbids = {
 			"--url" })
 	private String connectionPoolFile;
-
-	@Option(name = "-cpn", aliases = "--connection-pool-name", usage = "connection pool name\ne.g.: scott", metaVar = "<connection pool name>", forbids = {
+	
+	@Option(name ="--connection-pool-name", usage = "connection pool name\ne.g.: scott", metaVar = "<connection pool name>", forbids = {
 			"--url" })
 	private String connectionPoolName;
 
-	@Option(name = "-o", usage = "output directory, e.g. '.' or '/u01/project/src/sql'", aliases = "--output-dir", metaVar = "<directory>", required = true)
+	@Option(name = "--output-dir", usage = "output directory, e.g. '.' or '/u01/project/src/sql'", metaVar = "<directory>", required = true)
 	private String outputDir;
 
 	// passing in multiple parameters: -p p1 p2 p3
@@ -66,28 +71,28 @@ public class DBExporter {
 	// @Option(name = "-p", handler=WellBehavedStringArrayOptionHandler.class)
 	// private List<String> pList=new ArrayList<String>();
 
-	@Option(name = "-i", handler = WellBehavedStringArrayOptionHandler.class, usage = "include filter, e.g.: %XLIB% or *XLIB*", aliases = "--include", metaVar = "<filter1> [<filter2>] ... [n]")
+	@Option(name = "--includes", handler = WellBehavedStringArrayOptionHandler.class, usage = "include filter, e.g.: %XLIB% or *XLIB*", metaVar = "<filter1> [<filter2>] ... [n]")
 	private List<String> includeFilters = new ArrayList<String>();
 
-	@Option(name = "-it", handler = WellBehavedStringArrayOptionHandler.class, usage = "include types, e.g.: TABLE PACKAGE", aliases = "--include-types", metaVar = "<type1> [<type2>] ... [n]")
+	@Option(name = "--include-types", handler = WellBehavedStringArrayOptionHandler.class, usage = "include types, e.g.: TABLE PACKAGE", metaVar = "<type1> [<type2>] ... [n]")
 	private List<String> includeTypes = new ArrayList<String>();
 
-	@Option(name = "-e", handler = WellBehavedStringArrayOptionHandler.class, usage = "exclude filter, e.g.: %AQ$% %SYS_% or ", aliases = "--exclude", metaVar = "<type1> [<type2>] ... [n]")
+	@Option(name = "--excludes", handler = WellBehavedStringArrayOptionHandler.class, usage = "exclude filter, e.g.: %AQ$% %SYS_% or ", metaVar = "<type1> [<type2>] ... [n]")
 	private List<String> excludeFilters = new ArrayList<String>();
 
-	@Option(name = "-et", handler = WellBehavedStringArrayOptionHandler.class, usage = "exclude types, e.g.: JOB", aliases = "--exclude-types", metaVar = "<type1> [<type2>] ... [n]")
+	@Option(name = "--exclude-types", handler = WellBehavedStringArrayOptionHandler.class, usage = "exclude types, e.g.: JOB", metaVar = "<type1> [<type2>] ... [n]")
 	private List<String> excludeTypes = new ArrayList<String>();
 
-	@Option(name = "-s", handler = WellBehavedStringArrayOptionHandler.class, usage = "schemas to be included, only relevant when connecting as DBA", aliases = "--schemas", metaVar = "<schema1> [<schema2>] ... [n]")
+	@Option(name = "--include-schemas", handler = WellBehavedStringArrayOptionHandler.class, usage = "schemas to be included, only relevant when connecting as DBA", metaVar = "<schema1> [<schema2>] ... [n]")
 	private List<String> schemas = new ArrayList<String>();
 
-	@Option(name = "-d", handler = WellBehavedStringArrayOptionHandler.class, usage = "dependent objects, e.g. TABLE:COMMENT,INDEX", aliases = "--dependent-objects", metaVar = "<type>:<deptype1>,<deptype2> ... [n]")
+	@Option(name = "--dependent-objects", handler = WellBehavedStringArrayOptionHandler.class, usage = "dependent objects, e.g. TABLE:COMMENT,INDEX", metaVar = "<type>:<deptype1>,<deptype2> ... [n]")
 	private List<String> dependentObjects = new ArrayList<String>();
 
-	@Option(name = "-em", handler = WellBehavedStringArrayOptionHandler.class, usage = "mapping of object types to filename suffixes, e.g.: DEFAULT:sql PACKAGE:pks", aliases = "--extension-map", metaVar = "<map1> [<map2>] ... [n]")
+	@Option(name = "--extension-mappings", handler = WellBehavedStringArrayOptionHandler.class, usage = "mapping of object types to filename suffixes, e.g.: DEFAULT:sql PACKAGE:pks", metaVar = "<map1> [<map2>] ... [n]")
 	private List<String> extensionMappings = new ArrayList<String>();
 
-	@Option(name = "-dm", handler = WellBehavedStringArrayOptionHandler.class, usage = "mapping of object types to directories, e.g.: PACKAGE:package \"package body:package\"", aliases = "--directory-map", metaVar = "<map1> [<map2>] ... [n]")
+	@Option(name = "--directory-mappings", handler = WellBehavedStringArrayOptionHandler.class, usage = "mapping of object types to directories, e.g.: PACKAGE:package \"package body:package\"", metaVar = "<map1> [<map2>] ... [n]")
 	private List<String> directoryMappings = new ArrayList<String>();
 
 	// receives other command line parameters than options
@@ -99,26 +104,22 @@ public class DBExporter {
 	// from all_objects")
 	// private boolean selectFromAllObjects = false;
 
-	@Option(name = "-se", aliases = "--skip-errors", usage = "ORA- errors will not cause the program to abort")
+	@Option(name = "--skip-errors", usage = "ORA- errors will not cause the program to abort")
 	private boolean skipErrors = false;
 
-	@Option(name = "-sexp", aliases = "--skip-export", usage = "skip the export, this way only the pre- and post-scripts are run")
+	@Option(name = "--skip-export", usage = "skip the export, this way only the pre- and post-scripts are run")
 	private boolean skipExport = false;
 
-	// @Option(name = "-t", usage = "template directory", aliases =
-	// "--template_dir", metaVar = "TEMPLATE DIRECTORY")
-	// private File templateDir;
-
-	@Option(name = "-pre", usage = "script (sqlplus/sqlcl) that is running to initialize the session, similar to the login.sql file for sqlplus, e.g. ./login.sql or ./init.sql", aliases = "--pre-script", metaVar = "<script> [<script2>] ...")
+	@Option(name = "--pre-scripts", usage = "script (sqlplus/sqlcl) that is running to initialize the session, similar to the login.sql file for sqlplus, e.g. ./login.sql or ./init.sql", metaVar = "<script> [<script2>] ...")
 	private List<File> preScripts = new ArrayList<File>();
 
-	@Option(name = "-post", usage = "script (sqlplus/sqlcl) that is running in the end to export custom objects, e.g. ./apex.sql", aliases = "--post-script", metaVar = "<script> [<script2>] ...")
+	@Option(name = "--post-scripts", usage = "script (sqlplus/sqlcl) that is running in the end to export custom objects, e.g. ./apex.sql", metaVar = "<script> [<script2>] ...")
 	private List<File> postScripts = new ArrayList<File>();
 
 	@Option(name = "--silent", usage = "turns off prompts")
 	private boolean isSilent = false;
 
-	@Option(name = "-ft", usage = "template for constructing the filename\n"
+	@Option(name = "--filename-template", usage = "template for constructing the filename\n"
 			+ "e.g.: #schema#/#object_type#/#object_name#.#ext#\n\n"
 			+ "#schema#             - schema name in lower case\n"
 			+ "#object_type#        - lower case type name: 'table'\n"
@@ -129,13 +130,13 @@ public class DBExporter {
 			+ "#OBJECT_TYPE#        - upper case object type name: 'TABLE' or 'INDEX'\n"
 			+ "#OBJECT_TYPE_PLURAL# - upper case object type name in plural: 'TABLES'\n"
 			+ "#OBJECT_NAME#        - upper case object name\n"
-			+ "#EXT#                - upper case extension: 'SQL' or 'PKS'", aliases = "--filename-template", metaVar = "<template structure>", required = false)
+			+ "#EXT#                - upper case extension: 'SQL' or 'PKS'", metaVar = "<template structure>", required = false)
 	private String filenameTemplate = "#schema#/#object_type_plural#/#object_name#.#ext#";
 
 	@Option(name = "--filename-replace-blanks", usage = "replaces blanks in the filename with an _, e.g. PACKAGE BODY=>PACKAGE_BODY")
 	private boolean filenameReplaceBlanks = true;
 
-	@Option(name = "-wd", usage = "working directory for running sqlcl scripts (-pre and -post), e.g. '.' or '/u01/project/src/sql'. The default is the environment variable OPAL_TOOLS_SRC_SQL_DIR", aliases = "--working-directory", metaVar = "<directory>", required = false)
+	@Option(name = "--script-working-directory", usage = "working directory for running sqlcl scripts (-pre and -post), e.g. '.' or '/u01/project/src/sql'. The default is the environment variable OPAL_TOOLS_SRC_SQL_DIR", metaVar = "<directory>", required = false)
 	private String workingDirectorySQLcl;
 
 	// @Option(name = "-h", aliases = "--help", usage = "display this help page")
@@ -186,6 +187,18 @@ public class DBExporter {
 
 		log.debug("*** end ***");
 	}
+	
+	private void showUsage(PrintStream out, CmdLineParser parser) {
+		out.println("\njava de.opal.exporter.DBExporter [options...]");
+
+		// print the list of available options
+		parser.printUsage(out);
+		
+		out.println();
+
+		// print option sample. This is useful some time
+		out.println("  Example: java de.opal.exporter.DBExporter" + parser.printExample(OptionHandlerFilter.PUBLIC));
+	}
 
 	/**
 	 * doMain is actually doing the work
@@ -203,7 +216,7 @@ public class DBExporter {
 		try {
 			// parse the arguments.
 			parser.parseArgument(args);
-
+			
 			// help can be displayed without -url being given
 			// else -url is required
 			/*
@@ -231,6 +244,12 @@ public class DBExporter {
 			// throw new CmdLineException(parser, "No argument is given");
 
 			// check whether jdbcURL OR connection pool is specified correctly
+			if (this.showHelp) {
+				showUsage(System.out, parser);
+				System.exit(0);
+			}
+			
+			// check more complex parameters
 			if (this.jdbcURL != null || (this.connectionPoolFile != null && this.connectionPoolName != null)) {
 				// ok
 			} else {
@@ -292,18 +311,9 @@ public class DBExporter {
 			}
 
 		} catch (CmdLineException e) {
-			// if there's a problem in the command line,
-			// you'll get this exception. this will report
-			// an error message.
 			System.err.println(e.getMessage());
-			System.err.println("\njava de.opal.exporter.DBExporter [options...]");
-			// print the list of available options
-			parser.printUsage(System.err);
-			System.err.println();
-
-			// print option sample. This is useful some time
-			System.err.println("  Example: java de.opal.exporter.DBExporter" + parser.printExample(ALL));
-
+			showUsage(System.err, parser);
+			
 			System.exit(1);
 		}
 
