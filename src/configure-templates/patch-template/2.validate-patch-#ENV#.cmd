@@ -12,6 +12,6 @@ SET CURRDIR=%~dp0
 
 #OPAL_TOOLS_SET_COLOR_COMMAND#
 
-@call opal-installer.cmd executePatch VALIDATE_ONLY "%CURRDIR%opal-installer.json" "%OPAL_TOOLS_USER_CONFIG_DIR%\connections-#ENV#.json"
+@call opal-install.cmd --validate-only --config-file "%CURRDIR%opal-installer.json" --connection-pool-file "%OPAL_TOOLS_USER_CONFIG_DIR%\connections-#ENV#.json"
 
 cmd /k

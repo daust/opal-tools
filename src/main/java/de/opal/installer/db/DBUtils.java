@@ -25,8 +25,6 @@ import java.sql.Statement;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import de.opal.exporter.Exporter;
-
 public class DBUtils {
 
 	private static final Logger log = LogManager.getLogger(DBUtils.class.getName());

@@ -2,7 +2,6 @@
 
 SET CURRDIR=%~dp0
 
-@call opal-installer.cmd copyPatchFiles "%CURRDIR%sql" "%OPAL_TOOLS_SRC_SQL_DIR%" PatchFiles.txt
+@call opal-install-copy-patch-files.cmd --source-path "%OPAL_TOOLS_SRC_SQL_DIR%" --target-path "%CURRDIR%sql" --patch-file-name PatchFiles.txt
 
 cmd /k
-

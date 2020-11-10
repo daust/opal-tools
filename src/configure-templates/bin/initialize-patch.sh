@@ -7,7 +7,7 @@ export PATCH_DIRECTORY=${OPAL_TOOLS_PATCH_DIR}/${YEAR}/${DATE_STRING}-${PATCH_NA
 
 # calling the initialization and copying the the template file structure to the target 
 # patch directory
-opal-installer.sh initPatch "${PATCH_DIRECTORY}" "${OPAL_TOOLS_PATCH_TEMPLATE_DIR}"
+opal-install-copy-template.sh --source-path "${OPAL_TOOLS_PATCH_TEMPLATE_DIR}" --target-path "${PATCH_DIRECTORY}"
 
 echo
 echo "To open the finder/explorer in new window automatically, add in this file:"  

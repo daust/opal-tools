@@ -421,14 +421,17 @@ public class SetupManager {
 		ConfigEncodingMapping map = null;
 		if (osIsWindows()) {
 			map = new ConfigEncodingMapping(utf8_default, "\\\\sql\\\\.*apex.*\\\\.*f*sql");
+			confMgrInst.getConfigData().encodingMappings.add(map);
+			map = new ConfigEncodingMapping(utf8_default, "\\\\sql\\\\.*");
+			confMgrInst.getConfigData().encodingMappings.add(map);
 		} else {
 			map = new ConfigEncodingMapping(utf8_default, "/sql/.*apex.*/.*f*sql");
+			confMgrInst.getConfigData().encodingMappings.add(map);
+			map = new ConfigEncodingMapping(utf8_default, "/sql/.*");
+			confMgrInst.getConfigData().encodingMappings.add(map);
 		}
-		confMgrInst.getConfigData().encodingMappings.add(map);
-
 		// write opal-installer.json file
 		confMgrInst.writeJSONConfInitFile();
-
 	}
 
 	private void processDBSourceDirectory(Scanner kbd) throws IOException {

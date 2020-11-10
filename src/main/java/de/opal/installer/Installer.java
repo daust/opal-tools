@@ -41,39 +41,64 @@ public class Installer {
 	private ConfigManager configManagerConnectionPools;
 	private ConnectionManager connectionManager;
 
+	private String configFileName;
+	private String connectionPoolFileName;
+
 	private HashMap<String, ScriptExecutor> sqlcls = new HashMap<String, ScriptExecutor>();
 	private Logfile logfile;
 
-	private static Installer _instance;
-
 	private PatchRegistry patchRegistry;
+
+	private boolean validateOnly = false; // default is execute
 
 //	public enum RunMode {
 //		  EXECUTE,
 //		  VALIDATE_ONLY
 //		}
 
-	/**
-	 * returns Singleton Instance
-	 * 
-	 * @return Installer
-	 */
-	public static synchronized Installer getInstance() {
-		// will always be instantiated through the main() function
-		// if (_instance == null)
-		// _instance = new Installer();
+	public Installer(boolean validateOnly, String configFileName, String connectionPoolFileName) throws IOException {
+		this.validateOnly = validateOnly;
+		this.configFileName = configFileName;
+		this.connectionPoolFileName = connectionPoolFileName;
+		
+		this.readVersionFromFile();		
+		this.configManager = new ConfigManager(this.configFileName);
 
-		return _instance;
+		// after the config parameters have been initialized and read from the config
+		// file,
+		// the runMode from the command line can be set
+		if (this.validateOnly)
+			this.configManager.getConfigData().runMode = "VALIDATE_ONLY";			
+		else
+			this.configManager.getConfigData().runMode = "EXECUTE";
+			
+		// now read the connection pools from a different file
+		// both have the same structure
+		this.configManagerConnectionPools = new ConfigManager(this.connectionPoolFileName);
+		// encrypt passwords if required
+		if (this.configManagerConnectionPools.hasUnencryptedPasswords()) {
+			this.configManagerConnectionPools
+					.encryptPasswords(this.configManagerConnectionPools.getEncryptionKeyFilename(this.connectionPoolFileName));
+			// dump JSON file
+			this.configManagerConnectionPools.writeJSONConfPool();
+		}
+		// now decrypt the passwords so that they can be used internally in the program
+		this.configManagerConnectionPools
+				.decryptPasswords(this.configManagerConnectionPools.getEncryptionKeyFilename(this.connectionPoolFileName));
+		
+		this.connectionManager = ConnectionManager.getInstance();
+		// store definitions but don't create connections
+		this.connectionManager.initialize(this.configManagerConnectionPools.getConfigData().connectionPools);
+
 	}
 
-	/**
-	 * Constructor
-	 * 
-	 * - Reads settings from configuration file - Initializes the connectionManager
-	 * 
-	 * @throws IOException
-	 */
-	public Installer(String[] args) throws IOException {
+	// empty constructor
+	public Installer() {
+
+	}
+
+
+	private void readVersionFromFile() {
 		Properties prop = new Properties();
 		String result = "";
 
@@ -87,13 +112,6 @@ public class Installer {
 		}
 
 		this.version = result;
-
-		readConfig(args);
-		this.connectionManager = ConnectionManager.getInstance();
-
-		// store definitions but don't create connections
-		this.connectionManager.initialize(this.configManagerConnectionPools.getConfigData().connectionPools);
-
 	}
 
 	private String generateLogFileName(String logFileDir, String runMode, String env) {
@@ -264,59 +282,6 @@ public class Installer {
 		}
 	}
 
-	/**
-	 * Read the values from the JSON config file and set up the configManager
-	 * 
-	 * @param args
-	 * @throws IOException
-	 */
-	private void readConfig(String[] args) throws IOException {
-		if (args.length < 3) {
-			showUsage();
-			System.exit(1);
-		}
-
-		this.configManager = new ConfigManager(args[1]);
-
-		// after the config parameters have been initialized and read from the config
-		// file,
-		// the runMode from the command line can be set
-		this.configManager.getConfigData().runMode = args[0];
-
-		// now read the connection pools from a different file
-		// both have the same structure
-		this.configManagerConnectionPools = new ConfigManager(args[2]);
-		// encrypt passwords if required
-		if (this.configManagerConnectionPools.hasUnencryptedPasswords()) {
-			this.configManagerConnectionPools
-					.encryptPasswords(this.configManagerConnectionPools.getEncryptionKeyFilename(args[2]));
-			// dump JSON file
-			this.configManagerConnectionPools.writeJSONConfPool();
-		}
-		// now decrypt the passwords so that they can be used internally in the program
-		this.configManagerConnectionPools
-				.decryptPasswords(this.configManagerConnectionPools.getEncryptionKeyFilename(args[2]));
-
-	}
-
-	private void showUsage() {
-		Msg.println("");
-		Msg.println("OPAL Installer version " + this.version);
-		Msg.println("");
-		Msg.println("Usage: ");
-		Msg.println("");
-		Msg.println(
-				"java -jar opal_installer.jar executePatch EXECUTE <json config file incl. path> <json config file for connection information>");
-		Msg.println("");
-		Msg.println(
-				"java -jar opal_installer.jar executePatch VALIDATE_ONLY <json config file incl. path> <json config file for connection information>");
-		Msg.println("");
-		Msg.println(
-				"e.g.: java -jar opal_installer.jar executePatch VALIDATE_ONLY /.../installer.json /.../connectionPools.json");
-		Msg.println(
-				"e.g.: java -jar opal_installer.jar executePatch EXECUTE /.../installer.json /.../connectionPools.json");
-		Msg.println("");
-	}
 
 	public ScriptExecutor getScriptExecutorByDsName(String dsName) throws SQLException {
 		Connection conn;

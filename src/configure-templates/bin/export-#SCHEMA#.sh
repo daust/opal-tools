@@ -3,13 +3,12 @@ source #OPAL_TOOLS_USER_ENV_SCRIPT#
 
 opal-export.sh --output-dir "$OPAL_TOOLS_SRC_SQL_DIR" \
     --dependent-objects table:comment,index,object_grant,trigger view:comment,object_grant "materialized view:comment,index,materialized_view_log,object_grant" \
-    --pre-script ${OPAL_TOOLS_HOME_DIR}/conf/opal-export-pre-script.sql \
-    --post-script ${OPAL_TOOLS_HOME_DIR}/conf/opal-export-post-script.sql \
+    --pre-scripts ${OPAL_TOOLS_HOME_DIR}/conf/opal-export-pre-script.sql \
+    --post-scripts ${OPAL_TOOLS_HOME_DIR}/conf/opal-export-post-script.sql \
     --skip-errors \
-    --include "*" \
-    --exclude SYS_* AQ$* \
-    --extension-map package:pks "package body:pkb" \
-    --directory-map "package body:packages" \
+    --excludes SYS_* AQ$* \
+    --extension-mappings package:pks "package body:pkb" \
+    --directory-mappings "package body:packages" \
     --connection-pool-name #SCHEMA# \
     --connection-pool-file ${OPAL_TOOLS_USER_CONFIG_DIR}/connections-#ENV#.json
 

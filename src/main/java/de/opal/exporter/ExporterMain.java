@@ -1,7 +1,5 @@
 package de.opal.exporter;
 
-import static org.kohsuke.args4j.ExampleMode.ALL;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,12 +25,12 @@ import de.opal.installer.config.ConfigConnectionPool;
 import de.opal.installer.config.ConfigManager;
 import de.opal.installer.util.Msg;
 
-public class DBExporter {
+public class ExporterMain {
 
 	/*--------------------------------------------------------------------------------------
 	 * Other variables
 	 */
-	public static final Logger log = LogManager.getLogger(DBExporter.class.getName());
+	public static final Logger log = LogManager.getLogger(ExporterMain.class.getName());
 	private String user;
 	private String pwd;
 	private String connectStr;
@@ -168,7 +166,7 @@ public class DBExporter {
 	public static void main(String[] args) throws Exception {
 		log.debug("*** start ***");
 
-		DBExporter dbExporter = new DBExporter();
+		ExporterMain dbExporter = new ExporterMain();
 
 		dbExporter.readVersionFromFile();
 		dbExporter.parseParameters(args);
@@ -320,7 +318,7 @@ public class DBExporter {
 	}
 
 	public void transformParams() {
-		this.user = this.user.toUpperCase();
+		this.user = this.user.trim().toUpperCase();
 
 		// if no filter is given, everything should be exported
 		if (includeFilters.isEmpty()) {
@@ -333,56 +331,60 @@ public class DBExporter {
 		}
 		// make schemas uppercase
 		for (int i = 0; i < schemas.size(); i++) {
-			schemas.set(i, schemas.get(i).toUpperCase());
+			schemas.set(i, schemas.get(i).trim().toUpperCase());
 		}
 
 		// make filter uppercase
 		// replace *=>% for each filter
 		for (int i = 0; i < includeFilters.size(); i++) {
-			includeFilters.set(i, includeFilters.get(i).toUpperCase().replace("*", "%"));
+			includeFilters.set(i, includeFilters.get(i).trim().toUpperCase().replace("*", "%"));
 		}
 		for (int i = 0; i < excludeFilters.size(); i++) {
-			excludeFilters.set(i, excludeFilters.get(i).toUpperCase().replace("*", "%"));
+			excludeFilters.set(i, excludeFilters.get(i).trim().toUpperCase().replace("*", "%"));
 		}
 		for (int i = 0; i < this.includeTypes.size(); i++) {
-			includeTypes.set(i, includeTypes.get(i).toUpperCase().replace("*", "%"));
+			includeTypes.set(i, includeTypes.get(i).trim().toUpperCase().replace("*", "%"));
 		}
 		for (int i = 0; i < this.excludeTypes.size(); i++) {
-			excludeTypes.set(i, excludeTypes.get(i).toUpperCase().replace("*", "%"));
+			excludeTypes.set(i, excludeTypes.get(i).trim().toUpperCase().replace("*", "%"));
 		}
 
 		// make dependent objects uppercase
 		for (int i = 0; i < this.dependentObjects.size(); i++) {
-			dependentObjects.set(i, dependentObjects.get(i).toUpperCase());
+			dependentObjects.set(i, dependentObjects.get(i).trim().toUpperCase());
 		}
 		// make extension mappings uppercase
 		for (String ext : this.extensionMappings) {
-			String objectType = ext.split(":")[0];
-			String suffix = ext.split(":")[1];
+			String objectType = ext.split(":")[0].trim();
+			String suffix = ext.split(":")[1].trim();
 
 			this.extensionMappingsMap.put(objectType.toUpperCase(), suffix);
 		}
 		// make directory mappings uppercase
 		for (String ext : this.directoryMappings) {
-			String objectType = ext.split(":")[0];
-			String directory = ext.split(":")[1];
+			String objectType = ext.split(":")[0].trim();
+			String directory = ext.split(":")[1].trim();
 
 			this.directoryMappingsMap.put(objectType.toUpperCase(), directory);
 		}
 
 		// transform dependent object list into map
 		for (String dep : this.dependentObjects) {
-			String objType = dep.split(":")[0];
-			String depObj = dep.split(":")[1];
-
-			this.dependentObjectsMap.put(objType, new ArrayList<String>(Arrays.asList(depObj.split(","))));
+			String objType = dep.split(":")[0].trim();
+			String depObj = dep.split(":")[1].trim();
+		
+			ArrayList<String> depObjects= new ArrayList<String>();
+			Arrays.asList(depObj.split(",")).forEach((e) -> depObjects.add(e.trim()));
+			
+			this.dependentObjectsMap.put(objType, depObjects);
 		}
 
 		if (this.workingDirectorySQLcl == null) {
 			// set default to environment variable OPAL_TOOLS_SRC_SQL_DIR
 			log.debug("set default for workingDirectorySQLcl: " + this.workingDirectorySQLcl);
-			this.workingDirectorySQLcl = System.getenv("OPAL_TOOLS_SRC_SQL_DIR");
-		}
+			this.workingDirectorySQLcl = System.getenv("OPAL_TOOLS_SRC_SQL_DIR").trim();
+		}else
+			this.workingDirectorySQLcl=this.workingDirectorySQLcl.trim();
 	}
 
 	private void showHeaderInfo() {
