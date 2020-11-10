@@ -12,6 +12,8 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -143,7 +145,7 @@ public class SetupManager {
 
 		// Scanner kbd = new Scanner(System.in); // Create a Scanner object
 		Msg.print(prompt + " [" + defaultValue + "]: ");
-		input = kbd.nextLine();
+		input = kbd.nextLine().trim();
 		if (input.isEmpty()) {
 			input = defaultValue;
 		}
@@ -657,7 +659,7 @@ public class SetupManager {
 		Scanner kbd = new Scanner(System.in); // Create a Scanner object
 
 		projectRootDir = promptForInput(kbd, "\nProject root directory, typically the target of a GIT or SVN export",
-				projectRootDir);
+				projectRootDir.trim());
 		swDirectory = promptForInput(kbd,
 				"SW install directory (contains bin and lib directories, use '.' for local files)",
 				getOsDependentProjectRootVariable() + File.separatorChar + "opal-tools");
@@ -700,10 +702,18 @@ public class SetupManager {
 
 		Utils.waitForEnter("Please press <enter> to proceed ...");
 
-		// Split comma separated list into arrays
 		environmentListArr = environmentListString.split(",");
+		for (int i = 0; i < environmentListArr.length; i++) {
+			environmentListArr[i]=environmentListArr[i].trim();
+		}
 		schemaListArr = schemaListString.split(",");
+		for (int i = 0; i < schemaListArr.length; i++) {
+			schemaListArr[i]=schemaListArr[i].trim();
+		}
 		environmentColorListArr = environmentColorListString.split(",");
+		for (int i = 0; i < environmentColorListArr.length; i++) {
+			environmentColorListArr[i]=environmentColorListArr[i].trim();
+		}
 
 		// ----------------------------------------------------------
 		// software installation
