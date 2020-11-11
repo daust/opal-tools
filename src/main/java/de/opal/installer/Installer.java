@@ -438,7 +438,7 @@ public class Installer {
 		if (this.configManager.getConfigData().runMode.equals("EXECUTE")) {
 			// register file in patch registry
 			if (this.patchRegistry != null) {
-				this.patchRegistry.registerFile(file);
+				this.patchRegistry.registerFile(relativeFilename);
 			}
 		}
 
