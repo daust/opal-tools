@@ -16,10 +16,10 @@ set OPAL_TOOLS_USER_IDENTITY=#OPAL_TOOLS_USER_IDENTITY#
 @REM General configuration settings, typically unchanged
 @REM --------------------------------------------------------------------------
 set OPAL_TOOLS_HOME_DIR=#OPAL_TOOLS_HOME_DIR#
-set OPAL_TOOLS_JAVA_ARGS=-Dlog4j.configurationFile=%OPAL_TOOLS_HOME_DIR%\conf\log4j2.xml -Djava.util.logging.config.file=%OPAL_TOOLS_HOME_DIR%\conf\log4j.properties -Dfile.encoding=#FILE.ENCODING#
+set OPAL_TOOLS_JAVA_ARGS=-Dlog4j.configurationFile="%OPAL_TOOLS_HOME_DIR%\conf\log4j2.xml" -Djava.util.logging.config.file="%OPAL_TOOLS_HOME_DIR%\conf\log4j.properties" -Dfile.encoding=#FILE.ENCODING#
 
 @REM DEBUG: for debugging, use these log file settings
-@REM set OPAL_TOOLS_JAVA_ARGS=-Dlog4j.configurationFile=%OPAL_TOOLS_HOME_DIR%\conf\log4j2-debug.xml -Djava.util.logging.config.file=%OPAL_TOOLS_HOME_DIR%\conf\log4j-debug.properties -Dfile.encoding=#FILE.ENCODING#
+@REM set OPAL_TOOLS_JAVA_ARGS=-Dlog4j.configurationFile="%OPAL_TOOLS_HOME_DIR%\conf\log4j2-debug.xml" -Djava.util.logging.config.file="%OPAL_TOOLS_HOME_DIR%\conf\log4j-debug.properties" -Dfile.encoding=#FILE.ENCODING#
 
 set OPAL_TOOLS_USER_CONFIG_DIR=#OPAL_TOOLS_USER_CONFIG_DIR#
 set OPAL_TOOLS_SRC_SQL_DIR=#OPAL_TOOLS_SRC_SQL_DIR#

@@ -512,9 +512,9 @@ public class SetupManager {
 		} else {
 			Msg.println("\nset privileges for *.sh files\n");
 			ProcessBuilder builder = new ProcessBuilder();
-			builder.command("bash", "-c", "find " + getFullPathResolveVariables(localConfigDirectory) + " "
-					+ getFullPathResolveVariables(swDirectory) + " " + getFullPathResolveVariables(templateDirectory)
-					+ " -type f -iname \"*.sh\" -exec chmod +x {} \\;");
+			builder.command("bash", "-c", "find \"" + getFullPathResolveVariables(localConfigDirectory) + "\" \""
+					+ getFullPathResolveVariables(swDirectory) + "\" \"" + getFullPathResolveVariables(templateDirectory)
+					+ "\" -type f -iname \"*.sh\" -exec chmod +x {} \\;");
 			try {
 				Process process = builder.start();
 

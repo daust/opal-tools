@@ -85,12 +85,14 @@ public class InstallerMain {
 		Installer installer = new Installer(installerMain.validateOnly, installerMain.configFileName,
 				installerMain.connectionPoolFile, installerMain.userIdentity);
 		installer.run();
-
+		
 		Msg.println("\n*** done.");
 
 		log.debug("*** end ***");
 	}
 
+
+	
 	private void showUsage(PrintStream out, CmdLineParser parser) {
 		out.println("\njava de.opal.installer.InstallerMain [options...]");
 

@@ -1,5 +1,5 @@
 #!/bin/bash
-source #OPAL_TOOLS_USER_ENV_SCRIPT#
+source "#OPAL_TOOLS_USER_ENV_SCRIPT#"
 
 # setting up the target patch directory, e.g. \Patches\2020\2020-04-23-<patch name>
 read -p 'Patch name, e.g. jira_123 or Project-v2.5.0: ' PATCH_NAME

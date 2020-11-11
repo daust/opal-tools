@@ -20,8 +20,8 @@ public class Filesystem {
 	 * Fields
 	 */
 	private String baseDirName;
-	//private File baseDir;
-	
+	// private File baseDir;
+
 	public static final Logger log = LogManager.getLogger(Filesystem.class.getName());
 
 //	private List<FileNode> fileList = new ArrayList<FileNode>();
@@ -52,7 +52,7 @@ public class Filesystem {
 		List<FileNode> fileList = new ArrayList<FileNode>();
 
 		log.debug("\n*** Scan Tree: directory: " + baseDirName);
-		//Msg.println("\ntraversalType: " + traversalType.toString());
+		// Msg.println("\ntraversalType: " + traversalType.toString());
 
 		Path start = FileSystems.getDefault().getPath(this.baseDirName);
 		try {
@@ -70,34 +70,39 @@ public class Filesystem {
 		return fileList;
 	}
 
-
 	/**
 	 * 
 	 * 
 	 * @param srcFileList
 	 * @return
-	 * @throws IOException 
+	 * @throws IOException
 	 */
-	public List<FileNode> filterTreeInorder(List<FileNode> srcFileList, String sqlFileRegEx, Logfile logfile, ConfigManager configManager) throws IOException {
+	public List<FileNode> filterTreeInorder(List<FileNode> srcFileList, String sqlFileRegEx, Logfile logfile,
+			ConfigManager configManager) throws IOException {
 
 		List<FileNode> fileList = new ArrayList<FileNode>();
 
 		log.debug("\n*** filterTreeInorder ");
-		log.debug("\nregex: "+sqlFileRegEx);
-		
-		//Msg.print("*** List of files to be installed:\n\n");
-		
+		log.debug("\nregex: " + sqlFileRegEx);
+
+		// Msg.print("*** List of files to be installed:\n\n");
+
 		Pattern p = Pattern.compile(sqlFileRegEx);
-	   
+
 		for (FileNode fileNode : srcFileList) {
-			if (p.matcher(fileNode.getFile().getAbsolutePath()).find()) {		
-				String overrideEncoding = configManager.getEncoding(fileNode.getFile().toString());
+			String baseDirectoryName=configManager.getPackageDirName();
+			String relativeFilename = fileNode.getFile().getAbsolutePath()
+					.replace(baseDirectoryName, "");
+
+			if (p.matcher(relativeFilename).find()) {
+				String overrideEncoding = configManager.getEncoding(relativeFilename);
 				if (overrideEncoding.isEmpty()) {
-					Msg.println("file: (system encoding) - "+ fileNode.getFile().toString());
-				} else	{
-					Msg.println("file: (override encoding: " + overrideEncoding + ") - "+ fileNode.getFile().toString());	
+					Msg.println("file: (system encoding) - " + relativeFilename);
+				} else {
+					Msg.println(
+							"file: (override encoding: " + overrideEncoding + ") - " + relativeFilename);
 				}
-				
+
 				logfile.appendln("file: " + fileNode.getFile().toString());
 				fileList.add(fileNode);
 			}
@@ -118,24 +123,20 @@ public class Filesystem {
 
 		log.debug("\n*** filterTreeStaticFiles ");
 		log.debug("\nstaticFiles: " + staticFiles.toString());
-		
+
 		for (String staticFile : staticFiles) {
 			for (FileNode fileNode : srcFileList) {
-				
-				if (fileNode.getFile().getName().equals(staticFile))  {
+
+				if (fileNode.getFile().getName().equals(staticFile)) {
 					Msg.println("file: " + fileNode.getFile().toString());
 					fileList.add(fileNode);
 				}
 			}
-			
+
 		}
-		
 
 		return fileList;
 	}
-
-	
-	
 
 	/**
 	 * Getter / Setter

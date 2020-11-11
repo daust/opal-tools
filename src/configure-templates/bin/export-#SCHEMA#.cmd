@@ -1,4 +1,4 @@
-@call #OPAL_TOOLS_USER_ENV_SCRIPT#
+@call "#OPAL_TOOLS_USER_ENV_SCRIPT#"
 
 @REM Notes for shell scripting:
 @REM - if * is specified without characters around it (* vs. LOG* or *LOG) it needs to be put in quotes for the shell: "*"

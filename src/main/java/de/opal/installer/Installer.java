@@ -151,6 +151,7 @@ public class Installer {
 	 * @throws SQLException
 	 */
 	public void run() throws Exception {
+		long startTime = System.currentTimeMillis();
 		List<FileNode> fsTree, fsTreeFull;
 
 		String logFileDir = this.configManager.getPackageDir().getAbsolutePath() + File.separator + "logs";
@@ -183,6 +184,7 @@ public class Installer {
 			Msg.println("** Run mode              : " + this.configManager.getConfigData().runMode);
 			Msg.println("**");
 			Msg.println("** Config File           : " + this.configManager.getConfigFileName());
+			Msg.println("** SQL directory         : " + this.configManager.getSqlDir());
 			Msg.println("** Connection Pool File  : " + this.configManagerConnectionPools.getConfigFileName());
 			Msg.println("**");
 			Msg.println("** File Encoding (System): " + System.getProperty("file.encoding"));
@@ -201,6 +203,7 @@ public class Installer {
 			logfile.appendln("** Run mode              : " + this.configManager.getConfigData().runMode);
 			logfile.appendln("**");
 			logfile.appendln("** Config File           : " + this.configManager.getConfigFileName());
+			logfile.appendln("** SQL directory         : " + this.configManager.getSqlDir());
 			logfile.appendln("** Connection Pool File  : " + this.configManagerConnectionPools.getConfigFileName());
 			logfile.appendln("**");
 			logfile.appendln("** File Encoding (System): " + System.getProperty("file.encoding"));
@@ -266,15 +269,8 @@ public class Installer {
 				}
 			}
 
-			/*
-			 * close connection pool
-			 */
-			this.connectionManager.closeAllConnections();
-
-			logfile.close();
-			log.debug("*** end");
-			Msg.println("*** end");
-
+			displayStatsFooter(fsTree.size(), startTime);
+			
 		} catch (Exception e) {
 			log.error(e.getMessage());
 			this.connectionManager.closeAllConnections();
@@ -284,7 +280,20 @@ public class Installer {
 			throw (e);
 		} finally {
 			this.connectionManager.closeAllConnections();
+			logfile.close();
 		}
+	}
+
+	
+	private void displayStatsFooter(int totalObjectCnt, long startTime) {
+		long finish = System.currentTimeMillis();
+		long timeElapsed = finish - startTime;
+		int minutes = (int) (timeElapsed / (60 * 1000));
+		int seconds = (int) ((timeElapsed / 1000) % 60);
+		String timeElapsedString = String.format("%d:%02d", minutes, seconds);
+
+		Msg.println("\n*** " + totalObjectCnt + " files were processed in " + timeElapsedString + " [mm:ss].");
+		
 	}
 
 
@@ -416,6 +425,10 @@ public class Installer {
 		BufferedOutputStream buf = new BufferedOutputStream(bout);
 		sqlcl.setOut(buf);
 		
+		String baseDirectoryName=configManager.getPackageDirName();
+		String relativeFilename = file.getAbsolutePath()
+				.replace(baseDirectoryName, "");
+
 		// enable all REST commands
 		CommandRegistry.addForAllStmtsListener(RESTCommand.class, StmtSubType.G_S_FORALLSTMTS_STMTSUBTYPE);
 
@@ -429,27 +442,25 @@ public class Installer {
 			}
 		}
 
-		String overrideEncoding = configManager.getEncoding(file.toString());
+		String overrideEncoding = configManager.getEncoding(relativeFilename);
 
-		// # run a whole file
-		// String cmd = "@" + file.getAbsolutePath();
-		this.logfile.append("\n***");
+		//this.logfile.append("\n***");
 		if (overrideEncoding.isEmpty()) {
-			this.logfile.append("\n*** User:" + sqlcl.getConn().getSchema() + "; " + file.getAbsolutePath());
+			this.logfile.append("\n*** User:" + sqlcl.getConn().getSchema() + "; " + relativeFilename);
 		} else {
 			this.logfile.append("\n*** Override encoding: " + overrideEncoding + "; User:" + sqlcl.getConn().getSchema()
-					+ "; " + file.getAbsolutePath());
+					+ "; " + relativeFilename);
 		}
-		this.logfile.append("\n***\n\n");
+		//this.logfile.append("\n***\n\n");
 
-		Msg.print("\n***");
+		//Msg.print("\n***");
 		if (overrideEncoding.isEmpty()) {
-			Msg.print("\n*** User:" + sqlcl.getConn().getSchema() + "; " + file.getAbsolutePath());
+			Msg.print("\n*** User:" + sqlcl.getConn().getSchema() + "; " + relativeFilename);
 		} else {
 			Msg.print("\n*** Override encoding: " + overrideEncoding + "; User:" + sqlcl.getConn().getSchema() + "; "
-					+ file.getAbsolutePath());
+					+ relativeFilename);
 		}
-		Msg.print("\n***\n\n");
+		//Msg.print("\n***\n\n");
 
 		// only execute if flag is set in config file
 		if (this.configManager.getConfigData().runMode.equals("EXECUTE")) {

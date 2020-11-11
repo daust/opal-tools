@@ -181,7 +181,7 @@ public class ExporterMain {
 		exporter.export(dbExporter.preScripts, dbExporter.postScripts, dbExporter.includeFilters,
 				dbExporter.excludeFilters, dbExporter.schemas, dbExporter.includeTypes, dbExporter.excludeTypes);
 
-		Msg.println("\n*** done.");
+		Msg.println("\n*** done.\n");
 
 		log.debug("*** end ***");
 	}

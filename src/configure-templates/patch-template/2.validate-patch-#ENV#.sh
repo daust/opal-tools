@@ -1,5 +1,5 @@
 #!/bin/bash
-source #OPAL_TOOLS_USER_ENV_SCRIPT#
+source "#OPAL_TOOLS_USER_ENV_SCRIPT#"
 
 SCRIPT_DIR=`dirname $0`
 

@@ -170,6 +170,8 @@ public class CopyPatchFilesMain {
 		}
 		displayStatsFooter(this.fileCopyCount, startTime);
 		
+		Msg.println("\n*** done.\n");
+		
 		log.info("END run()");
 	}
 
@@ -234,6 +236,7 @@ public class CopyPatchFilesMain {
 		String timeElapsedString = String.format("%d:%02d", minutes, seconds);
 
 		Msg.println("\n*** The script copied " + totalObjectCnt + " files in " + timeElapsedString + " [mm:ss].");
+		
 	}
 
 }

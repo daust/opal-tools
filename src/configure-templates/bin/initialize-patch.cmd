@@ -1,4 +1,4 @@
-@call #OPAL_TOOLS_USER_ENV_SCRIPT#
+@call "#OPAL_TOOLS_USER_ENV_SCRIPT#"
 
 @REM setting up the target patch directory, e.g. \Patches\2020\2020-04-23-<patch name>
 SET /P PATCH_NAME=Patch name, e.g. jira_123 or Project-v2.5.0: 
