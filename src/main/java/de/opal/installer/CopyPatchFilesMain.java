@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Properties;
 
 import org.apache.commons.io.FileUtils;
@@ -21,15 +22,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.opal.installer.util.Msg;
+import de.opal.utils.OpalFileUtils;
 
 public class CopyPatchFilesMain {
 	public static final Logger log = LoggerFactory.getLogger(CopyPatchFilesMain.class.getName());
 
 	private String currentSourcePathName = "";
 	private String currentTargetPathName = "";
-	
+
 	private String version; // will be loaded from file version.txt which will be populated by the gradle
 	// build process
+	private int fileCopyCount = 0;
 
 	/*--------------------------------------------------------------------------------------
 	 * Command line parameters
@@ -40,13 +43,13 @@ public class CopyPatchFilesMain {
 	@Option(name = "-h", aliases = "--help", usage = "show this help page", help = true)
 	private boolean showHelp;
 
-	@Option(name = "--source-path", usage = "path to the template directory structure", metaVar = "<path>", required=true)
+	@Option(name = "--source-path", usage = "path to the template directory structure", metaVar = "<path>", required = true)
 	private String sourcePathName;
 
-	@Option(name = "--target-path", usage = "target path for the patch", metaVar = "<path>", required=true)
+	@Option(name = "--target-path", usage = "target path for the patch", metaVar = "<path>", required = true)
 	private String targetPathName;
 
-	@Option(name = "--patch-file-name", usage = "target path for the patch", metaVar = "<path>", required=true)
+	@Option(name = "--patch-file-name", usage = "target path for the patch", metaVar = "<path>", required = true)
 	private String patchFilesName;
 
 	/**
@@ -69,26 +72,17 @@ public class CopyPatchFilesMain {
 
 		this.version = result;
 	}
-	
+
 	public CopyPatchFilesMain() {
-		
+
 	}
 
 	public static void main(String[] args) throws SQLException, IOException {
 
 		log.info("*** start");
 		CopyPatchFilesMain main = new CopyPatchFilesMain();
+		main.run(args);
 		
-		main.readVersionFromFile();
-		main.parseParameters(args);
-		main.transformParams();
-		main.dumpParameters();
-		// initially the source and target path names are derived from the starting
-		// point,
-		// the base directories for source and target
-		main.setRelativePaths(null, null);
-
-		main.run();
 		log.info("*** end");
 	}
 
@@ -131,7 +125,7 @@ public class CopyPatchFilesMain {
 		log.debug("*** Options");
 		log.debug("sourcePathName: " + this.sourcePathName);
 		log.debug("targetPathName: " + this.targetPathName);
-	}	
+	}
 
 	private void showUsage(PrintStream out, CmdLineParser parser) {
 		out.println("\njava de.opal.installer.CopyPatchFiles [options...]");
@@ -142,13 +136,25 @@ public class CopyPatchFilesMain {
 		out.println();
 
 		// print option sample. This is useful some time
-		out.println("  Example: java de.opal.installer.CopyPatchFiles" + parser.printExample(OptionHandlerFilter.PUBLIC));
+		out.println(
+				"  Example: java de.opal.installer.CopyPatchFiles" + parser.printExample(OptionHandlerFilter.PUBLIC));
 	}
 
-	
-	public void run() throws IOException {
-		Msg.println("copy files from:" + this.sourcePathName + 
-				  "\n           to  :" + this.targetPathName + "\n");
+	public void run(String[] args) throws IOException {
+		
+		long startTime = System.currentTimeMillis();
+
+		readVersionFromFile();
+		parseParameters(args);
+		transformParams();
+		dumpParameters();
+		
+		// initially the source and target path names are derived from the starting
+		// point,
+		// the base directories for source and target
+		setRelativePaths(null, null);
+				
+		Msg.println("copy files from:" + this.sourcePathName + "\n           to  :" + this.targetPathName + "\n");
 		Msg.println("process patch file listing in: " + this.patchFilesName + "\n");
 
 		// read file line by line
@@ -162,7 +168,8 @@ public class CopyPatchFilesMain {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		Msg.println("");
+		displayStatsFooter(this.fileCopyCount, startTime);
+		
 		log.info("END run()");
 	}
 
@@ -185,7 +192,7 @@ public class CopyPatchFilesMain {
 
 	/**
 	 * 
-	 * @param line (should already be trimmed()
+	 * @param line (should already be trimmed())
 	 * @throws IOException
 	 */
 	private void processLine(String line) throws IOException {
@@ -205,20 +212,28 @@ public class CopyPatchFilesMain {
 
 			Msg.println("Mapping: " + source + " => " + target);
 			setRelativePaths(source, target);
-			
+
 			return;
 		}
 
 		// process file
 		if (!line.isEmpty()) {
 			log.debug("process line: " + line);
-			File src = new File(this.currentSourcePathName);
-			File target = new File(this.currentTargetPathName);
-			
-			Msg.println("  " + line );
-
-			IOFileFilter filter = new WildcardFileFilter(line);
-			FileUtils.copyDirectory(src, target, filter);
+			Msg.println("  process directive: " + line);
+			// copy files and return number of files copied
+			this.fileCopyCount += OpalFileUtils.copyDirectory(this.currentSourcePathName, this.currentTargetPathName,
+					line);
 		}
 	}
+	
+	private void displayStatsFooter(int totalObjectCnt, long startTime) {
+		long finish = System.currentTimeMillis();
+		long timeElapsed = finish - startTime;
+		int minutes = (int) (timeElapsed / (60 * 1000));
+		int seconds = (int) ((timeElapsed / 1000) % 60);
+		String timeElapsedString = String.format("%d:%02d", minutes, seconds);
+
+		Msg.println("\n*** The script copied " + totalObjectCnt + " files in " + timeElapsedString + " [mm:ss].");
+	}
+
 }
