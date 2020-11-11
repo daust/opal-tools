@@ -5,7 +5,8 @@
 @REM - if using multiline commands, the ^ character MUST be the LAST character on the line, else you will get errors
 
 @REM setting up the filter for exporting sources
-SET /P FILTER=Filter for DDL object names including wildcards, e.g. "xlib*" : 
+@echo Object wildcards can be * or %. The %-sign needs to be escaped for the shell: % => %%
+SET /P FILTER=Filter for DDL object names including wildcards, e.g. "xlib*" or "xlib%%": 
 
 @call opal-export.cmd --output-dir "%OPAL_TOOLS_SRC_SQL_DIR%" ^
     --dependent-objects table:comment,index,object_grant,trigger view:comment,object_grant "materialized view:comment,index,materialized_view_log,object_grant" ^

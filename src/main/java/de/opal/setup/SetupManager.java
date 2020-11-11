@@ -644,7 +644,8 @@ public class SetupManager {
 		}
 		
 		newContents = newContents.replace("#FILE.ENCODING#", this.fileEncoding);
-
+		newContents = newContents.replace("#OPAL_TOOLS_USER_IDENTITY#", System.getProperty("user.name"));
+		
 		return newContents;
 	}
 
@@ -682,7 +683,7 @@ public class SetupManager {
 		environmentColorListString = promptForInput(kbd,
 				"List of shell colors for the environments (comma-separated, e.g. green,yellow,red)",
 				"green,yellow,red");
-		environmentExportConnection = promptForInput(kbd, "which is your developement environment? This is used for the export: ", environmentListString.split(",")[0]);
+		environmentExportConnection = promptForInput(kbd, "which is your developement environment? This is used for the export: ", environmentListString.split(",")[0].trim());
 		fileEncoding = promptForInput(kbd, "file encoding (e.g. UTF-8 or Cp1252, default is current system encoding): ", System.getProperty("file.encoding"));
 
 		log.debug("***");

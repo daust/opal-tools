@@ -1,63 +1,46 @@
+-- per default, the working directory for scripts is the directory stored 
+-- in the environment variable: OPAL_TOOLS_SRC_SQL_DIR
+-- it can be changed at runtime using the switch: --script-working-directory <directory>
+-- for the opal-export.sh call
 
-prompt display version of sqlcl
-version
-
-prompt show current working directory
-pwd
-
+-----------------------------------------------------------------------------
+-- Sample APEX export
+-----------------------------------------------------------------------------
+/*
 prompt *** exporting apex applications
 prompt *** configure opal-export-post-script.sql if required
-/*
-host mkdir /tmp/opal-exporter/apex
-cd /tmp/opal-exporter/apex
 
+-- create new subdirectory sql/apex
+host mkdir apex
+cd apex
+
+-- export applications
 apex export -applicationid 344
 apex export -applicationid 201
+
+-- move up directory from sql/apex
+cd ..
 */
 
-
-prompt *** exporting ORDS applications
-prompt *** configure opal-export-post-script.sql if required
+-----------------------------------------------------------------------------
+-- Sample ORDS export
+-- the simple approach using rest export is currently not working (sqlcl 20.3)
+-- when using the sqlcl libraries through Java programming
+-----------------------------------------------------------------------------
 /*
-https://dsavenko.me/apex-and-ords-deployments-automation/
+-- create new subdirectory sql/ords
+host mkdir ords
+cd ords
 
-set timing on
-timing start TIMER_REST_EXPORT
-
--- SQL*Plus environment settings
--- they are crucial to retrieve a consistent export file
-set feedback off
-set heading off
-set echo off
-set flush off
-set termout off
-set pagesize 0
-set long 100000000 longchunksize 32767
-column output format a4000
-set linesize 4000
-set trimspool on
-
--- variable for storing the export data
-variable contents clob
-
--- generating the export file
-begin
-    :contents := ords_metadata.ords_export.export_schema();
-end;
-/
-
--- you can specify any file name here
+prompt *** spool rest modules
 spool my_rest_modules_export.sql
 
-print contents
--- the trailing '/' symbol is needed to terminate the generated PL/SQL block
+rest export
 prompt /
 
 spool off
 
-timing stop TIMER_REST_EXPORT
-
+-- move up directory from sql/ords
+cd ..
 
 */
-
-

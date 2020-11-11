@@ -28,8 +28,11 @@ import de.opal.installer.util.Logfile;
 import de.opal.installer.util.Msg;
 import de.opal.installer.util.Utils;
 import oracle.dbtools.db.ResultSetFormatter;
+import oracle.dbtools.raptor.newscriptrunner.CommandRegistry;
 import oracle.dbtools.raptor.newscriptrunner.ScriptExecutor;
 import oracle.dbtools.raptor.newscriptrunner.ScriptRunnerContext;
+import oracle.dbtools.raptor.newscriptrunner.SQLCommand.StmtSubType;
+import oracle.dbtools.raptor.scriptrunner.commands.rest.RESTCommand;
 
 public class Installer {
 	public static final Logger log = LogManager.getLogger(Installer.class.getName());
@@ -50,16 +53,18 @@ public class Installer {
 	private PatchRegistry patchRegistry;
 
 	private boolean validateOnly = false; // default is execute
+	private String userIdentity;
 
 //	public enum RunMode {
 //		  EXECUTE,
 //		  VALIDATE_ONLY
 //		}
 
-	public Installer(boolean validateOnly, String configFileName, String connectionPoolFileName) throws IOException {
+	public Installer(boolean validateOnly, String configFileName, String connectionPoolFileName, String userIdentity) throws IOException {
 		this.validateOnly = validateOnly;
 		this.configFileName = configFileName;
 		this.connectionPoolFileName = connectionPoolFileName;
+		this.userIdentity=userIdentity;
 		
 		this.readVersionFromFile();		
 		this.configManager = new ConfigManager(this.configFileName);
@@ -181,7 +186,7 @@ public class Installer {
 			Msg.println("** Connection Pool File  : " + this.configManagerConnectionPools.getConfigFileName());
 			Msg.println("**");
 			Msg.println("** File Encoding (System): " + System.getProperty("file.encoding"));
-			Msg.println("** Current User          : " + System.getProperty("user.name"));
+			Msg.println("** Current User          : " + this.userIdentity);
 			Msg.println("*************************\n");
 
 			logfile.appendln("OPAL Installer version " + this.version);
@@ -199,7 +204,7 @@ public class Installer {
 			logfile.appendln("** Connection Pool File  : " + this.configManagerConnectionPools.getConfigFileName());
 			logfile.appendln("**");
 			logfile.appendln("** File Encoding (System): " + System.getProperty("file.encoding"));
-			logfile.appendln("** Current User          : " + System.getProperty("user.name"));
+			logfile.appendln("** Current User          : " + this.userIdentity);
 			logfile.appendln("*************************\n");
 
 			Utils.waitForEnter("Please press <enter> to list the files to be installed ...");
@@ -410,6 +415,9 @@ public class Installer {
 		ByteArrayOutputStream bout = new ByteArrayOutputStream();
 		BufferedOutputStream buf = new BufferedOutputStream(bout);
 		sqlcl.setOut(buf);
+		
+		// enable all REST commands
+		CommandRegistry.addForAllStmtsListener(RESTCommand.class, StmtSubType.G_S_FORALLSTMTS_STMTSUBTYPE);
 
 		// register patch file if registry targets are defined in config file and
 		// EXECUTE-mode, not
@@ -481,6 +489,9 @@ public class Installer {
 		ByteArrayOutputStream bout = new ByteArrayOutputStream();
 		BufferedOutputStream buf = new BufferedOutputStream(bout);
 		sqlcl.setOut(buf);
+		
+		// enable all REST commands
+		CommandRegistry.addForAllStmtsListener(RESTCommand.class, StmtSubType.G_S_FORALLSTMTS_STMTSUBTYPE);
 
 		// only execute if flag is set in config file
 		if (this.configManager.getConfigData().runMode.equals("EXECUTE")) {

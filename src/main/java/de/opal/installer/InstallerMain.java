@@ -25,6 +25,7 @@ public class InstallerMain {
 	public static final Logger log = LogManager.getLogger(InstallerMain.class.getName());
 	private String version; // will be loaded from file version.txt which will be populated by the gradle
 							// build process
+	private String userIdentity;
 
 	/*--------------------------------------------------------------------------------------
 	 * Command line parameters
@@ -82,7 +83,7 @@ public class InstallerMain {
 		installerMain.dumpParameters();
 
 		Installer installer = new Installer(installerMain.validateOnly, installerMain.configFileName,
-				installerMain.connectionPoolFile);
+				installerMain.connectionPoolFile, installerMain.userIdentity);
 		installer.run();
 
 		Msg.println("\n*** done.");
@@ -152,6 +153,11 @@ public class InstallerMain {
 		// trim() parameters
 		this.connectionPoolFile = this.connectionPoolFile.trim();
 		this.configFileName = this.configFileName.trim();
+		
+		this.userIdentity=System.getenv("OPAL_TOOLS_USER_IDENTITY");
+		if (this.userIdentity==null || this.userIdentity.isEmpty()) {
+			this.userIdentity=System.getProperty("user.name");
+		}
 	}
 
 	private void dumpParameters() {

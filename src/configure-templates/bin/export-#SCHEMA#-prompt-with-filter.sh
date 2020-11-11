@@ -1,9 +1,12 @@
 #!/bin/bash
 source #OPAL_TOOLS_USER_ENV_SCRIPT#
 
-# due to shell expansion, the wildcard % is preferred to * on Linux/Mac/Unix environments
+# Notes for shell scripting:
+# - due to shell expansion, the wildcard % is preferred to * on Linux/Mac/Unix environments
+# - if using multiline commands, the \ character MUST be the LAST character on the line, 
+#   else you will get errors
 
-read -p 'Filter for DDL object names including wildcards, e.g. "xlib%" : ' FILTER
+read -p 'Filter for DDL object names including wildcards, e.g. "xlib%" or "xlib*" : ' FILTER
 
 opal-export.sh --output-dir "$OPAL_TOOLS_SRC_SQL_DIR" \
     --dependent-objects table:comment,index,object_grant,trigger view:comment,object_grant "materialized view:comment,index,materialized_view_log,object_grant" \
