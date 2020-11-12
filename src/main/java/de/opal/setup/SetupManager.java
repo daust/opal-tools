@@ -399,10 +399,14 @@ public class SetupManager {
 		// read opal-installer.json file
 		// ConfigData configDataInst = new ConfigData();
 		// configDataInst.clearDefaults();
+		/*
 		String fileContents = "{\n" + "	\"application\": \"\",\n" + "    \"patch\": \"\",\n" + "    \"author\": \"\",\n"
 				+ "    \"version\": \"\",\n" + "    \"connectionMappings\": [],\n"
 				+ "	 \"waitAfterEachStatement\": \"true\"," + "    \"sqlFileRegEx\": \"\\\\.(sql|pks|pkb|trg)$\",\n"
 				+ "    \"registryTargets\": [],\n" + "    \"encodingMappings\": [ ]	\n" + "}";
+		*/
+		String fileContents=FileUtils.readFileToString(new File(tmpSourceDir+File.separator+"opal-installer.json"), Charset.defaultCharset());
+		
 		FileUtils.writeStringToFile(new File(tmpTargetDir + File.separator + "opal-installer.json"), fileContents,
 				Charset.defaultCharset());
 		ConfigManager confMgrInst = new ConfigManager(tmpTargetDir + File.separator + "opal-installer.json");

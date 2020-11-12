@@ -1,6 +1,5 @@
 package de.opal.installer;
 
-import java.io.File;
 import java.io.IOException;
 import java.sql.CallableStatement;
 import java.sql.SQLException;

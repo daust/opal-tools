@@ -242,3 +242,35 @@ begin
  DBMS_METADATA.SET_TRANSFORM_PARAM(DBMS_METADATA.SESSION_TRANSFORM,'PRETTY',true);
 end;
 /
+
+
+{
+  "application": "",
+  "patch": "",
+  "author": "",
+  "version": "",
+  "connectionMappings": [
+    {
+      "connectionPoolName": "jri_test",
+      "matchRegEx": "/sql/.*jri_test.*"
+    }
+  ],
+  "sqlFileRegEx": "\\.(sql|pks|pkb|trg)$",
+  "waitAfterEachStatement": "true",
+  "registryTargets": [
+    {
+   "connectionPoolName": "jri_test",
+   "tablePrefix": "OPAL2"
+    }
+   ],
+   "encodingMappings": [
+    {
+      "encoding": "UTF-8",
+      "matchRegEx": "/sql/.*apex.*/.*f*sql"
+    },
+    {
+      "encoding": "UTF-8",
+      "matchRegEx": "/sql/.*"
+    }
+  ]
+}

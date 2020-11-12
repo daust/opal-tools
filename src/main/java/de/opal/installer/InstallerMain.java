@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 import org.apache.logging.log4j.LogManager;
@@ -14,6 +16,7 @@ import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.OptionHandlerFilter;
 import org.kohsuke.args4j.ParserProperties;
 
+import de.opal.exporter.WellBehavedStringArrayOptionHandler;
 import de.opal.installer.config.ConfigManager;
 import de.opal.installer.util.Msg;
 
@@ -44,6 +47,9 @@ public class InstallerMain {
 
 	@Option(name = "--validate-only", usage = "don't execute patch, just validate the files and connection pools")
 	private boolean validateOnly = false;
+	
+	@Option(name = "--mandatory-attributes", handler = WellBehavedStringArrayOptionHandler.class, usage = "list of attributes that must not be null,\ne.g. patch author version", metaVar = "<attr1> [<attr2>] ... [n]")
+	private List<String> mandatoryAttributes = new ArrayList<String>();
 
 	/**
 	 * readVersionFromFile
@@ -83,7 +89,7 @@ public class InstallerMain {
 		installerMain.dumpParameters();
 
 		Installer installer = new Installer(installerMain.validateOnly, installerMain.configFileName,
-				installerMain.connectionPoolFile, installerMain.userIdentity);
+				installerMain.connectionPoolFile, installerMain.userIdentity, installerMain.mandatoryAttributes);
 		installer.run();
 		
 		Msg.println("\n*** done.");

@@ -12,4 +12,7 @@ SCRIPT_DIR=`dirname $0`
 
 #OPAL_TOOLS_SET_COLOR_COMMAND#
 
-opal-install.sh --config-file "${SCRIPT_DIR}/opal-installer.json" --connection-pool-file "${OPAL_TOOLS_USER_CONFIG_DIR}/connections-#ENV#.json"
+opal-install.sh --config-file "${SCRIPT_DIR}/opal-installer.json" \
+                --connection-pool-file "${OPAL_TOOLS_USER_CONFIG_DIR}/connections-#ENV#.json" \
+                --mandatory-attributes application patch author version
+                

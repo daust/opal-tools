@@ -1,12 +1,13 @@
 {
 	"application": "",
-    "patch": "",
-    "author": "",
+    "patch": "#PARENT_FOLDER_NAME#",
+    "author": "#ENV_OPAL_TOOLS_USER_IDENTITY#",
     "version": "",
     "packageDir": ".",
     "sqlDir": "sql",
     "connectionMappings": [],
     "sqlFileRegEx": "\\.(sql|pks|pkb|trg)$",
+    "waitAfterEachStatement": "true",
     "registryTargets": [],
     "encodingMappings": [  /* most common ones: UTF-8, Cp1252 */ 
         { 

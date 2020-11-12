@@ -11,7 +11,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.regex.Pattern;
 
 import org.apache.logging.log4j.LogManager;
@@ -20,6 +19,7 @@ import org.apache.logging.log4j.Logger;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import de.opal.installer.db.DBUtils;
 import de.opal.installer.util.Msg;
 import de.opal.utils.EncryptorWrapper;
 
@@ -49,6 +49,40 @@ public class ConfigManager {
 
 	private TraversalType traversalType;
 
+	private String replacePlaceholders(String value) {
+		// abort when value is null
+		if (value == null || value.isEmpty())
+			return value;
+
+		// first you trim
+		String newValue = value.trim();
+		String envValue = "";
+
+		// replace parent_folder_name
+		newValue = newValue.replace("#PARENT_FOLDER_NAME#", this.configFile.getParentFile().getName());
+
+		// replace placeholder with env variable value
+		// if env variable is null, at least replace placeholder
+		envValue = DBUtils.nvl(System.getenv("OPAL_TOOLS_USER_IDENTITY"),""); 
+		newValue = newValue.replace("#ENV_OPAL_TOOLS_USER_IDENTITY#", envValue);
+
+		return newValue;
+	}
+
+	/**
+	 * trim() and replace() placeholders
+	 */
+	public void replacePlaceholders() {
+		
+		this.configData.application = replacePlaceholders(this.configData.application);
+		this.configData.author = replacePlaceholders(this.configData.author);
+		this.configData.packageDir = replacePlaceholders(this.configData.packageDir);
+		this.configData.patch = replacePlaceholders(this.configData.patch);
+		this.configData.sqlDir = replacePlaceholders(this.configData.sqlDir);
+		this.configData.sqlFileRegEx = replacePlaceholders(this.configData.sqlFileRegEx);
+		this.configData.version = replacePlaceholders(this.configData.version);
+	}
+
 	/**
 	 * Constructor
 	 * 
@@ -67,10 +101,10 @@ public class ConfigManager {
 		String packageDirPathName = this.configData.packageDir;
 		Path packageDirPath = Paths.get(packageDirPathName);
 		if (!packageDirPath.isAbsolute()) {
-			log.debug("Path is relative ...");
+			log.trace("Path is relative ...");
 			// relative path, so do concatenate from config file
 			packageDirPath = this.configFile.getParentFile().toPath().resolve(this.configData.packageDir);
-			log.debug("packageDirPath: " + packageDirPath.toString());
+			log.trace("packageDirPath: " + packageDirPath.toString());
 		}
 
 		log.debug("packageDirPath: " + packageDirPath.toRealPath().toString());
@@ -82,7 +116,7 @@ public class ConfigManager {
 		String sqlDirPathName = this.configData.sqlDir;
 		Path sqlDirPath = Paths.get(sqlDirPathName);
 		if (!sqlDirPath.isAbsolute()) {
-			log.trace("Path is relative ...");
+			log.trace("SQL dir path is relative ...");
 			// relative path, so do concatenate from packageDir
 			sqlDirPath = this.packageDir.toPath().resolve(sqlDirPathName);
 			log.trace("packageDirPath: " + packageDirPath);
@@ -105,37 +139,41 @@ public class ConfigManager {
 
 	public boolean hasUnencryptedPasswords() {
 		EncryptorWrapper enc = new EncryptorWrapper();
-		boolean hasUnencryptedPasswords=false;
-		
+		boolean hasUnencryptedPasswords = false;
+
 		for (ConfigConnectionPool pool : this.configData.connectionPools) {
 			if (!enc.isEncrypted(pool.password)) {
-				hasUnencryptedPasswords=true;
+				hasUnencryptedPasswords = true;
 			}
 		}
 		return hasUnencryptedPasswords;
 
 	}
-	public void encryptPasswords(String encryptionKeyFilename ) {
+
+	public void encryptPasswords(String encryptionKeyFilename) {
 		EncryptorWrapper enc = new EncryptorWrapper();
-		
+
 		for (ConfigConnectionPool pool : this.configData.connectionPools) {
 			if (!enc.isEncrypted(pool.password)) {
 				pool.password = enc.encryptPWD(pool.password, encryptionKeyFilename);
 			}
 		}
 	}
+
 	public void decryptPasswords(String encryptionKeyFilename) {
 		EncryptorWrapper enc = new EncryptorWrapper();
-		
+
 		for (ConfigConnectionPool pool : this.configData.connectionPools) {
 			if (enc.isEncrypted(pool.password)) {
 				pool.password = enc.decryptPWD(pool.password, encryptionKeyFilename);
 			}
 		}
 	}
-	// the encryption keys will be stored in the same directory as the connection pool
+
+	// the encryption keys will be stored in the same directory as the connection
+	// pool
 	public String getEncryptionKeyFilename(String connPoolFilename) {
-		return new File(connPoolFilename).getParent()+File.separatorChar+"keys.txt";
+		return new File(connPoolFilename).getParent() + File.separatorChar + "keys.txt";
 	}
 
 	public void dumpConfig() {
@@ -143,7 +181,7 @@ public class ConfigManager {
 		Msg.println("packageDir: " + this.packageDirName);
 		Msg.println("configFileName: " + this.configFileName);
 
-		//Msg.println(this.configData.toString());
+		// Msg.println(this.configData.toString());
 	}
 
 	// @SuppressWarnings("unchecked")
@@ -155,7 +193,8 @@ public class ConfigManager {
 
 		try (Reader reader = new InputStreamReader(new FileInputStream(configFile), StandardCharsets.UTF_8)) {
 			GsonBuilder builder = new GsonBuilder();
-			Gson gson = builder.excludeFieldsWithoutExposeAnnotation().setPrettyPrinting().disableHtmlEscaping().create();
+			Gson gson = builder.excludeFieldsWithoutExposeAnnotation().setPrettyPrinting().disableHtmlEscaping()
+					.create();
 
 			configData = gson.fromJson(reader, ConfigData.class);
 
@@ -189,7 +228,8 @@ public class ConfigManager {
 			// Gson gson = new GsonBuilder().create();
 			// with pretty printing
 			GsonBuilder builder = new GsonBuilder();
-			Gson gson = builder.excludeFieldsWithoutExposeAnnotation().setPrettyPrinting().disableHtmlEscaping().create();
+			Gson gson = builder.excludeFieldsWithoutExposeAnnotation().setPrettyPrinting().disableHtmlEscaping()
+					.create();
 
 			gson.toJson(configData, writer);
 
