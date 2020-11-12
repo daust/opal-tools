@@ -133,7 +133,7 @@ public class ExporterMain {
 	private String filenameTemplate = "#schema#/#object_type_plural#/#object_name#.#ext#";
 */
 	
-	@Option(name = "--filename-templates", usage = "templates for constructing the filename per object type\n"
+	@Option(name = "--filename-templates", handler = WellBehavedStringArrayOptionHandler.class, usage = "templates for constructing the filename per object type\n"
 			+ "e.g.: #schema#/#object_type#/#object_name#.#ext#\n\n"
 			+ "#schema#             - schema name in lower case\n"
 			+ "#object_type#        - lower case type name: 'table'\n"

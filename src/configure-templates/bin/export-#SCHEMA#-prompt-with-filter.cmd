@@ -16,8 +16,7 @@ SET /P FILTER=Filter for DDL object names including wildcards, e.g. "xlib*" or "
     --includes %FILTER% ^
     --excludes SYS_YOID* SYS_PLSQL* AQ$*  ^
     --exclude-types LOB "TABLE_PARTITION" "INDEX PARTITION" "JAVA CLASS" JAVA "JAVA RESOURCE" INDEX ^
-    --extension-mappings package:pks "package body:pkb" ^
-    --directory-mappings "package body:packages" ^
+    --filename-templates default:#schema#/#object_type_plural#/#object_name#.sql package:#schema#/packages/#object_name#.pks "package body:#schema#/packages/#object_name#.pkb" ^
     --connection-pool-name #SCHEMA# ^
     --connection-pool-file "%OPAL_TOOLS_USER_CONFIG_DIR%\connections-#ENV#.json"
 
