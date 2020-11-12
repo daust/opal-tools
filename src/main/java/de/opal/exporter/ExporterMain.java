@@ -37,8 +37,9 @@ public class ExporterMain {
 	private String version; // will be loaded from file version.txt which will be populated by the gradle
 							// build process
 	private HashMap<String, ArrayList<String>> dependentObjectsMap = new HashMap<String, ArrayList<String>>();
-	private HashMap<String, String> extensionMappingsMap = new HashMap<String, String>();
-	private HashMap<String, String> directoryMappingsMap = new HashMap<String, String>();
+	//private HashMap<String, String> extensionMappingsMap = new HashMap<String, String>();
+	//private HashMap<String, String> directoryMappingsMap = new HashMap<String, String>();
+	private HashMap<String, String> filenameTemplatesMap = new HashMap<String, String>();
 
 	/*--------------------------------------------------------------------------------------
 	 * Command line parameters
@@ -87,11 +88,11 @@ public class ExporterMain {
 	@Option(name = "--dependent-objects", handler = WellBehavedStringArrayOptionHandler.class, usage = "dependent objects, e.g. TABLE:COMMENT,INDEX", metaVar = "<type>:<deptype1>,<deptype2> ... [n]")
 	private List<String> dependentObjects = new ArrayList<String>();
 
-	@Option(name = "--extension-mappings", handler = WellBehavedStringArrayOptionHandler.class, usage = "mapping of object types to filename suffixes, e.g.: DEFAULT:sql PACKAGE:pks", metaVar = "<map1> [<map2>] ... [n]")
-	private List<String> extensionMappings = new ArrayList<String>();
+//	@Option(name = "--extension-mappings", handler = WellBehavedStringArrayOptionHandler.class, usage = "mapping of object types to filename suffixes, e.g.: DEFAULT:sql PACKAGE:pks", metaVar = "<map1> [<map2>] ... [n]")
+//	private List<String> extensionMappings = new ArrayList<String>();
 
-	@Option(name = "--directory-mappings", handler = WellBehavedStringArrayOptionHandler.class, usage = "mapping of object types to directories, e.g.: PACKAGE:package \"package body:package\"", metaVar = "<map1> [<map2>] ... [n]")
-	private List<String> directoryMappings = new ArrayList<String>();
+//	@Option(name = "--directory-mappings", handler = WellBehavedStringArrayOptionHandler.class, usage = "mapping of object types to directories, e.g.: PACKAGE:package \"package body:package\"", metaVar = "<map1> [<map2>] ... [n]")
+//	private List<String> directoryMappings = new ArrayList<String>();
 
 	// receives other command line parameters than options
 	@Argument
@@ -117,7 +118,7 @@ public class ExporterMain {
 	@Option(name = "--silent", usage = "turns off prompts")
 	private boolean isSilent = false;
 
-	@Option(name = "--filename-template", usage = "template for constructing the filename\n"
+/*	@Option(name = "--filename-template", usage = "template for constructing the filename\n"
 			+ "e.g.: #schema#/#object_type#/#object_name#.#ext#\n\n"
 			+ "#schema#             - schema name in lower case\n"
 			+ "#object_type#        - lower case type name: 'table'\n"
@@ -130,6 +131,22 @@ public class ExporterMain {
 			+ "#OBJECT_NAME#        - upper case object name\n"
 			+ "#EXT#                - upper case extension: 'SQL' or 'PKS'", metaVar = "<template structure>", required = false)
 	private String filenameTemplate = "#schema#/#object_type_plural#/#object_name#.#ext#";
+*/
+	
+	@Option(name = "--filename-templates", usage = "templates for constructing the filename per object type\n"
+			+ "e.g.: #schema#/#object_type#/#object_name#.#ext#\n\n"
+			+ "#schema#             - schema name in lower case\n"
+			+ "#object_type#        - lower case type name: 'table'\n"
+			+ "#object_type_plural# - lower case type name in plural: 'tables'\n"
+			+ "#object_name#        - lower case object name\n"
+			+ "#ext#                - lower case extension: 'sql' or 'pks'\n"
+			+ "#SCHEMA#             - upper case schema name\n"
+			+ "#OBJECT_TYPE#        - upper case object type name: 'TABLE' or 'INDEX'\n"
+			+ "#OBJECT_TYPE_PLURAL# - upper case object type name in plural: 'TABLES'\n"
+			+ "#OBJECT_NAME#        - upper case object name\n"
+			+ "#EXT#                - upper case extension: 'SQL' or 'PKS'", metaVar = "<template structure>", required = false)
+	private List<String> filenameTemplates = new ArrayList<String>();
+	// default will be: "default:#schema#/#object_type_plural#/#object_name#.#ext#";
 
 	@Option(name = "--filename-replace-blanks", usage = "replaces blanks in the filename with an _, e.g. PACKAGE BODY=>PACKAGE_BODY")
 	private boolean filenameReplaceBlanks = true;
@@ -176,8 +193,8 @@ public class ExporterMain {
 
 		Exporter exporter = new Exporter(dbExporter.user, dbExporter.pwd, dbExporter.connectStr, dbExporter.outputDir,
 				dbExporter.skipErrors, dbExporter.dependentObjectsMap, dbExporter.isSilent,
-				dbExporter.extensionMappingsMap, dbExporter.directoryMappingsMap, dbExporter.filenameTemplate,
-				dbExporter.filenameReplaceBlanks, dbExporter.workingDirectorySQLcl, dbExporter.skipExport);
+				/*dbExporter.extensionMappingsMap, dbExporter.directoryMappingsMap, dbExporter.filenameTemplate,*/
+				dbExporter.filenameReplaceBlanks, dbExporter.workingDirectorySQLcl, dbExporter.skipExport, dbExporter.filenameTemplatesMap);
 		exporter.export(dbExporter.preScripts, dbExporter.postScripts, dbExporter.includeFilters,
 				dbExporter.excludeFilters, dbExporter.schemas, dbExporter.includeTypes, dbExporter.excludeTypes);
 
@@ -353,6 +370,8 @@ public class ExporterMain {
 		for (int i = 0; i < this.dependentObjects.size(); i++) {
 			dependentObjects.set(i, dependentObjects.get(i).trim().toUpperCase());
 		}
+		
+		/*
 		// make extension mappings uppercase
 		for (String ext : this.extensionMappings) {
 			String objectType = ext.split(":")[0].trim();
@@ -367,7 +386,8 @@ public class ExporterMain {
 
 			this.directoryMappingsMap.put(objectType.toUpperCase(), directory);
 		}
-
+		*/
+		
 		// transform dependent object list into map
 		for (String dep : this.dependentObjects) {
 			String objType = dep.split(":")[0].trim();
@@ -377,6 +397,18 @@ public class ExporterMain {
 			Arrays.asList(depObj.split(",")).forEach((e) -> depObjects.add(e.trim()));
 			
 			this.dependentObjectsMap.put(objType, depObjects);
+		}
+		
+		// filename templates => set default
+		if (filenameTemplates.size()==0)
+			filenameTemplates.add("default:#schema#/#object_type_plural#/#object_name#.sql");
+		
+		// filename templates => convert to map
+		for (String template : this.filenameTemplates) {
+			String objectType = template.split(":")[0].trim();
+			String filenameTemplate = template.split(":")[1].trim();
+
+			this.filenameTemplatesMap.put(objectType.toUpperCase(), filenameTemplate);
 		}
 
 		if (this.workingDirectorySQLcl == null) {
@@ -427,12 +459,14 @@ public class ExporterMain {
 
 		if (!this.skipExport) {
 			sb.append("*" + lSep);
+/*
 			if (this.extensionMappings != null)
 				sb.append("* Extension Mapping        : " + this.extensionMappings + lSep);
 			if (this.directoryMappings != null)
 				sb.append("* Directory Mapping        : " + this.directoryMappings + lSep);
-			if (!this.filenameTemplate.isEmpty()) {
-				sb.append("* Filename Template        : " + this.filenameTemplate + lSep);
+*/				
+			if (this.filenameTemplates.size()>0) {
+				sb.append("* Filename Templates       : " + this.filenameTemplates.toString() + lSep);
 			}
 			sb.append("* Filename Replace Blanks? : " + this.filenameReplaceBlanks + lSep);
 		}
