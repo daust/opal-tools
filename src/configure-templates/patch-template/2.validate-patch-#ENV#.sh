@@ -1,5 +1,5 @@
 #!/bin/bash
-source #OPAL_TOOLS_USER_ENV_SCRIPT#
+source "#OPAL_TOOLS_USER_ENV_SCRIPT#"
 
 SCRIPT_DIR=`dirname $0`
 
@@ -12,4 +12,8 @@ SCRIPT_DIR=`dirname $0`
 
 #OPAL_TOOLS_SET_COLOR_COMMAND#
 
-opal-installer.sh executePatch VALIDATE_ONLY "${SCRIPT_DIR}/opal-installer.json" "${OPAL_TOOLS_USER_CONFIG_DIR}/connections-#ENV#.json"
+opal-install.sh --validate-only \
+                --config-file "${SCRIPT_DIR}/opal-installer.json" \
+                --connection-pool-file "${OPAL_TOOLS_USER_CONFIG_DIR}/connections-#ENV#.json" \
+                --mandatory-attributes application patch author version
+                

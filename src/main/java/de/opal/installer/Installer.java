@@ -5,6 +5,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
@@ -20,6 +21,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import de.opal.installer.config.ConfigConnectionMapping;
+import de.opal.installer.config.ConfigData;
 import de.opal.installer.config.ConfigManager;
 import de.opal.installer.db.ConnectionManager;
 import de.opal.installer.util.FileNode;
@@ -28,8 +30,11 @@ import de.opal.installer.util.Logfile;
 import de.opal.installer.util.Msg;
 import de.opal.installer.util.Utils;
 import oracle.dbtools.db.ResultSetFormatter;
+import oracle.dbtools.raptor.newscriptrunner.CommandRegistry;
+import oracle.dbtools.raptor.newscriptrunner.SQLCommand.StmtSubType;
 import oracle.dbtools.raptor.newscriptrunner.ScriptExecutor;
 import oracle.dbtools.raptor.newscriptrunner.ScriptRunnerContext;
+import oracle.dbtools.raptor.scriptrunner.commands.rest.RESTCommand;
 
 public class Installer {
 	public static final Logger log = LogManager.getLogger(Installer.class.getName());
@@ -41,39 +46,99 @@ public class Installer {
 	private ConfigManager configManagerConnectionPools;
 	private ConnectionManager connectionManager;
 
+	private String configFileName;
+	private String connectionPoolFileName;
+
 	private HashMap<String, ScriptExecutor> sqlcls = new HashMap<String, ScriptExecutor>();
 	private Logfile logfile;
 
-	private static Installer _instance;
-
 	private PatchRegistry patchRegistry;
+
+	private boolean validateOnly = false; // default is execute
+	private String userIdentity;
+	private List<String> mandatoryAttributes;
 
 //	public enum RunMode {
 //		  EXECUTE,
 //		  VALIDATE_ONLY
 //		}
-
-	/**
-	 * returns Singleton Instance
-	 * 
-	 * @return Installer
-	 */
-	public static synchronized Installer getInstance() {
-		// will always be instantiated through the main() function
-		// if (_instance == null)
-		// _instance = new Installer();
-
-		return _instance;
+	
+	private void validateMandatoryAttributes() {
+		ConfigData data=this.configManager.getConfigData();
+		Class<?> configDataclass = data.getClass();
+		
+		for (String attr : mandatoryAttributes) {
+			try {
+				Field field=configDataclass.getDeclaredField(attr);
+				
+				String strValue = (String) field.get (data);
+				
+				if (strValue == null || strValue.isEmpty()) {
+					throw new RuntimeException("Attribute \""+attr + "\" in file " + this.configFileName + " cannot be empty.");
+				}
+				
+			} catch (Exception e) {
+				// TODO: handle exception
+				System.err.println(e.getLocalizedMessage());
+				System.exit(1);
+			}
+		}
+		
+		
 	}
 
-	/**
-	 * Constructor
-	 * 
-	 * - Reads settings from configuration file - Initializes the connectionManager
-	 * 
-	 * @throws IOException
-	 */
-	public Installer(String[] args) throws IOException {
+	public Installer(boolean validateOnly, String configFileName, String connectionPoolFileName, String userIdentity, List<String> mandatoryAttributes)
+			throws IOException {
+		this.validateOnly = validateOnly;
+		this.configFileName = configFileName;
+		this.connectionPoolFileName = connectionPoolFileName;
+		this.userIdentity = userIdentity;
+		this.mandatoryAttributes = mandatoryAttributes;
+
+		this.readVersionFromFile();
+		this.configManager = new ConfigManager(this.configFileName);
+		
+		// replace placeholders in opal-installer.json file
+		// only replace them during installer, not setup
+		this.configManager.replacePlaceholders();
+		
+		// validate the mandatory attributes in the config file
+		validateMandatoryAttributes();
+
+		// after the config parameters have been initialized and read from the config
+		// file,
+		// the runMode from the command line can be set
+		if (this.validateOnly)
+			this.configManager.getConfigData().runMode = "VALIDATE_ONLY";
+		else
+			this.configManager.getConfigData().runMode = "EXECUTE";
+
+		// now read the connection pools from a different file
+		// both have the same structure
+		this.configManagerConnectionPools = new ConfigManager(this.connectionPoolFileName);
+		// encrypt passwords if required
+		if (this.configManagerConnectionPools.hasUnencryptedPasswords()) {
+			this.configManagerConnectionPools.encryptPasswords(
+					this.configManagerConnectionPools.getEncryptionKeyFilename(this.connectionPoolFileName));
+			// dump JSON file
+			this.configManagerConnectionPools.writeJSONConfPool();
+		}
+		// now decrypt the passwords so that they can be used internally in the program
+		this.configManagerConnectionPools.decryptPasswords(
+				this.configManagerConnectionPools.getEncryptionKeyFilename(this.connectionPoolFileName));
+
+		this.connectionManager = ConnectionManager.getInstance();
+		// store definitions but don't create connections
+		this.connectionManager.initialize(this.configManagerConnectionPools.getConfigData().connectionPools);
+
+	}
+
+	// empty constructor
+	public Installer() {
+
+	}
+
+	private void readVersionFromFile() {
 		Properties prop = new Properties();
 		String result = "";
 
@@ -87,13 +152,6 @@ public class Installer {
 		}
 
 		this.version = result;
-
-		readConfig(args);
-		this.connectionManager = ConnectionManager.getInstance();
-
-		// store definitions but don't create connections
-		this.connectionManager.initialize(this.configManagerConnectionPools.getConfigData().connectionPools);
-
 	}
 
 	private String generateLogFileName(String logFileDir, String runMode, String env) {
@@ -128,6 +186,7 @@ public class Installer {
 	 * @throws SQLException
 	 */
 	public void run() throws Exception {
+		long startTime = System.currentTimeMillis();
 		List<FileNode> fsTree, fsTreeFull;
 
 		String logFileDir = this.configManager.getPackageDir().getAbsolutePath() + File.separator + "logs";
@@ -160,10 +219,11 @@ public class Installer {
 			Msg.println("** Run mode              : " + this.configManager.getConfigData().runMode);
 			Msg.println("**");
 			Msg.println("** Config File           : " + this.configManager.getConfigFileName());
+			Msg.println("** SQL directory         : " + this.configManager.getSqlDir());
 			Msg.println("** Connection Pool File  : " + this.configManagerConnectionPools.getConfigFileName());
 			Msg.println("**");
 			Msg.println("** File Encoding (System): " + System.getProperty("file.encoding"));
-			Msg.println("** Current User          : " + System.getProperty("user.name"));
+			Msg.println("** Current User          : " + this.userIdentity);
 			Msg.println("*************************\n");
 
 			logfile.appendln("OPAL Installer version " + this.version);
@@ -178,10 +238,11 @@ public class Installer {
 			logfile.appendln("** Run mode              : " + this.configManager.getConfigData().runMode);
 			logfile.appendln("**");
 			logfile.appendln("** Config File           : " + this.configManager.getConfigFileName());
+			logfile.appendln("** SQL directory         : " + this.configManager.getSqlDir());
 			logfile.appendln("** Connection Pool File  : " + this.configManagerConnectionPools.getConfigFileName());
 			logfile.appendln("**");
 			logfile.appendln("** File Encoding (System): " + System.getProperty("file.encoding"));
-			logfile.appendln("** Current User          : " + System.getProperty("user.name"));
+			logfile.appendln("** Current User          : " + this.userIdentity);
 			logfile.appendln("*************************\n");
 
 			Utils.waitForEnter("Please press <enter> to list the files to be installed ...");
@@ -243,14 +304,7 @@ public class Installer {
 				}
 			}
 
-			/*
-			 * close connection pool
-			 */
-			this.connectionManager.closeAllConnections();
-
-			logfile.close();
-			log.debug("*** end");
-			Msg.println("*** end");
+			displayStatsFooter(fsTree.size(), startTime);
 
 		} catch (Exception e) {
 			log.error(e.getMessage());
@@ -261,61 +315,19 @@ public class Installer {
 			throw (e);
 		} finally {
 			this.connectionManager.closeAllConnections();
+			logfile.close();
 		}
 	}
 
-	/**
-	 * Read the values from the JSON config file and set up the configManager
-	 * 
-	 * @param args
-	 * @throws IOException
-	 */
-	private void readConfig(String[] args) throws IOException {
-		if (args.length < 3) {
-			showUsage();
-			System.exit(1);
-		}
+	private void displayStatsFooter(int totalObjectCnt, long startTime) {
+		long finish = System.currentTimeMillis();
+		long timeElapsed = finish - startTime;
+		int minutes = (int) (timeElapsed / (60 * 1000));
+		int seconds = (int) ((timeElapsed / 1000) % 60);
+		String timeElapsedString = String.format("%d:%02d", minutes, seconds);
 
-		this.configManager = new ConfigManager(args[1]);
+		Msg.println("\n*** " + totalObjectCnt + " files were processed in " + timeElapsedString + " [mm:ss].");
 
-		// after the config parameters have been initialized and read from the config
-		// file,
-		// the runMode from the command line can be set
-		this.configManager.getConfigData().runMode = args[0];
-
-		// now read the connection pools from a different file
-		// both have the same structure
-		this.configManagerConnectionPools = new ConfigManager(args[2]);
-		// encrypt passwords if required
-		if (this.configManagerConnectionPools.hasUnencryptedPasswords()) {
-			this.configManagerConnectionPools
-					.encryptPasswords(this.configManagerConnectionPools.getEncryptionKeyFilename(args[2]));
-			// dump JSON file
-			this.configManagerConnectionPools.writeJSONConfPool();
-		}
-		// now decrypt the passwords so that they can be used internally in the program
-		this.configManagerConnectionPools
-				.decryptPasswords(this.configManagerConnectionPools.getEncryptionKeyFilename(args[2]));
-
-	}
-
-	private void showUsage() {
-		Msg.println("");
-		Msg.println("OPAL Installer version " + this.version);
-		Msg.println("");
-		Msg.println("Usage: ");
-		Msg.println("");
-		Msg.println(
-				"java -jar opal_installer.jar executePatch EXECUTE <json config file incl. path> <json config file for connection information>");
-		Msg.println("");
-		Msg.println(
-				"java -jar opal_installer.jar executePatch VALIDATE_ONLY <json config file incl. path> <json config file for connection information>");
-		Msg.println("");
-		Msg.println(
-				"e.g.: java -jar opal_installer.jar executePatch VALIDATE_ONLY /.../installer.json /.../connectionPools.json");
-		Msg.println(
-				"e.g.: java -jar opal_installer.jar executePatch EXECUTE /.../installer.json /.../connectionPools.json");
-		Msg.println("");
 	}
 
 	public ScriptExecutor getScriptExecutorByDsName(String dsName) throws SQLException {
@@ -446,37 +458,41 @@ public class Installer {
 		BufferedOutputStream buf = new BufferedOutputStream(bout);
 		sqlcl.setOut(buf);
 
+		String baseDirectoryName = configManager.getPackageDirName();
+		String relativeFilename = file.getAbsolutePath().replace(baseDirectoryName, "");
+
+		// enable all REST commands
+		CommandRegistry.addForAllStmtsListener(RESTCommand.class, StmtSubType.G_S_FORALLSTMTS_STMTSUBTYPE);
+
 		// register patch file if registry targets are defined in config file and
 		// EXECUTE-mode, not
 		// SIMULATE
 		if (this.configManager.getConfigData().runMode.equals("EXECUTE")) {
 			// register file in patch registry
 			if (this.patchRegistry != null) {
-				this.patchRegistry.registerFile(file);
+				this.patchRegistry.registerFile(relativeFilename);
 			}
 		}
 
-		String overrideEncoding = configManager.getEncoding(file.toString());
+		String overrideEncoding = configManager.getEncoding(relativeFilename);
 
-		// # run a whole file
-		// String cmd = "@" + file.getAbsolutePath();
-		this.logfile.append("\n***");
+		// this.logfile.append("\n***");
 		if (overrideEncoding.isEmpty()) {
-			this.logfile.append("\n*** User:" + sqlcl.getConn().getSchema() + "; " + file.getAbsolutePath());
+			this.logfile.append("\n*** User:" + sqlcl.getConn().getSchema() + "; " + relativeFilename);
 		} else {
 			this.logfile.append("\n*** Override encoding: " + overrideEncoding + "; User:" + sqlcl.getConn().getSchema()
-					+ "; " + file.getAbsolutePath());
+					+ "; " + relativeFilename);
 		}
-		this.logfile.append("\n***\n\n");
+		// this.logfile.append("\n***\n\n");
 
-		Msg.print("\n***");
+		// Msg.print("\n***");
 		if (overrideEncoding.isEmpty()) {
-			Msg.print("\n*** User:" + sqlcl.getConn().getSchema() + "; " + file.getAbsolutePath());
+			Msg.print("\n*** User:" + sqlcl.getConn().getSchema() + "; " + relativeFilename);
 		} else {
 			Msg.print("\n*** Override encoding: " + overrideEncoding + "; User:" + sqlcl.getConn().getSchema() + "; "
-					+ file.getAbsolutePath());
+					+ relativeFilename);
 		}
-		Msg.print("\n***\n\n");
+		// Msg.print("\n***\n\n");
 
 		// only execute if flag is set in config file
 		if (this.configManager.getConfigData().runMode.equals("EXECUTE")) {
@@ -516,6 +532,9 @@ public class Installer {
 		ByteArrayOutputStream bout = new ByteArrayOutputStream();
 		BufferedOutputStream buf = new BufferedOutputStream(bout);
 		sqlcl.setOut(buf);
+
+		// enable all REST commands
+		CommandRegistry.addForAllStmtsListener(RESTCommand.class, StmtSubType.G_S_FORALLSTMTS_STMTSUBTYPE);
 
 		// only execute if flag is set in config file
 		if (this.configManager.getConfigData().runMode.equals("EXECUTE")) {

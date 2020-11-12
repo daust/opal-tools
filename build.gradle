@@ -1,11 +1,6 @@
 /*
   File    : build.gradle
   Purpose : Build file for opal-tools
-
-  Date        Author    Comment
-  --------------------------------------------------
-  14.10.2020  D. Aust   initial creation
-  03.11.2020  D. Aust   switch to opal-tools
  */
 
 plugins {
@@ -22,7 +17,7 @@ import org.gradle.internal.os.OperatingSystem
 //-----------------------------------------------------------------------------
 
   project.description       = "OPAL Tools - more details here: https://github.com/daust/opal-tools"
-  project.version           = '1.1.2'
+  project.version           = '2.0.0'
   
   sourceCompatibility       = 1.8
   targetCompatibility       = 1.8

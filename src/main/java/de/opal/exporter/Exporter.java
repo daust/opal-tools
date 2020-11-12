@@ -40,12 +40,13 @@ public class Exporter {
 	private boolean skipErrors;
 	private HashMap<String, ArrayList<String>> dependentObjectsMap;
 	private boolean isSilent;
-	private HashMap<String, String> extensionMappingsMap;
-	private HashMap<String, String> directoryMappingsMap;
-	private String filenameTemplate;
+	//private HashMap<String, String> extensionMappingsMap;
+	//private HashMap<String, String> directoryMappingsMap;
+	//private String filenameTemplate;
 	private boolean filenameReplaceBlanks;
 	private String workingDirectorySQLcl;
 	private boolean skipExport;
+	private HashMap<String, String> filenameTemplatesMap;
 
 	/**
 	 * 
@@ -55,8 +56,9 @@ public class Exporter {
 	 */
 	public Exporter(String user, String pwd, String connectStr, String outputDir, boolean skipErrors,
 			HashMap<String, ArrayList<String>> dependentObjectsMap, boolean isSilent,
-			HashMap<String, String> extensionMappingsMap, HashMap<String, String> directoryMappingsMap,
-			String filenameTemplate, boolean filenameReplaceBlanks, String workingDirectorySQLcl, boolean skipExport) {
+			/*HashMap<String, String> extensionMappingsMap, HashMap<String, String> directoryMappingsMap,
+			String filenameTemplate,*/ boolean filenameReplaceBlanks, String workingDirectorySQLcl, boolean skipExport,
+			HashMap<String, String> filenameTemplatesMap) {
 		super();
 		this.user = user;
 		this.pwd = pwd;
@@ -65,21 +67,22 @@ public class Exporter {
 		this.skipErrors = skipErrors;
 		this.dependentObjectsMap = dependentObjectsMap;
 		this.isSilent = isSilent;
-		this.extensionMappingsMap = extensionMappingsMap;
-		this.directoryMappingsMap = directoryMappingsMap;
-		this.filenameTemplate = filenameTemplate;
+		//this.extensionMappingsMap = extensionMappingsMap;
+		//this.directoryMappingsMap = directoryMappingsMap;
+		//this.filenameTemplate = filenameTemplate;
 		this.filenameReplaceBlanks = filenameReplaceBlanks;
 		this.workingDirectorySQLcl = workingDirectorySQLcl;
 		this.skipExport = skipExport;
+		this.filenameTemplatesMap=filenameTemplatesMap;
 
 	}
 
 	private String computeExportFilename(String schemaName, String objectType, String objectName) {
-		String filename = this.filenameTemplate;
-		String suffix = "sql";
+		String filename="";
+		//String suffix = "sql";
 		String objectTypePath = objectType;
 		String objectTypePlural = objectTypePath;
-		boolean objectTypePathChanged = false;
+		//boolean objectTypePathChanged = false;
 
 		// make plural form
 		if (objectTypePlural.endsWith("Y"))
@@ -89,6 +92,13 @@ public class Exporter {
 
 		objectTypePlural += "s";
 
+		// get filename template
+		if (this.filenameTemplatesMap.containsKey(objectType))
+			filename = this.filenameTemplatesMap.get(objectType);
+		else if (this.filenameTemplatesMap.containsKey("DEFAULT"))
+			filename = this.filenameTemplatesMap.get("DEFAULT");
+		
+		/*
 		// map object types to suffixes
 		if (this.extensionMappingsMap.containsKey(objectType))
 			suffix = this.extensionMappingsMap.get(objectType);
@@ -100,6 +110,7 @@ public class Exporter {
 			// override both variables later
 			objectTypePathChanged = true;
 		}
+		*/
 
 		/*
 		 * schema - schema name in lower case type - lower case type name: 'table'
@@ -118,20 +129,20 @@ public class Exporter {
 
 		// when it is overriden on the command line ...
 		// it will affect it completely .. AS IS
-		if (objectTypePathChanged) {
-			filename = filename.replace("#object_type_plural#", objectTypePath.toLowerCase());
-			filename = filename.replace("#OBJECT_TYPE_PLURAL#", objectTypePath.toUpperCase());
-			filename = filename.replace("#object_type#", objectTypePath.toLowerCase());
-			filename = filename.replace("#OBJECT_TYPE#", objectTypePath.toUpperCase());
-		} else {
+		//if (objectTypePathChanged) {
+		//	filename = filename.replace("#object_type_plural#", objectTypePath.toLowerCase());
+		//	filename = filename.replace("#OBJECT_TYPE_PLURAL#", objectTypePath.toUpperCase());
+		//	filename = filename.replace("#object_type#", objectTypePath.toLowerCase());
+		//	filename = filename.replace("#OBJECT_TYPE#", objectTypePath.toUpperCase());
+		//} else {
 			filename = filename.replace("#object_type_plural#", objectTypePlural.toLowerCase());
 			filename = filename.replace("#OBJECT_TYPE_PLURAL#", objectTypePlural.toUpperCase());
 			filename = filename.replace("#object_type#", objectType.toLowerCase());
 			filename = filename.replace("#OBJECT_TYPE#", objectType.toUpperCase());
-		}
+		//}
 
-		filename = filename.replace("#ext#", suffix.toLowerCase());
-		filename = filename.replace("#EXT#", suffix.toUpperCase());
+		//filename = filename.replace("#ext#", suffix.toLowerCase());
+		//filename = filename.replace("#EXT#", suffix.toUpperCase());
 
 		filename = filename.replace("/", "" + File.separatorChar);
 
@@ -231,8 +242,9 @@ public class Exporter {
 	 * @param jdbcURL
 	 * @throws Exception
 	 */
-	public void export(List<File> preScripts, List<File> postScripts, List<String> includeFilters, List<String> excludeFilters,
-			List<String> schemas, List<String> includeTypes, List<String> excludeTypes) throws Exception {
+	public void export(List<File> preScripts, List<File> postScripts, List<String> includeFilters,
+			List<String> excludeFilters, List<String> schemas, List<String> includeTypes, List<String> excludeTypes)
+			throws Exception {
 		SQLclUtil sqlclUtil = new SQLclUtil();
 		String schemaName = "";
 		String objectType = "";
@@ -248,11 +260,12 @@ public class Exporter {
 			sqlcl = getScriptExecutor(user, pwd, connectStr);
 
 			// run pre-script(s)
-			if (preScripts.size()>0) {
+			if (preScripts.size() > 0) {
 				for (File preScript : preScripts) {
 					Msg.println("*** run pre script: " + preScript + "\n");
 					if (this.workingDirectorySQLcl != null)
-						sqlcl.setDirectory(this.workingDirectorySQLcl);
+						sqlclUtil.setWorkingDirectory(this.workingDirectorySQLcl, sqlcl);
+					// sqlcl.setDirectory(this.workingDirectorySQLcl);
 
 					sqlclUtil.executeFile(preScript, sqlcl, null);
 				}
@@ -266,8 +279,12 @@ public class Exporter {
 				// The query can be update query or can be select query
 				String whereClause = computeWhereClause(includeFilters, excludeFilters, schemas, includeTypes,
 						excludeTypes);
-				String objectQuery = "select owner, object_name, object_type \n" + "  from all_objects \n" + " where "
-						+ whereClause + "\n" + " order by 1,2,3";
+				String objectQuery = "select owner, object_name, object_type\n"
+						+ "    from (select owner, object_name, object_type, generated \n"
+						+ "            from all_objects \n" + "          union all \n"
+						+ "          select owner, constraint_name as object_name, 'REF_CONSTRAINT' as object_type, 'N' as generated\n"
+						+ "            from all_constraints \n" + "           where constraint_type = 'R') \n"
+						+ " where " + whereClause + "\n" + " order by 1,2,3";
 				log.debug("execute query: " + objectQuery);
 				Msg.println("*** The following objects will be exported:\n\n" + objectQuery);
 				Msg.println("");
@@ -311,18 +328,20 @@ public class Exporter {
 			}
 
 			// run post-script(s)
-			if (postScripts.size()>0) {
+			if (postScripts.size() > 0) {
 				for (File postScript : postScripts) {
-					Msg.println("*** run post script: " + postScript + "\n");
+					Msg.println("\n*** run post script: " + postScript + "\n");
 					if (this.workingDirectorySQLcl != null)
-						sqlcl.setDirectory(this.workingDirectorySQLcl);
+						sqlclUtil.setWorkingDirectory(this.workingDirectorySQLcl, sqlcl);
+					// sqlcl.setDirectory(this.workingDirectorySQLcl);
 
 					sqlclUtil.executeFile(postScript, sqlcl, null);
 				}
 			}
-			//sqlclUtil.setWorkingDirectory(this.workingDirectorySQLcl, sqlcl);
-			//log.debug("\ncurrent working directory (after change): "
-			//+ oracle.dbtools.common.utils.FileUtils.getCWD(sqlcl.getScriptRunnerContext()));
+			// sqlclUtil.setWorkingDirectory(this.workingDirectorySQLcl, sqlcl);
+			// log.debug("\ncurrent working directory (after change): "
+			// +
+			// oracle.dbtools.common.utils.FileUtils.getCWD(sqlcl.getScriptRunnerContext()));
 
 			displayStatsFooter(errorList, totalObjectCnt, startTime);
 		} catch (Exception e) {
@@ -437,7 +456,7 @@ public class Exporter {
 					ddlStmtDependent.setString(1, actualObjectType);
 					ddlStmtDependent.setString(2, objectName);
 					ddlStmtDependent.setString(3, schemaName);
-					
+
 					boolean ddlQueryStatus = ddlStmtDependent.execute();
 					if (ddlQueryStatus) {
 						// query is a select query.

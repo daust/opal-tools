@@ -1,4 +1,4 @@
-@call #OPAL_TOOLS_USER_ENV_SCRIPT#
+@call "#OPAL_TOOLS_USER_ENV_SCRIPT#"
 
 SET CURRDIR=%~dp0
 
@@ -12,6 +12,8 @@ SET CURRDIR=%~dp0
 
 #OPAL_TOOLS_SET_COLOR_COMMAND#
 
-@call opal-installer.cmd executePatch EXECUTE "%CURRDIR%opal-installer.json" "%OPAL_TOOLS_USER_CONFIG_DIR%\connections-#ENV#.json"
+@call opal-install.cmd --config-file "%CURRDIR%opal-installer.json" ^
+                       --connection-pool-file "%OPAL_TOOLS_USER_CONFIG_DIR%\connections-#ENV#.json" ^
+                       --mandatory-attributes application patch author version
 
 cmd /k

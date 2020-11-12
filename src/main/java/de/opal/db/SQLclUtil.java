@@ -9,7 +9,10 @@ import java.sql.SQLException;
 import org.apache.commons.io.FileUtils;
 
 import de.opal.installer.util.Msg;
+import oracle.dbtools.raptor.newscriptrunner.CommandRegistry;
 import oracle.dbtools.raptor.newscriptrunner.ScriptExecutor;
+import oracle.dbtools.raptor.newscriptrunner.SQLCommand.StmtSubType;
+import oracle.dbtools.raptor.scriptrunner.commands.rest.RESTCommand;
 
 public class SQLclUtil {
 	/**
@@ -25,6 +28,9 @@ public class SQLclUtil {
 		ByteArrayOutputStream bout = new ByteArrayOutputStream();
 		BufferedOutputStream buf = new BufferedOutputStream(bout);
 		sqlcl.setOut(buf);
+
+		// enable all REST commands
+		CommandRegistry.addForAllStmtsListener(RESTCommand.class, StmtSubType.G_S_FORALLSTMTS_STMTSUBTYPE);
 
 		// only execute if flag is set in config file
 		// sqlcl.setStmt(new FileInputStream(file));
@@ -58,6 +64,9 @@ public class SQLclUtil {
 		BufferedOutputStream buf = new BufferedOutputStream(bout);
 		sqlcl.setOut(buf);
 
+		// enable all REST commands
+		CommandRegistry.addForAllStmtsListener(RESTCommand.class, StmtSubType.G_S_FORALLSTMTS_STMTSUBTYPE);
+
 		sqlcl.setStmt(statement);
 		sqlcl.run();
 
@@ -71,7 +80,7 @@ public class SQLclUtil {
 	}
 
 	// see: https://twitter.com/krisrice/status/1324020253865725952
-	public void setWorkingDirectory(String directory, ScriptExecutor sqlcl) {
+	public static void setWorkingDirectory(String directory, ScriptExecutor sqlcl) {
 		sqlcl.setStmt("cd \"" + directory + "\"");
 		sqlcl.run();
 	}

@@ -1,6 +1,5 @@
 package de.opal.installer;
 
-import java.io.File;
 import java.io.IOException;
 import java.sql.CallableStatement;
 import java.sql.SQLException;
@@ -162,7 +161,7 @@ public class PatchRegistry {
 
 		String cmd="UPDATE #PREFIX#_installer_patches\n" + 
 				"   SET pat_ended_on = SYSDATE\n" + 
-				" WHERE pat_id = (SELECT MAX (pat_id) FROM opal_installer_patches)";
+				" WHERE pat_id = (SELECT MAX (pat_id) FROM #PREFIX#_installer_patches)";
 				
 		if (registryTargets != null) {
 			for (RegistryTarget registryTarget: this.registryTargets) {
@@ -196,7 +195,7 @@ public class PatchRegistry {
 	}
 
 	
-	public void registerFile(File file) throws SQLException {
+	public void registerFile(String filename) throws SQLException {
 
 		String cmd="INSERT INTO #PREFIX#_installer_details (\n" + 
 				"    det_id,\n" + 
@@ -238,7 +237,7 @@ public class PatchRegistry {
 					//this.installer.executeStatement(cmd, sqlcl);
 					
 					cs=sqlcl.getConn().prepareCall(cmd);
-					cs.setString(1,  StringUtils.substring(file.getPath(),0,3999));
+					cs.setString(1,  StringUtils.substring(filename,0,3999));
 					cs.execute();
 					cs.execute("commit");
 					cs.close();

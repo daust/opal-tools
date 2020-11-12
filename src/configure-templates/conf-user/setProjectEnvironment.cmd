@@ -1,22 +1,25 @@
+@REM DEBUG: For debugging, you can turn on ECHO again ... and also OPAL_TOOLS_JAVA_ARGS below
+@echo OFF
+
 @REM --------------------------------------------------------------------------
-@REM setting important environment variables for the scripts to be used. 
+@REM User specific configuration
 @REM --------------------------------------------------------------------------
+set PROJECT_ROOT=#PROJECT_ROOT#
+set OPAL_TOOLS_USER_IDENTITY=#OPAL_TOOLS_USER_IDENTITY#
 
 @REM --- change if needed ---
 @REM set ORACLE_HOME=c:\Progs\Oracle\Client\12.1\Home
 @REM it MUST be a JDK, a JRE is NOT ENOUGH
 @REM set JAVA_HOME=c:\Program Files (x86)\Java\jdk1.8.0_251
 
-@REM DEBUG: For debugging, you can turn on ECHO again ... and also OPAL_TOOLS_JAVA_ARGS below
-@echo OFF
-
-@REM set variables used in the various scripts for the installer
-set PROJECT_ROOT=#PROJECT_ROOT#
+@REM --------------------------------------------------------------------------
+@REM General configuration settings, typically unchanged
+@REM --------------------------------------------------------------------------
 set OPAL_TOOLS_HOME_DIR=#OPAL_TOOLS_HOME_DIR#
-set OPAL_TOOLS_JAVA_ARGS=-Dlog4j.configurationFile=%OPAL_TOOLS_HOME_DIR%\conf\log4j2.xml -Djava.util.logging.config.file=%OPAL_TOOLS_HOME_DIR%\conf\log4j.properties -Dfile.encoding=#FILE.ENCODING#
+set OPAL_TOOLS_JAVA_ARGS=-Dlog4j.configurationFile="%OPAL_TOOLS_HOME_DIR%\conf\log4j2.xml" -Djava.util.logging.config.file="%OPAL_TOOLS_HOME_DIR%\conf\log4j.properties" -Dfile.encoding=#FILE.ENCODING#
 
 @REM DEBUG: for debugging, use these log file settings
-@REM set OPAL_TOOLS_JAVA_ARGS=-Dlog4j.configurationFile=%OPAL_TOOLS_HOME_DIR%\conf\log4j2-debug.xml -Djava.util.logging.config.file=%OPAL_TOOLS_HOME_DIR%\conf\log4j-debug.properties -Dfile.encoding=#FILE.ENCODING#
+@REM set OPAL_TOOLS_JAVA_ARGS=-Dlog4j.configurationFile="%OPAL_TOOLS_HOME_DIR%\conf\log4j2-debug.xml" -Djava.util.logging.config.file="%OPAL_TOOLS_HOME_DIR%\conf\log4j-debug.properties" -Dfile.encoding=#FILE.ENCODING#
 
 set OPAL_TOOLS_USER_CONFIG_DIR=#OPAL_TOOLS_USER_CONFIG_DIR#
 set OPAL_TOOLS_SRC_SQL_DIR=#OPAL_TOOLS_SRC_SQL_DIR#

@@ -1,7 +1,6 @@
 #!/bin/bash
 #--------------------------------------------------------------------------
-# setting important environment variables for the scripts to be used. 
+# setting important environment variables for the scripts to be used.
 #--------------------------------------------------------------------------
 
 java -cp "lib/*" de.opal.setup.SetupManager $*
-

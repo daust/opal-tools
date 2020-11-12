@@ -1,4 +1,4 @@
-package setup;
+package de.opal.setup;
 
 import static org.kohsuke.args4j.ExampleMode.ALL;
 
@@ -12,6 +12,8 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -143,7 +145,7 @@ public class SetupManager {
 
 		// Scanner kbd = new Scanner(System.in); // Create a Scanner object
 		Msg.print(prompt + " [" + defaultValue + "]: ");
-		input = kbd.nextLine();
+		input = kbd.nextLine().trim();
 		if (input.isEmpty()) {
 			input = defaultValue;
 		}
@@ -397,10 +399,14 @@ public class SetupManager {
 		// read opal-installer.json file
 		// ConfigData configDataInst = new ConfigData();
 		// configDataInst.clearDefaults();
+		/*
 		String fileContents = "{\n" + "	\"application\": \"\",\n" + "    \"patch\": \"\",\n" + "    \"author\": \"\",\n"
 				+ "    \"version\": \"\",\n" + "    \"connectionMappings\": [],\n"
 				+ "	 \"waitAfterEachStatement\": \"true\"," + "    \"sqlFileRegEx\": \"\\\\.(sql|pks|pkb|trg)$\",\n"
 				+ "    \"registryTargets\": [],\n" + "    \"encodingMappings\": [ ]	\n" + "}";
+		*/
+		String fileContents=FileUtils.readFileToString(new File(tmpSourceDir+File.separator+"opal-installer.json"), Charset.defaultCharset());
+		
 		FileUtils.writeStringToFile(new File(tmpTargetDir + File.separator + "opal-installer.json"), fileContents,
 				Charset.defaultCharset());
 		ConfigManager confMgrInst = new ConfigManager(tmpTargetDir + File.separator + "opal-installer.json");
@@ -421,14 +427,17 @@ public class SetupManager {
 		ConfigEncodingMapping map = null;
 		if (osIsWindows()) {
 			map = new ConfigEncodingMapping(utf8_default, "\\\\sql\\\\.*apex.*\\\\.*f*sql");
+			confMgrInst.getConfigData().encodingMappings.add(map);
+			map = new ConfigEncodingMapping(utf8_default, "\\\\sql\\\\.*");
+			confMgrInst.getConfigData().encodingMappings.add(map);
 		} else {
 			map = new ConfigEncodingMapping(utf8_default, "/sql/.*apex.*/.*f*sql");
+			confMgrInst.getConfigData().encodingMappings.add(map);
+			map = new ConfigEncodingMapping(utf8_default, "/sql/.*");
+			confMgrInst.getConfigData().encodingMappings.add(map);
 		}
-		confMgrInst.getConfigData().encodingMappings.add(map);
-
 		// write opal-installer.json file
 		confMgrInst.writeJSONConfInitFile();
-
 	}
 
 	private void processDBSourceDirectory(Scanner kbd) throws IOException {
@@ -507,9 +516,9 @@ public class SetupManager {
 		} else {
 			Msg.println("\nset privileges for *.sh files\n");
 			ProcessBuilder builder = new ProcessBuilder();
-			builder.command("bash", "-c", "find " + getFullPathResolveVariables(localConfigDirectory) + " "
-					+ getFullPathResolveVariables(swDirectory) + " " + getFullPathResolveVariables(templateDirectory)
-					+ " -type f -iname \"*.sh\" -exec chmod +x {} \\;");
+			builder.command("bash", "-c", "find \"" + getFullPathResolveVariables(localConfigDirectory) + "\" \""
+					+ getFullPathResolveVariables(swDirectory) + "\" \"" + getFullPathResolveVariables(templateDirectory)
+					+ "\" -type f -iname \"*.sh\" -exec chmod +x {} \\;");
 			try {
 				Process process = builder.start();
 
@@ -639,7 +648,8 @@ public class SetupManager {
 		}
 		
 		newContents = newContents.replace("#FILE.ENCODING#", this.fileEncoding);
-
+		newContents = newContents.replace("#OPAL_TOOLS_USER_IDENTITY#", System.getProperty("user.name"));
+		
 		return newContents;
 	}
 
@@ -654,7 +664,7 @@ public class SetupManager {
 		Scanner kbd = new Scanner(System.in); // Create a Scanner object
 
 		projectRootDir = promptForInput(kbd, "\nProject root directory, typically the target of a GIT or SVN export",
-				projectRootDir);
+				projectRootDir.trim());
 		swDirectory = promptForInput(kbd,
 				"SW install directory (contains bin and lib directories, use '.' for local files)",
 				getOsDependentProjectRootVariable() + File.separatorChar + "opal-tools");
@@ -677,7 +687,7 @@ public class SetupManager {
 		environmentColorListString = promptForInput(kbd,
 				"List of shell colors for the environments (comma-separated, e.g. green,yellow,red)",
 				"green,yellow,red");
-		environmentExportConnection = promptForInput(kbd, "which is your developement environment? This is used for the export: ", environmentListString.split(",")[0]);
+		environmentExportConnection = promptForInput(kbd, "which is your developement environment? This is used for the export: ", environmentListString.split(",")[0].trim());
 		fileEncoding = promptForInput(kbd, "file encoding (e.g. UTF-8 or Cp1252, default is current system encoding): ", System.getProperty("file.encoding"));
 
 		log.debug("***");
@@ -697,10 +707,18 @@ public class SetupManager {
 
 		Utils.waitForEnter("Please press <enter> to proceed ...");
 
-		// Split comma separated list into arrays
 		environmentListArr = environmentListString.split(",");
+		for (int i = 0; i < environmentListArr.length; i++) {
+			environmentListArr[i]=environmentListArr[i].trim();
+		}
 		schemaListArr = schemaListString.split(",");
+		for (int i = 0; i < schemaListArr.length; i++) {
+			schemaListArr[i]=schemaListArr[i].trim();
+		}
 		environmentColorListArr = environmentColorListString.split(",");
+		for (int i = 0; i < environmentColorListArr.length; i++) {
+			environmentColorListArr[i]=environmentColorListArr[i].trim();
+		}
 
 		// ----------------------------------------------------------
 		// software installation
