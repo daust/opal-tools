@@ -41,6 +41,9 @@ public class ConfigManagerConnectionPool {
 		this.configFile = new File(configFileName);
 		this.configDataConnectionPool = new ConfigDataConnectionPool();
 		this.readJSONConf(this.configFile);
+		
+		// set defaults
+		
 	}
 
 	public boolean hasUnencryptedPasswords() {
@@ -124,7 +127,6 @@ public class ConfigManagerConnectionPool {
 		} catch (IOException ex) {
 			ex.printStackTrace();
 		}
-
 	}
 
 

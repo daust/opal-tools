@@ -212,11 +212,11 @@ public class SetupManager {
 
 			// first we create an empty file
 			FileUtils.writeStringToFile(new File(confFilename), "{}", Charset.defaultCharset());
-
+			
 			// prompt for url for all connections in this file
-			String envJDBCUrl = promptForInput(kbd, "    JDBC url for environment " + env + " (hostname:port:sid or hostname:port/servicename): ",
+			String envJDBCUrl = promptForInput(kbd    , "    JDBC url for environment " + env + " (hostname:port:sid or hostname:port/servicename): ",
 					"127.0.0.1:1521:xe");
-
+			
 			ConfigDataConnectionPool configData = new ConfigDataConnectionPool();
 			configData.targetSystem = env;
 
