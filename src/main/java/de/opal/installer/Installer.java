@@ -27,8 +27,8 @@ import de.opal.installer.db.ConnectionManager;
 import de.opal.installer.util.FileNode;
 import de.opal.installer.util.Filesystem;
 import de.opal.installer.util.Logfile;
-import de.opal.installer.util.Msg;
 import de.opal.installer.util.Utils;
+import de.opal.utils.MsgLog;
 import oracle.dbtools.db.ResultSetFormatter;
 import oracle.dbtools.raptor.newscriptrunner.CommandRegistry;
 import oracle.dbtools.raptor.newscriptrunner.SQLCommand.StmtSubType;
@@ -62,33 +62,33 @@ public class Installer {
 //		  EXECUTE,
 //		  VALIDATE_ONLY
 //		}
-	
+
 	private void validateMandatoryAttributes() {
-		ConfigData data=this.configManager.getConfigData();
+		ConfigData data = this.configManager.getConfigData();
 		Class<?> configDataclass = data.getClass();
-		
+
 		for (String attr : mandatoryAttributes) {
 			try {
-				Field field=configDataclass.getDeclaredField(attr);
-				
-				String strValue = (String) field.get (data);
-				
+				Field field = configDataclass.getDeclaredField(attr);
+
+				String strValue = (String) field.get(data);
+
 				if (strValue == null || strValue.isEmpty()) {
-					throw new RuntimeException("Attribute \""+attr + "\" in file " + this.configFileName + " cannot be empty.");
+					throw new RuntimeException(
+							"Attribute \"" + attr + "\" in file " + this.configFileName + " cannot be empty.");
 				}
-				
+
 			} catch (Exception e) {
 				// TODO: handle exception
 				System.err.println(e.getLocalizedMessage());
 				System.exit(1);
 			}
 		}
-		
-		
+
 	}
 
-	public Installer(boolean validateOnly, String configFileName, String connectionPoolFileName, String userIdentity, List<String> mandatoryAttributes)
-			throws IOException {
+	public Installer(boolean validateOnly, String configFileName, String connectionPoolFileName, String userIdentity,
+			List<String> mandatoryAttributes) throws IOException {
 		this.validateOnly = validateOnly;
 		this.configFileName = configFileName;
 		this.connectionPoolFileName = connectionPoolFileName;
@@ -97,11 +97,11 @@ public class Installer {
 
 		this.readVersionFromFile();
 		this.configManager = new ConfigManager(this.configFileName);
-		
+
 		// replace placeholders in opal-installer.json file
 		// only replace them during installer, not setup
 		this.configManager.replacePlaceholders();
-		
+
 		// validate the mandatory attributes in the config file
 		validateMandatoryAttributes();
 
@@ -193,57 +193,32 @@ public class Installer {
 		String logfileName = generateLogFileName(logFileDir, this.configManager.getConfigData().runMode,
 				this.configManagerConnectionPools.getConfigData().targetSystem);
 
-		// create logfile directory if it does not exist
-		File logFileDirFile = new File(logFileDir);
-		if (!logFileDirFile.exists()) {
-			logFileDirFile.mkdir();
-			log.debug("create log directory: " + logFileDir);
-		}
-		log.debug("logfile: " + logfileName);
-		logfile = Logfile.getInstance();
-		logfile.open(logfileName);
+		MsgLog.createLogDirectory(logFileDir);
+		MsgLog.createLogfile(logfileName);
 
 		// run application
 		log.debug("run()");
 		try {
 			Filesystem fs = new Filesystem(configManager.getSqlDir());
 
-			Msg.println("OPAL Installer version " + this.version);
-			Msg.println("*************************");
-			Msg.println("** Application           : " + this.configManager.getConfigData().application);
-			Msg.println("** Patch                 : " + this.configManager.getConfigData().patch);
-			Msg.println("** Version               : " + this.configManager.getConfigData().version);
-			Msg.println("** Author                : " + this.configManager.getConfigData().author);
-			Msg.println("**");
-			Msg.println("** Target system         : " + this.configManagerConnectionPools.getConfigData().targetSystem);
-			Msg.println("** Run mode              : " + this.configManager.getConfigData().runMode);
-			Msg.println("**");
-			Msg.println("** Config File           : " + this.configManager.getConfigFileName());
-			Msg.println("** SQL directory         : " + this.configManager.getSqlDir());
-			Msg.println("** Connection Pool File  : " + this.configManagerConnectionPools.getConfigFileName());
-			Msg.println("**");
-			Msg.println("** File Encoding (System): " + System.getProperty("file.encoding"));
-			Msg.println("** Current User          : " + this.userIdentity);
-			Msg.println("*************************\n");
-
-			logfile.appendln("OPAL Installer version " + this.version);
-			logfile.appendln("*************************");
-			logfile.appendln("** Application           : " + this.configManager.getConfigData().application);
-			logfile.appendln("** Patch                 : " + this.configManager.getConfigData().patch);
-			logfile.appendln("** Version               : " + this.configManager.getConfigData().version);
-			logfile.appendln("** Author                : " + this.configManager.getConfigData().author);
-			logfile.appendln("**");
-			logfile.appendln(
+			MsgLog.println("OPAL Installer version " + this.version);
+			MsgLog.println("*************************");
+			MsgLog.println("** Application           : " + this.configManager.getConfigData().application);
+			MsgLog.println("** Patch                 : " + this.configManager.getConfigData().patch);
+			MsgLog.println("** Version               : " + this.configManager.getConfigData().version);
+			MsgLog.println("** Author                : " + this.configManager.getConfigData().author);
+			MsgLog.println("**");
+			MsgLog.println(
 					"** Target system         : " + this.configManagerConnectionPools.getConfigData().targetSystem);
-			logfile.appendln("** Run mode              : " + this.configManager.getConfigData().runMode);
-			logfile.appendln("**");
-			logfile.appendln("** Config File           : " + this.configManager.getConfigFileName());
-			logfile.appendln("** SQL directory         : " + this.configManager.getSqlDir());
-			logfile.appendln("** Connection Pool File  : " + this.configManagerConnectionPools.getConfigFileName());
-			logfile.appendln("**");
-			logfile.appendln("** File Encoding (System): " + System.getProperty("file.encoding"));
-			logfile.appendln("** Current User          : " + this.userIdentity);
-			logfile.appendln("*************************\n");
+			MsgLog.println("** Run mode              : " + this.configManager.getConfigData().runMode);
+			MsgLog.println("**");
+			MsgLog.println("** Config File           : " + this.configManager.getConfigFileName());
+			MsgLog.println("** SQL directory         : " + this.configManager.getSqlDir());
+			MsgLog.println("** Connection Pool File  : " + this.configManagerConnectionPools.getConfigFileName());
+			MsgLog.println("**");
+			MsgLog.println("** File Encoding (System): " + System.getProperty("file.encoding"));
+			MsgLog.println("** Current User          : " + this.userIdentity);
+			MsgLog.println("*************************\n");
 
 			Utils.waitForEnter("Please press <enter> to list the files to be installed ...");
 
@@ -257,9 +232,9 @@ public class Installer {
 				fsTree = fs.filterTreeInorder(fsTreeFull, configManager.getConfigData().sqlFileRegEx, logfile,
 						configManager);
 			}
-			logfile.append("\n");
 			Utils.waitForEnter("\nPlease press <enter> to start the process ("
 					+ this.configManager.getConfigData().runMode + ") ...");
+			MsgLog.logfilePrintln("");
 
 			/*
 			 * now process all files one by one
@@ -305,29 +280,29 @@ public class Installer {
 			}
 
 			displayStatsFooter(fsTree.size(), startTime);
+			MsgLog.logfilePrintln("\ndone.");
 
 		} catch (Exception e) {
 			log.error(e.getMessage());
 			this.connectionManager.closeAllConnections();
-			logfile.close();
+			MsgLog.closeLogfile();
 
 			// reraise exception
 			throw (e);
 		} finally {
 			this.connectionManager.closeAllConnections();
-			logfile.close();
+			MsgLog.closeLogfile();
 		}
 	}
 
-	private void displayStatsFooter(int totalObjectCnt, long startTime) {
+	private void displayStatsFooter(int totalObjectCnt, long startTime) throws IOException {
 		long finish = System.currentTimeMillis();
 		long timeElapsed = finish - startTime;
 		int minutes = (int) (timeElapsed / (60 * 1000));
 		int seconds = (int) ((timeElapsed / 1000) % 60);
 		String timeElapsedString = String.format("%d:%02d", minutes, seconds);
 
-		Msg.println("\n*** " + totalObjectCnt + " files were processed in " + timeElapsedString + " [mm:ss].");
-
+		MsgLog.println("\n*** " + totalObjectCnt + " files were processed in " + timeElapsedString + " [mm:ss].");
 	}
 
 	public ScriptExecutor getScriptExecutorByDsName(String dsName) throws SQLException {
@@ -475,25 +450,12 @@ public class Installer {
 		}
 
 		String overrideEncoding = configManager.getEncoding(relativeFilename);
-
-		// this.logfile.append("\n***");
 		if (overrideEncoding.isEmpty()) {
-			this.logfile.append("\n*** User:" + sqlcl.getConn().getSchema() + "; " + relativeFilename);
+			MsgLog.print("\n*** User:" + sqlcl.getConn().getSchema() + "; " + relativeFilename);
 		} else {
-			this.logfile.append("\n*** Override encoding: " + overrideEncoding + "; User:" + sqlcl.getConn().getSchema()
-					+ "; " + relativeFilename);
-		}
-		// this.logfile.append("\n***\n\n");
-
-		// Msg.print("\n***");
-		if (overrideEncoding.isEmpty()) {
-			Msg.print("\n*** User:" + sqlcl.getConn().getSchema() + "; " + relativeFilename);
-		} else {
-			Msg.print("\n*** Override encoding: " + overrideEncoding + "; User:" + sqlcl.getConn().getSchema() + "; "
+			MsgLog.print("*** Override encoding: " + overrideEncoding + "; User:" + sqlcl.getConn().getSchema() + "; "
 					+ relativeFilename);
 		}
-		// Msg.print("\n***\n\n");
-
 		// only execute if flag is set in config file
 		if (this.configManager.getConfigData().runMode.equals("EXECUTE")) {
 			// sqlcl.setStmt(new FileInputStream(file));
@@ -510,8 +472,7 @@ public class Installer {
 
 		String results = bout.toString("UTF8");
 		results = results.replaceAll(" force_print\n", "");
-		this.logfile.append(results);
-		Msg.println(results);
+		MsgLog.println(results);
 
 		if (this.configManager.getConfigData().waitAfterEachStatement.equals("true")
 				&& this.configManager.getConfigData().runMode.equals("EXECUTE")) {
@@ -548,8 +509,7 @@ public class Installer {
 
 		// suppress output when "name is already used by existing object
 		if (!results.contains("ORA-00955")) {
-			this.logfile.append(results);
-			Msg.println(results);
+			MsgLog.println(results);
 		}
 	}
 

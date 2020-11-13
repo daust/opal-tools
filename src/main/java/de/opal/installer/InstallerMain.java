@@ -18,7 +18,7 @@ import org.kohsuke.args4j.ParserProperties;
 
 import de.opal.exporter.WellBehavedStringArrayOptionHandler;
 import de.opal.installer.config.ConfigManager;
-import de.opal.installer.util.Msg;
+import de.opal.utils.MsgLog;
 
 public class InstallerMain {
 
@@ -50,6 +50,9 @@ public class InstallerMain {
 	
 	@Option(name = "--mandatory-attributes", handler = WellBehavedStringArrayOptionHandler.class, usage = "list of attributes that must not be null,\ne.g. patch author version", metaVar = "<attr1> [<attr2>] ... [n]")
 	private List<String> mandatoryAttributes = new ArrayList<String>();
+
+	@Option(name = "--no-logging", usage = "disable writing a logfile")
+	private boolean noLogging = false;
 
 	/**
 	 * readVersionFromFile
@@ -92,7 +95,7 @@ public class InstallerMain {
 				installerMain.connectionPoolFile, installerMain.userIdentity, installerMain.mandatoryAttributes);
 		installer.run();
 		
-		Msg.println("\n*** done.");
+		MsgLog.println("\n*** done.");
 
 		log.debug("*** end ***");
 	}
