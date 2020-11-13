@@ -78,7 +78,8 @@ public class Utils {
 		System.out.println(message);
 		
 		try {
-            int read = System.in.read(new byte[2]);
+            @SuppressWarnings("unused")
+			int read = System.in.read(new byte[2]);
         } catch (IOException e) {
             e.printStackTrace();
         }

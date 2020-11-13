@@ -2,13 +2,11 @@ package de.opal.exporter;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -22,7 +20,7 @@ import org.kohsuke.args4j.OptionHandlerFilter;
 import org.kohsuke.args4j.ParserProperties;
 
 import de.opal.installer.config.ConfigConnectionPool;
-import de.opal.installer.config.ConfigManager;
+import de.opal.installer.config.ConfigManagerConnectionPool;
 import de.opal.installer.util.Msg;
 import de.opal.utils.VersionInfo;
 
@@ -281,20 +279,20 @@ public class ExporterMain {
 							"connection pool file " + this.connectionPoolFile + " not found");
 				}
 
-				ConfigManager configManagerConnectionPools = new ConfigManager(this.connectionPoolFile);
+				ConfigManagerConnectionPool configManagerConnectionPools = new ConfigManagerConnectionPool(this.connectionPoolFile);
 
 				// encrypt passwords if required
 				if (configManagerConnectionPools.hasUnencryptedPasswords()) {
 					configManagerConnectionPools.encryptPasswords(
 							configManagerConnectionPools.getEncryptionKeyFilename(this.connectionPoolFile));
 					// dump JSON file
-					configManagerConnectionPools.writeJSONConfPool();
+					configManagerConnectionPools.writeJSONConf();
 				}
 				// now decrypt the passwords so that they can be used internally in the program
 				configManagerConnectionPools.decryptPasswords(
 						configManagerConnectionPools.getEncryptionKeyFilename(this.connectionPoolFile));
 
-				for (ConfigConnectionPool pool : configManagerConnectionPools.getConfigData().connectionPools) {
+				for (ConfigConnectionPool pool : configManagerConnectionPools.getConfigDataConnectionPool().connectionPools) {
 					if (pool.name.toUpperCase().contentEquals(this.connectionPoolName.toUpperCase())) {
 						this.user = pool.user;
 						this.pwd = pool.password;

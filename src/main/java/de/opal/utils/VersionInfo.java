@@ -12,7 +12,7 @@ public class VersionInfo {
 	 * 
 	 * Read version from file version.properties in same package
 	 */
-	private static void readVersionFromFile(Class myClass) {
+	private static void readVersionFromFile(@SuppressWarnings("rawtypes") Class myClass) {
 		Properties prop = new Properties();
 		String result = "";
 
@@ -28,7 +28,7 @@ public class VersionInfo {
 		version = result;
 	}
 
-	public static void showVersionInfo(Class myClass, String program, boolean exitProgram) {
+	public static void showVersionInfo(@SuppressWarnings("rawtypes") Class myClass, String program, boolean exitProgram) {
 		if (version == null)
 			readVersionFromFile(myClass);
 
@@ -38,7 +38,7 @@ public class VersionInfo {
 			System.exit(0);
 	}
 
-	public static String getVersion(Class myClass) {
+	public static String getVersion(@SuppressWarnings("rawtypes") Class myClass) {
 		if (version == null)
 			readVersionFromFile(myClass);
 

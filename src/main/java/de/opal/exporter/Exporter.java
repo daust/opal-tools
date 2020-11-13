@@ -245,7 +245,6 @@ public class Exporter {
 	public void export(List<File> preScripts, List<File> postScripts, List<String> includeFilters,
 			List<String> excludeFilters, List<String> schemas, List<String> includeTypes, List<String> excludeTypes)
 			throws Exception {
-		SQLclUtil sqlclUtil = new SQLclUtil();
 		String schemaName = "";
 		String objectType = "";
 		String objectName = "";
@@ -264,10 +263,10 @@ public class Exporter {
 				for (File preScript : preScripts) {
 					Msg.println("*** run pre script: " + preScript + "\n");
 					if (this.workingDirectorySQLcl != null)
-						sqlclUtil.setWorkingDirectory(this.workingDirectorySQLcl, sqlcl);
+						SQLclUtil.setWorkingDirectory(this.workingDirectorySQLcl, sqlcl);
 					// sqlcl.setDirectory(this.workingDirectorySQLcl);
 
-					sqlclUtil.executeFile(preScript, sqlcl, null);
+					SQLclUtil.executeFile(preScript, sqlcl, null);
 				}
 			}
 
@@ -332,10 +331,10 @@ public class Exporter {
 				for (File postScript : postScripts) {
 					Msg.println("\n*** run post script: " + postScript + "\n");
 					if (this.workingDirectorySQLcl != null)
-						sqlclUtil.setWorkingDirectory(this.workingDirectorySQLcl, sqlcl);
+						SQLclUtil.setWorkingDirectory(this.workingDirectorySQLcl, sqlcl);
 					// sqlcl.setDirectory(this.workingDirectorySQLcl);
 
-					sqlclUtil.executeFile(postScript, sqlcl, null);
+					SQLclUtil.executeFile(postScript, sqlcl, null);
 				}
 			}
 			// sqlclUtil.setWorkingDirectory(this.workingDirectorySQLcl, sqlcl);

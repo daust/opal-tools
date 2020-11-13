@@ -2,11 +2,9 @@ package de.opal.installer;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,7 +15,7 @@ import org.kohsuke.args4j.OptionHandlerFilter;
 import org.kohsuke.args4j.ParserProperties;
 
 import de.opal.exporter.WellBehavedStringArrayOptionHandler;
-import de.opal.installer.config.ConfigManager;
+import de.opal.installer.config.ConfigManagerConnectionPool;
 import de.opal.utils.MsgLog;
 
 public class InstallerMain {
@@ -120,14 +118,14 @@ public class InstallerMain {
 				throw new CmdLineException(parser, "connection pool file " + this.connectionPoolFile + " not found");
 			}
 
-			ConfigManager configManagerConnectionPools = new ConfigManager(this.connectionPoolFile);
+			ConfigManagerConnectionPool configManagerConnectionPools = new ConfigManagerConnectionPool(this.connectionPoolFile);
 
 			// encrypt passwords if required
 			if (configManagerConnectionPools.hasUnencryptedPasswords()) {
 				configManagerConnectionPools.encryptPasswords(
 						configManagerConnectionPools.getEncryptionKeyFilename(this.connectionPoolFile));
 				// dump JSON file
-				configManagerConnectionPools.writeJSONConfPool();
+				configManagerConnectionPools.writeJSONConf();
 			}
 		} catch (CmdLineException e) {
 			System.err.println(e.getMessage());

@@ -20,8 +20,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import de.opal.installer.db.DBUtils;
-import de.opal.installer.util.Msg;
-import de.opal.utils.EncryptorWrapper;
 
 /**
  * @author daust
@@ -137,59 +135,8 @@ public class ConfigManager {
 		// this.dumpConfig();
 	}
 
-	public boolean hasUnencryptedPasswords() {
-		EncryptorWrapper enc = new EncryptorWrapper();
-		boolean hasUnencryptedPasswords = false;
-
-		for (ConfigConnectionPool pool : this.configData.connectionPools) {
-			if (!enc.isEncrypted(pool.password)) {
-				hasUnencryptedPasswords = true;
-			}
-		}
-		return hasUnencryptedPasswords;
-
-	}
-
-	public void encryptPasswords(String encryptionKeyFilename) {
-		EncryptorWrapper enc = new EncryptorWrapper();
-
-		for (ConfigConnectionPool pool : this.configData.connectionPools) {
-			if (!enc.isEncrypted(pool.password)) {
-				pool.password = enc.encryptPWD(pool.password, encryptionKeyFilename);
-			}
-		}
-	}
-
-	public void decryptPasswords(String encryptionKeyFilename) {
-		EncryptorWrapper enc = new EncryptorWrapper();
-
-		for (ConfigConnectionPool pool : this.configData.connectionPools) {
-			if (enc.isEncrypted(pool.password)) {
-				pool.password = enc.decryptPWD(pool.password, encryptionKeyFilename);
-			}
-		}
-	}
-
-	// the encryption keys will be stored in the same directory as the connection
-	// pool
-	public String getEncryptionKeyFilename(String connPoolFilename) {
-		return new File(connPoolFilename).getParent() + File.separatorChar + "keys.txt";
-	}
-
-	public void dumpConfig() {
-		Msg.println("*** Dump config ***");
-		Msg.println("packageDir: " + this.packageDirName);
-		Msg.println("configFileName: " + this.configFileName);
-
-		// Msg.println(this.configData.toString());
-	}
-
 	// @SuppressWarnings("unchecked")
 	public void readJSONConf(File configFile) throws IOException {
-
-		// try(Reader reader = new
-		// InputStreamReader(Config.class.getResourceAsStream("/Server2.json"),
-		// "UTF-8")){
 
 		try (Reader reader = new InputStreamReader(new FileInputStream(configFile), StandardCharsets.UTF_8)) {
 			GsonBuilder builder = new GsonBuilder();
@@ -213,12 +160,6 @@ public class ConfigManager {
 			configData = new ConfigData();
 		}
 
-		/*
-		 * configData.setAuthor("Dietmar"); configData.setPackageName("Package1");
-		 * ArrayList<String> connections = new ArrayList<>(Arrays.asList("system",
-		 * "shdb_200", "shdb_jda")); configData.setConnections(connections);
-		 * configData.setInternalValue("hidden");
-		 */
 		log.debug(configData.toString());
 
 		try {
@@ -244,18 +185,10 @@ public class ConfigManager {
 		/* clean defaults if requested */
 		configData.traversalType = configData.traversalType == "INORDER" ? null : configData.traversalType;
 		configData.sqlDir = "sql".contentEquals(configData.sqlDir) ? null : configData.sqlDir;
-		configData.targetSystem = null;
 
 		// can't remove wait statement, because when installing the patch it won't wait
 		// configData.waitAfterEachStatement=null;
-
 		configData.runMode = null;
-
-		// now write it generically
-		writeJSONConf();
-	}
-
-	public void writeJSONConfPool() throws IOException {
 
 		// now write it generically
 		writeJSONConf();

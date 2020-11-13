@@ -21,10 +21,6 @@ public class ConfigData {
 	public String traversalType = "INORDER";
 	@Expose(serialize = true, deserialize = true)
 	public ArrayList<ConfigConnectionMapping> connectionMappings;
-	@Expose(serialize = true, deserialize = true)
-	public String targetSystem = ""; // e.g. DEVELOPMENT,INTEGRATION,PRODUCTION
-	@Expose(serialize = true, deserialize = true)
-	public ArrayList<ConfigConnectionPool> connectionPools;
 	@Expose(serialize = false, deserialize = true)
 	public ArrayList<String> staticFiles;
 	@Expose(serialize = true, deserialize = true)
@@ -38,10 +34,6 @@ public class ConfigData {
 	@Expose(serialize = true, deserialize = true)
 	public ArrayList<ConfigEncodingMapping> encodingMappings;
 
-//	@Expose(serialize = false, deserialize = true)
-//	public String logFileNamingScheme="##-#CONN-POOL#";
-
-	
 	// settings only read but not written back
 	// upon writing back ... we could introduce absolute paths
 	// we assume per default that the .json file is in the top level directory of
@@ -50,8 +42,8 @@ public class ConfigData {
 	public String packageDir = ".";
 
 	// internal values, should not be serialized
-	@Expose(serialize = false, deserialize = false)
-	private String internalValue = "";
+//	@Expose(serialize = false, deserialize = false)
+//	private String internalValue = "";
 
 	@Override
 	public String toString() {
@@ -61,17 +53,7 @@ public class ConfigData {
 				+ (connectionMappings == null ? "" : connectionMappings.toString()) + "; sqlFileRegEx: "
 				+ (encodingMappings == null ? "" : encodingMappings.toString()) 
 				+ (sqlFileRegEx == null ? "" : sqlFileRegEx.toString()) + "; connectionPools: "
-				+ (connectionPools == null ? "" : connectionPools.toString()) + "; waitAfterEachStatement: "
+				+ "; waitAfterEachStatement: "
 				+ (waitAfterEachStatement == null ? "" : waitAfterEachStatement.toString());
-	}
-	
-	public void clearDefaults() {
-		this.sqlDir = null;
-		this.traversalType=null;
-		this.sqlFileRegEx=null;
-		this.waitAfterEachStatement=null;
-		this.runMode=null;
-		this.connectionPools=new ArrayList<ConfigConnectionPool>();
-//		this.logFileNamingScheme=null;
 	}
 }

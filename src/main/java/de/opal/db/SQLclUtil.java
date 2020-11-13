@@ -22,7 +22,7 @@ public class SQLclUtil {
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-	public void executeFile(File file, ScriptExecutor sqlcl, String overrideEncoding) throws SQLException, IOException {
+	public static void executeFile(File file, ScriptExecutor sqlcl, String overrideEncoding) throws SQLException, IOException {
 
 		// Capture the results without this it goes to STDOUT
 		ByteArrayOutputStream bout = new ByteArrayOutputStream();

@@ -2,7 +2,6 @@ package de.opal.utils;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.lang3.RandomStringUtils;
@@ -10,10 +9,11 @@ import org.apache.commons.lang3.RandomStringUtils;
 public class EncryptorWrapper {
 	private static final String key2 = "FinxNA1Q#tEIFCAJ";
 	
+/*
 	private static String padRight(String s, int n) {
 	     return String.format("%1$-" + n + "s", s);  
 	}
-
+*/
 //	private static String padLeft(String s, int n) {
 //	    return String.format("%1$" + n + "s", s);  
 //	}
@@ -79,6 +79,7 @@ public class EncryptorWrapper {
 	}
 
 	
+	/*
 	private String getKeyIPAddress() {
 		String key1 = "";
 		String localhostname = "";
@@ -97,7 +98,7 @@ public class EncryptorWrapper {
 		
 		return key1;
 	}
-
+*/
 	
     public Boolean isEncrypted(String pwd) {
     	Boolean isEncrypted=false;

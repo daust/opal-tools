@@ -2,10 +2,8 @@ package de.opal.installer;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintStream;
 import java.sql.SQLException;
-import java.util.Properties;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -16,7 +14,6 @@ import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.OptionHandlerFilter;
 import org.kohsuke.args4j.ParserProperties;
 
-import de.opal.installer.config.ConfigManager;
 import de.opal.installer.util.Msg;
 import de.opal.utils.VersionInfo;
 

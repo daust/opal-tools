@@ -21,6 +21,7 @@ import org.apache.logging.log4j.Logger;
 import de.opal.installer.config.ConfigConnectionMapping;
 import de.opal.installer.config.ConfigData;
 import de.opal.installer.config.ConfigManager;
+import de.opal.installer.config.ConfigManagerConnectionPool;
 import de.opal.installer.db.ConnectionManager;
 import de.opal.installer.util.FileNode;
 import de.opal.installer.util.Filesystem;
@@ -39,7 +40,7 @@ public class Installer {
 	public static final Logger log = LogManager.getLogger(Installer.class.getName());
 
 	private ConfigManager configManager;
-	private ConfigManager configManagerConnectionPools;
+	private ConfigManagerConnectionPool configManagerConnectionPools;
 	private ConnectionManager connectionManager;
 
 	private String configFileName;
@@ -113,13 +114,13 @@ public class Installer {
 
 		// now read the connection pools from a different file
 		// both have the same structure
-		this.configManagerConnectionPools = new ConfigManager(this.connectionPoolFileName);
+		this.configManagerConnectionPools = new ConfigManagerConnectionPool(this.connectionPoolFileName);
 		// encrypt passwords if required
 		if (this.configManagerConnectionPools.hasUnencryptedPasswords()) {
 			this.configManagerConnectionPools.encryptPasswords(
 					this.configManagerConnectionPools.getEncryptionKeyFilename(this.connectionPoolFileName));
 			// dump JSON file
-			this.configManagerConnectionPools.writeJSONConfPool();
+			this.configManagerConnectionPools.writeJSONConf();
 		}
 		// now decrypt the passwords so that they can be used internally in the program
 		this.configManagerConnectionPools.decryptPasswords(
@@ -127,7 +128,7 @@ public class Installer {
 
 		this.connectionManager = ConnectionManager.getInstance();
 		// store definitions but don't create connections
-		this.connectionManager.initialize(this.configManagerConnectionPools.getConfigData().connectionPools);
+		this.connectionManager.initialize(this.configManagerConnectionPools.getConfigDataConnectionPool().connectionPools);
 
 	}
 
@@ -173,7 +174,7 @@ public class Installer {
 
 		String logFileDir = this.configManager.getPackageDir().getAbsolutePath() + File.separator + "logs";
 		String logfileName = generateLogFileName(logFileDir, this.configManager.getConfigData().runMode,
-				this.configManagerConnectionPools.getConfigData().targetSystem);
+				this.configManagerConnectionPools.getConfigDataConnectionPool().targetSystem);
 
 		if (!this.noLogging) {
 			MsgLog.createLogDirectory(logFileDir);
@@ -193,7 +194,7 @@ public class Installer {
 			MsgLog.println("** Author                : " + this.configManager.getConfigData().author);
 			MsgLog.println("**");
 			MsgLog.println(
-					"** Target system         : " + this.configManagerConnectionPools.getConfigData().targetSystem);
+					"** Target system         : " + this.configManagerConnectionPools.getConfigDataConnectionPool().targetSystem);
 			MsgLog.println("** Run mode              : " + this.configManager.getConfigData().runMode);
 			MsgLog.println("**");
 			MsgLog.println("** Config File           : " + this.configManager.getConfigFileName());
@@ -247,7 +248,7 @@ public class Installer {
 							configManager.getConfigData().patch, configManager.getConfigData().version,
 							configManager.getConfigData().author, configManager.getConfigFileName(),
 							configManagerConnectionPools.getConfigFileName(), releaseNotesContents,
-							configManagerConnectionPools.getConfigData().targetSystem);
+							configManagerConnectionPools.getConfigDataConnectionPool().targetSystem);
 				} else {
 					log.debug("*** no registry targets defined ");
 				}
