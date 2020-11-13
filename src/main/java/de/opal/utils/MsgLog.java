@@ -131,5 +131,6 @@ public class MsgLog {
 	public static void closeLogfile() throws IOException {
 		if (logfile != null)
 			logfile.close();
+		logfile=null;
 	}
 }

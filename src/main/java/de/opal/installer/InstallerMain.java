@@ -39,15 +39,15 @@ public class InstallerMain {
 	@Option(name = "-h", aliases = "--help", usage = "show this help page", help = true)
 	private boolean showHelp;
 
-	@Option(name = "--connection-pool-file", usage = "connection pool file\ne.g.: connections-dev.json", metaVar = "<file>", required=true)
+	@Option(name = "--connection-pool-file", usage = "connection pool file\ne.g.: connections-dev.json", metaVar = "<file>", required = true)
 	private String connectionPoolFile;
 
-	@Option(name = "--config-file", usage = "configuration file\ne.g.: opal-installer.json", metaVar = "<file>", required=true)
+	@Option(name = "--config-file", usage = "configuration file\ne.g.: opal-installer.json", metaVar = "<file>", required = true)
 	private String configFileName;
 
 	@Option(name = "--validate-only", usage = "don't execute patch, just validate the files and connection pools")
 	private boolean validateOnly = false;
-	
+
 	@Option(name = "--mandatory-attributes", handler = WellBehavedStringArrayOptionHandler.class, usage = "list of attributes that must not be null,\ne.g. patch author version", metaVar = "<attr1> [<attr2>] ... [n]")
 	private List<String> mandatoryAttributes = new ArrayList<String>();
 
@@ -92,16 +92,15 @@ public class InstallerMain {
 		installerMain.dumpParameters();
 
 		Installer installer = new Installer(installerMain.validateOnly, installerMain.configFileName,
-				installerMain.connectionPoolFile, installerMain.userIdentity, installerMain.mandatoryAttributes);
+				installerMain.connectionPoolFile, installerMain.userIdentity, installerMain.mandatoryAttributes,
+				installerMain.noLogging);
 		installer.run();
-		
+
 		MsgLog.println("\n*** done.");
 
 		log.debug("*** end ***");
 	}
 
-
-	
 	private void showUsage(PrintStream out, CmdLineParser parser) {
 		out.println("\njava de.opal.installer.InstallerMain [options...]");
 
@@ -111,7 +110,8 @@ public class InstallerMain {
 		out.println();
 
 		// print option sample. This is useful some time
-		out.println("  Example: java de.opal.installer.InstallerMain" + parser.printExample(OptionHandlerFilter.PUBLIC));
+		out.println(
+				"  Example: java de.opal.installer.InstallerMain" + parser.printExample(OptionHandlerFilter.PUBLIC));
 	}
 
 	/**
@@ -164,10 +164,10 @@ public class InstallerMain {
 		// trim() parameters
 		this.connectionPoolFile = this.connectionPoolFile.trim();
 		this.configFileName = this.configFileName.trim();
-		
-		this.userIdentity=System.getenv("OPAL_TOOLS_USER_IDENTITY");
-		if (this.userIdentity==null || this.userIdentity.isEmpty()) {
-			this.userIdentity=System.getProperty("user.name");
+
+		this.userIdentity = System.getenv("OPAL_TOOLS_USER_IDENTITY");
+		if (this.userIdentity == null || this.userIdentity.isEmpty()) {
+			this.userIdentity = System.getProperty("user.name");
 		}
 	}
 

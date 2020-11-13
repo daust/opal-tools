@@ -58,6 +58,8 @@ public class Installer {
 	private String userIdentity;
 	private List<String> mandatoryAttributes;
 
+	private boolean noLogging;
+
 //	public enum RunMode {
 //		  EXECUTE,
 //		  VALIDATE_ONLY
@@ -88,12 +90,13 @@ public class Installer {
 	}
 
 	public Installer(boolean validateOnly, String configFileName, String connectionPoolFileName, String userIdentity,
-			List<String> mandatoryAttributes) throws IOException {
+			List<String> mandatoryAttributes, boolean noLogging) throws IOException {
 		this.validateOnly = validateOnly;
 		this.configFileName = configFileName;
 		this.connectionPoolFileName = connectionPoolFileName;
 		this.userIdentity = userIdentity;
 		this.mandatoryAttributes = mandatoryAttributes;
+		this.noLogging = noLogging;
 
 		this.readVersionFromFile();
 		this.configManager = new ConfigManager(this.configFileName);
@@ -193,8 +196,10 @@ public class Installer {
 		String logfileName = generateLogFileName(logFileDir, this.configManager.getConfigData().runMode,
 				this.configManagerConnectionPools.getConfigData().targetSystem);
 
-		MsgLog.createLogDirectory(logFileDir);
-		MsgLog.createLogfile(logfileName);
+		if (!this.noLogging) {
+			MsgLog.createLogDirectory(logFileDir);
+			MsgLog.createLogfile(logfileName);
+		}
 
 		// run application
 		log.debug("run()");
@@ -234,7 +239,8 @@ public class Installer {
 			}
 			Utils.waitForEnter("\nPlease press <enter> to start the process ("
 					+ this.configManager.getConfigData().runMode + ") ...");
-			MsgLog.logfilePrintln("");
+			if (!this.noLogging)
+				MsgLog.logfilePrintln("");
 
 			/*
 			 * now process all files one by one
@@ -280,7 +286,8 @@ public class Installer {
 			}
 
 			displayStatsFooter(fsTree.size(), startTime);
-			MsgLog.logfilePrintln("\ndone.");
+			if (!this.noLogging)
+				MsgLog.logfilePrintln("\ndone.");
 
 		} catch (Exception e) {
 			log.error(e.getMessage());
