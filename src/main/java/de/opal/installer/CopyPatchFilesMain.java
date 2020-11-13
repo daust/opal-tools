@@ -4,15 +4,9 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintStream;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Properties;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.IOFileFilter;
-import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
@@ -23,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import de.opal.installer.util.Msg;
 import de.opal.utils.OpalFileUtils;
+import de.opal.utils.VersionInfo;
 
 public class CopyPatchFilesMain {
 	public static final Logger log = LoggerFactory.getLogger(CopyPatchFilesMain.class.getName());
@@ -30,7 +25,6 @@ public class CopyPatchFilesMain {
 	private String currentSourcePathName = "";
 	private String currentTargetPathName = "";
 
-	private String version; // will be loaded from file version.txt which will be populated by the gradle
 	// build process
 	private int fileCopyCount = 0;
 
@@ -43,6 +37,9 @@ public class CopyPatchFilesMain {
 	@Option(name = "-h", aliases = "--help", usage = "show this help page", help = true)
 	private boolean showHelp;
 
+	@Option(name = "-v", aliases = "--version", usage = "show version information", help = true)
+	private boolean showVersion;
+
 	@Option(name = "--source-path", usage = "path to the template directory structure", metaVar = "<path>", required = true)
 	private String sourcePathName;
 
@@ -51,27 +48,6 @@ public class CopyPatchFilesMain {
 
 	@Option(name = "--patch-file-name", usage = "target path for the patch", metaVar = "<path>", required = true)
 	private String patchFilesName;
-
-	/**
-	 * readVersionFromFile
-	 * 
-	 * Read version from file version.properties in same package
-	 */
-	private void readVersionFromFile() {
-		Properties prop = new Properties();
-		String result = "";
-
-		try (InputStream inputStream = getClass().getResourceAsStream("version.properties")) {
-
-			prop.load(inputStream);
-			result = prop.getProperty("version");
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		this.version = result;
-	}
 
 	public CopyPatchFilesMain() {
 
@@ -82,7 +58,7 @@ public class CopyPatchFilesMain {
 		log.info("*** start");
 		CopyPatchFilesMain main = new CopyPatchFilesMain();
 		main.run(args);
-		
+
 		log.info("*** end");
 	}
 
@@ -101,6 +77,10 @@ public class CopyPatchFilesMain {
 		try {
 			// parse the arguments.
 			parser.parseArgument(args);
+
+			if (this.showVersion) {
+				VersionInfo.showVersionInfo(this.getClass(), "OPAL Installer", true);
+			}
 
 			// check whether jdbcURL OR connection pool is specified correctly
 			if (this.showHelp) {
@@ -141,19 +121,18 @@ public class CopyPatchFilesMain {
 	}
 
 	public void run(String[] args) throws IOException {
-		
+
 		long startTime = System.currentTimeMillis();
 
-		readVersionFromFile();
 		parseParameters(args);
 		transformParams();
 		dumpParameters();
-		
+
 		// initially the source and target path names are derived from the starting
 		// point,
 		// the base directories for source and target
 		setRelativePaths(null, null);
-				
+
 		Msg.println("copy files from:" + this.sourcePathName + "\n           to  :" + this.targetPathName + "\n");
 		Msg.println("process patch file listing in: " + this.patchFilesName + "\n");
 
@@ -169,9 +148,9 @@ public class CopyPatchFilesMain {
 			e.printStackTrace();
 		}
 		displayStatsFooter(this.fileCopyCount, startTime);
-		
+
 		Msg.println("\n*** done.\n");
-		
+
 		log.info("END run()");
 	}
 
@@ -227,7 +206,7 @@ public class CopyPatchFilesMain {
 					line);
 		}
 	}
-	
+
 	private void displayStatsFooter(int totalObjectCnt, long startTime) {
 		long finish = System.currentTimeMillis();
 		long timeElapsed = finish - startTime;
@@ -236,7 +215,7 @@ public class CopyPatchFilesMain {
 		String timeElapsedString = String.format("%d:%02d", minutes, seconds);
 
 		Msg.println("\n*** The script copied " + totalObjectCnt + " files in " + timeElapsedString + " [mm:ss].");
-		
+
 	}
 
 }

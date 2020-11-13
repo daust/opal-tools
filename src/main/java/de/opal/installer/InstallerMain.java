@@ -26,8 +26,6 @@ public class InstallerMain {
 	 * Other variables
 	 */
 	public static final Logger log = LogManager.getLogger(InstallerMain.class.getName());
-	private String version; // will be loaded from file version.txt which will be populated by the gradle
-							// build process
 	private String userIdentity;
 
 	/*--------------------------------------------------------------------------------------
@@ -54,26 +52,6 @@ public class InstallerMain {
 	@Option(name = "--no-logging", usage = "disable writing a logfile")
 	private boolean noLogging = false;
 
-	/**
-	 * readVersionFromFile
-	 * 
-	 * Read version from file version.properties in same package
-	 */
-	private void readVersionFromFile() {
-		Properties prop = new Properties();
-		String result = "";
-
-		try (InputStream inputStream = getClass().getResourceAsStream("version.properties")) {
-
-			prop.load(inputStream);
-			result = prop.getProperty("version");
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		this.version = result;
-	}
 
 	/**
 	 * Main entry point to the Installer
@@ -86,7 +64,6 @@ public class InstallerMain {
 
 		InstallerMain installerMain = new InstallerMain();
 
-		installerMain.readVersionFromFile();
 		installerMain.parseParameters(args);
 		installerMain.transformParams();
 		installerMain.dumpParameters();

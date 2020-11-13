@@ -4,7 +4,6 @@ import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -13,7 +12,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Properties;
 import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
@@ -29,6 +27,7 @@ import de.opal.installer.util.Filesystem;
 import de.opal.installer.util.Logfile;
 import de.opal.installer.util.Utils;
 import de.opal.utils.MsgLog;
+import de.opal.utils.VersionInfo;
 import oracle.dbtools.db.ResultSetFormatter;
 import oracle.dbtools.raptor.newscriptrunner.CommandRegistry;
 import oracle.dbtools.raptor.newscriptrunner.SQLCommand.StmtSubType;
@@ -38,9 +37,6 @@ import oracle.dbtools.raptor.scriptrunner.commands.rest.RESTCommand;
 
 public class Installer {
 	public static final Logger log = LogManager.getLogger(Installer.class.getName());
-
-	private String version = ""; // will be loaded from file version.txt which will be populated by the gradle
-									// build process
 
 	private ConfigManager configManager;
 	private ConfigManager configManagerConnectionPools;
@@ -98,7 +94,6 @@ public class Installer {
 		this.mandatoryAttributes = mandatoryAttributes;
 		this.noLogging = noLogging;
 
-		this.readVersionFromFile();
 		this.configManager = new ConfigManager(this.configFileName);
 
 		// replace placeholders in opal-installer.json file
@@ -139,22 +134,6 @@ public class Installer {
 	// empty constructor
 	public Installer() {
 
-	}
-
-	private void readVersionFromFile() {
-		Properties prop = new Properties();
-		String result = "";
-
-		try (InputStream inputStream = getClass().getResourceAsStream("version.properties")) {
-
-			prop.load(inputStream);
-			result = prop.getProperty("version");
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		this.version = result;
 	}
 
 	private String generateLogFileName(String logFileDir, String runMode, String env) {
@@ -206,7 +185,7 @@ public class Installer {
 		try {
 			Filesystem fs = new Filesystem(configManager.getSqlDir());
 
-			MsgLog.println("OPAL Installer version " + this.version);
+			MsgLog.println("OPAL Installer version " + VersionInfo.getVersion(this.getClass()));
 			MsgLog.println("*************************");
 			MsgLog.println("** Application           : " + this.configManager.getConfigData().application);
 			MsgLog.println("** Patch                 : " + this.configManager.getConfigData().patch);

@@ -24,6 +24,7 @@ import org.kohsuke.args4j.ParserProperties;
 import de.opal.installer.config.ConfigConnectionPool;
 import de.opal.installer.config.ConfigManager;
 import de.opal.installer.util.Msg;
+import de.opal.utils.VersionInfo;
 
 public class ExporterMain {
 
@@ -49,6 +50,9 @@ public class ExporterMain {
 
 	@Option(name = "-h", aliases = "--help", usage = "show this help page", help=true)
 	private boolean showHelp;
+	
+	@Option(name = "-v", aliases = "--version", usage = "show version information", help = true)
+	private boolean showVersion;
 
 	@Option(name = "--url", usage = "database connection jdbc url, \ne.g.: scott/tiger@localhost:1521:ORCL", metaVar = "<jdbc url>", forbids = {
 			"--connection-pool-file", "--connection-pool-name" })
@@ -154,26 +158,6 @@ public class ExporterMain {
 	@Option(name = "--script-working-directory", usage = "working directory for running sqlcl scripts (-pre and -post), e.g. '.' or '/u01/project/src/sql'. The default is the environment variable OPAL_TOOLS_SRC_SQL_DIR", metaVar = "<directory>", required = false)
 	private String workingDirectorySQLcl;
 
-	// @Option(name = "-h", aliases = "--help", usage = "display this help page")
-	// private boolean showHelp = false;
-
-	private void readVersionFromFile() {
-		Properties prop = new Properties();
-		String result = "";
-
-		try (InputStream inputStream = getClass().getResourceAsStream("version.properties")) {
-
-			prop.load(inputStream);
-			result = prop.getProperty("version");
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		this.version = result;
-
-	}
-
 	/**
 	 * Main entry point to the DB Exporter
 	 * 
@@ -185,7 +169,6 @@ public class ExporterMain {
 
 		ExporterMain dbExporter = new ExporterMain();
 
-		dbExporter.readVersionFromFile();
 		dbExporter.parseParameters(args);
 		dbExporter.transformParams();
 		dbExporter.dumpParameters();
@@ -257,6 +240,10 @@ public class ExporterMain {
 			// if enough arguments are given.
 			// if (arguments.isEmpty())
 			// throw new CmdLineException(parser, "No argument is given");
+			
+			if (this.showVersion) {
+				VersionInfo.showVersionInfo(this.getClass(), "OPAL Installer", true);
+			}
 
 			// check whether jdbcURL OR connection pool is specified correctly
 			if (this.showHelp) {
