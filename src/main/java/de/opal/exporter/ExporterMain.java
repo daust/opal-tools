@@ -36,8 +36,10 @@ public class ExporterMain {
 	private String version; // will be loaded from file version.txt which will be populated by the gradle
 							// build process
 	private HashMap<String, ArrayList<String>> dependentObjectsMap = new HashMap<String, ArrayList<String>>();
-	//private HashMap<String, String> extensionMappingsMap = new HashMap<String, String>();
-	//private HashMap<String, String> directoryMappingsMap = new HashMap<String, String>();
+	// private HashMap<String, String> extensionMappingsMap = new HashMap<String,
+	// String>();
+	// private HashMap<String, String> directoryMappingsMap = new HashMap<String,
+	// String>();
 	private HashMap<String, String> filenameTemplatesMap = new HashMap<String, String>();
 
 	/*--------------------------------------------------------------------------------------
@@ -46,9 +48,9 @@ public class ExporterMain {
 	 * - https://args4j.kohsuke.org/args4j/apidocs 
 	 */
 
-	@Option(name = "-h", aliases = "--help", usage = "show this help page", help=true)
+	@Option(name = "-h", aliases = "--help", usage = "show this help page", help = true)
 	private boolean showHelp;
-	
+
 	@Option(name = "-v", aliases = "--version", usage = "show version information", help = true)
 	private boolean showVersion;
 
@@ -59,8 +61,8 @@ public class ExporterMain {
 	@Option(name = "--connection-pool-file", usage = "connection pool file\ne.g.: connections-dev.json", metaVar = "<file>", forbids = {
 			"--url" })
 	private String connectionPoolFile;
-	
-	@Option(name ="--connection-pool-name", usage = "connection pool name\ne.g.: scott", metaVar = "<connection pool name>", forbids = {
+
+	@Option(name = "--connection-pool-name", usage = "connection pool name\ne.g.: scott", metaVar = "<connection pool name>", forbids = {
 			"--url" })
 	private String connectionPoolName;
 
@@ -120,21 +122,24 @@ public class ExporterMain {
 	@Option(name = "--silent", usage = "turns off prompts")
 	private boolean isSilent = false;
 
-/*	@Option(name = "--filename-template", usage = "template for constructing the filename\n"
-			+ "e.g.: #schema#/#object_type#/#object_name#.#ext#\n\n"
-			+ "#schema#             - schema name in lower case\n"
-			+ "#object_type#        - lower case type name: 'table'\n"
-			+ "#object_type_plural# - lower case type name in plural: 'tables'\n"
-			+ "#object_name#        - lower case object name\n"
-			+ "#ext#                - lower case extension: 'sql' or 'pks'\n"
-			+ "#SCHEMA#             - upper case schema name\n"
-			+ "#OBJECT_TYPE#        - upper case object type name: 'TABLE' or 'INDEX'\n"
-			+ "#OBJECT_TYPE_PLURAL# - upper case object type name in plural: 'TABLES'\n"
-			+ "#OBJECT_NAME#        - upper case object name\n"
-			+ "#EXT#                - upper case extension: 'SQL' or 'PKS'", metaVar = "<template structure>", required = false)
-	private String filenameTemplate = "#schema#/#object_type_plural#/#object_name#.#ext#";
-*/
-	
+	/*
+	 * @Option(name = "--filename-template", usage =
+	 * "template for constructing the filename\n" +
+	 * "e.g.: #schema#/#object_type#/#object_name#.#ext#\n\n" +
+	 * "#schema#             - schema name in lower case\n" +
+	 * "#object_type#        - lower case type name: 'table'\n" +
+	 * "#object_type_plural# - lower case type name in plural: 'tables'\n" +
+	 * "#object_name#        - lower case object name\n" +
+	 * "#ext#                - lower case extension: 'sql' or 'pks'\n" +
+	 * "#SCHEMA#             - upper case schema name\n" +
+	 * "#OBJECT_TYPE#        - upper case object type name: 'TABLE' or 'INDEX'\n" +
+	 * "#OBJECT_TYPE_PLURAL# - upper case object type name in plural: 'TABLES'\n" +
+	 * "#OBJECT_NAME#        - upper case object name\n" +
+	 * "#EXT#                - upper case extension: 'SQL' or 'PKS'", metaVar =
+	 * "<template structure>", required = false) private String filenameTemplate =
+	 * "#schema#/#object_type_plural#/#object_name#.#ext#";
+	 */
+
 	@Option(name = "--filename-templates", handler = WellBehavedStringArrayOptionHandler.class, usage = "templates for constructing the filename per object type\n"
 			+ "e.g.: #schema#/#object_type#/#object_name#.#ext#\n\n"
 			+ "#schema#             - schema name in lower case\n"
@@ -156,6 +161,9 @@ public class ExporterMain {
 	@Option(name = "--script-working-directory", usage = "working directory for running sqlcl scripts (-pre and -post), e.g. '.' or '/u01/project/src/sql'. The default is the environment variable OPAL_TOOLS_SRC_SQL_DIR", metaVar = "<directory>", required = false)
 	private String workingDirectorySQLcl;
 
+	@Option(name = "--export-template-dir", usage = "directory for object templates, e.g. /u01/project/opal-tools/export-templates", metaVar = "<directory>", required = false)
+	private String exportTemplateDir;
+
 	/**
 	 * Main entry point to the DB Exporter
 	 * 
@@ -174,8 +182,12 @@ public class ExporterMain {
 
 		Exporter exporter = new Exporter(dbExporter.user, dbExporter.pwd, dbExporter.connectStr, dbExporter.outputDir,
 				dbExporter.skipErrors, dbExporter.dependentObjectsMap, dbExporter.isSilent,
-				/*dbExporter.extensionMappingsMap, dbExporter.directoryMappingsMap, dbExporter.filenameTemplate,*/
-				dbExporter.filenameReplaceBlanks, dbExporter.workingDirectorySQLcl, dbExporter.skipExport, dbExporter.filenameTemplatesMap);
+				/*
+				 * dbExporter.extensionMappingsMap, dbExporter.directoryMappingsMap,
+				 * dbExporter.filenameTemplate,
+				 */
+				dbExporter.filenameReplaceBlanks, dbExporter.workingDirectorySQLcl, dbExporter.skipExport,
+				dbExporter.filenameTemplatesMap, dbExporter.exportTemplateDir);
 		exporter.export(dbExporter.preScripts, dbExporter.postScripts, dbExporter.includeFilters,
 				dbExporter.excludeFilters, dbExporter.schemas, dbExporter.includeTypes, dbExporter.excludeTypes);
 
@@ -183,13 +195,13 @@ public class ExporterMain {
 
 		log.debug("*** end ***");
 	}
-	
+
 	private void showUsage(PrintStream out, CmdLineParser parser) {
 		out.println("\njava de.opal.exporter.DBExporter [options...]");
 
 		// print the list of available options
 		parser.printUsage(out);
-		
+
 		out.println();
 
 		// print option sample. This is useful some time
@@ -212,7 +224,7 @@ public class ExporterMain {
 		try {
 			// parse the arguments.
 			parser.parseArgument(args);
-			
+
 			// help can be displayed without -url being given
 			// else -url is required
 			/*
@@ -238,7 +250,7 @@ public class ExporterMain {
 			// if enough arguments are given.
 			// if (arguments.isEmpty())
 			// throw new CmdLineException(parser, "No argument is given");
-			
+
 			if (this.showVersion) {
 				VersionInfo.showVersionInfo(this.getClass(), "OPAL Installer", true);
 			}
@@ -248,7 +260,7 @@ public class ExporterMain {
 				showUsage(System.out, parser);
 				System.exit(0);
 			}
-			
+
 			// check more complex parameters
 			if (this.jdbcURL != null || (this.connectionPoolFile != null && this.connectionPoolName != null)) {
 				// ok
@@ -279,7 +291,8 @@ public class ExporterMain {
 							"connection pool file " + this.connectionPoolFile + " not found");
 				}
 
-				ConfigManagerConnectionPool configManagerConnectionPools = new ConfigManagerConnectionPool(this.connectionPoolFile);
+				ConfigManagerConnectionPool configManagerConnectionPools = new ConfigManagerConnectionPool(
+						this.connectionPoolFile);
 
 				// encrypt passwords if required
 				if (configManagerConnectionPools.hasUnencryptedPasswords()) {
@@ -292,7 +305,8 @@ public class ExporterMain {
 				configManagerConnectionPools.decryptPasswords(
 						configManagerConnectionPools.getEncryptionKeyFilename(this.connectionPoolFile));
 
-				for (ConfigConnectionPool pool : configManagerConnectionPools.getConfigDataConnectionPool().connectionPools) {
+				for (ConfigConnectionPool pool : configManagerConnectionPools
+						.getConfigDataConnectionPool().connectionPools) {
 					if (pool.name.toUpperCase().contentEquals(this.connectionPoolName.toUpperCase())) {
 						this.user = pool.user;
 						this.pwd = pool.password;
@@ -313,7 +327,7 @@ public class ExporterMain {
 		} catch (CmdLineException e) {
 			System.err.println(e.getMessage());
 			showUsage(System.err, parser);
-			
+
 			System.exit(1);
 		}
 
@@ -355,39 +369,35 @@ public class ExporterMain {
 		for (int i = 0; i < this.dependentObjects.size(); i++) {
 			dependentObjects.set(i, dependentObjects.get(i).trim().toUpperCase());
 		}
-		
+
 		/*
-		// make extension mappings uppercase
-		for (String ext : this.extensionMappings) {
-			String objectType = ext.split(":")[0].trim();
-			String suffix = ext.split(":")[1].trim();
+		 * // make extension mappings uppercase for (String ext :
+		 * this.extensionMappings) { String objectType = ext.split(":")[0].trim();
+		 * String suffix = ext.split(":")[1].trim();
+		 * 
+		 * this.extensionMappingsMap.put(objectType.toUpperCase(), suffix); } // make
+		 * directory mappings uppercase for (String ext : this.directoryMappings) {
+		 * String objectType = ext.split(":")[0].trim(); String directory =
+		 * ext.split(":")[1].trim();
+		 * 
+		 * this.directoryMappingsMap.put(objectType.toUpperCase(), directory); }
+		 */
 
-			this.extensionMappingsMap.put(objectType.toUpperCase(), suffix);
-		}
-		// make directory mappings uppercase
-		for (String ext : this.directoryMappings) {
-			String objectType = ext.split(":")[0].trim();
-			String directory = ext.split(":")[1].trim();
-
-			this.directoryMappingsMap.put(objectType.toUpperCase(), directory);
-		}
-		*/
-		
 		// transform dependent object list into map
 		for (String dep : this.dependentObjects) {
 			String objType = dep.split(":")[0].trim();
 			String depObj = dep.split(":")[1].trim();
-		
-			ArrayList<String> depObjects= new ArrayList<String>();
+
+			ArrayList<String> depObjects = new ArrayList<String>();
 			Arrays.asList(depObj.split(",")).forEach((e) -> depObjects.add(e.trim()));
-			
+
 			this.dependentObjectsMap.put(objType, depObjects);
 		}
-		
+
 		// filename templates => set default
-		if (filenameTemplates.size()==0)
+		if (filenameTemplates.size() == 0)
 			filenameTemplates.add("default:#schema#/#object_type_plural#/#object_name#.sql");
-		
+
 		// filename templates => convert to map
 		for (String template : this.filenameTemplates) {
 			String objectType = template.split(":")[0].trim();
@@ -400,8 +410,8 @@ public class ExporterMain {
 			// set default to environment variable OPAL_TOOLS_SRC_SQL_DIR
 			log.debug("set default for workingDirectorySQLcl: " + this.workingDirectorySQLcl);
 			this.workingDirectorySQLcl = System.getenv("OPAL_TOOLS_SRC_SQL_DIR").trim();
-		}else
-			this.workingDirectorySQLcl=this.workingDirectorySQLcl.trim();
+		} else
+			this.workingDirectorySQLcl = this.workingDirectorySQLcl.trim();
 	}
 
 	private void showHeaderInfo() {
@@ -431,29 +441,31 @@ public class ExporterMain {
 				sb.append("* Dependent Objects        : " + this.dependentObjects + lSep);
 		}
 
-		if (this.preScripts.size() >0 || this.postScripts.size()> 0) {
+		if (this.preScripts.size() > 0 || this.postScripts.size() > 0) {
 			sb.append("*" + lSep);
 			// sb.append("* Arguments : " + this.arguments+lSep);
-			if (this.workingDirectorySQLcl != null && (this.preScripts.size() >0 || this.postScripts.size()> 0))
+			if (this.workingDirectorySQLcl != null && (this.preScripts.size() > 0 || this.postScripts.size() > 0))
 				sb.append("* Script Working Directory : " + this.workingDirectorySQLcl + lSep);
-			if (this.preScripts.size() >0)
+			if (this.preScripts.size() > 0)
 				sb.append("* Pre Scripts              : " + this.preScripts.toString() + lSep);
-			if (this.postScripts.size() > 0 )
+			if (this.postScripts.size() > 0)
 				sb.append("* Post Scripts             : " + this.postScripts.toString() + lSep);
 		}
 
 		if (!this.skipExport) {
 			sb.append("*" + lSep);
-/*
-			if (this.extensionMappings != null)
-				sb.append("* Extension Mapping        : " + this.extensionMappings + lSep);
-			if (this.directoryMappings != null)
-				sb.append("* Directory Mapping        : " + this.directoryMappings + lSep);
-*/				
-			if (this.filenameTemplates.size()>0) {
+			/*
+			 * if (this.extensionMappings != null) sb.append("* Extension Mapping        : "
+			 * + this.extensionMappings + lSep); if (this.directoryMappings != null)
+			 * sb.append("* Directory Mapping        : " + this.directoryMappings + lSep);
+			 */
+			if (this.filenameTemplates.size() > 0) {
 				sb.append("* Filename Templates       : " + this.filenameTemplates.toString() + lSep);
 			}
 			sb.append("* Filename Replace Blanks? : " + this.filenameReplaceBlanks + lSep);
+			if (this.exportTemplateDir!=null) {
+				sb.append("* Export Template Directory: " + this.exportTemplateDir + lSep);
+			}
 		}
 
 		sb.append("*" + lSep);

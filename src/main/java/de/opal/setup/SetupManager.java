@@ -274,6 +274,32 @@ public class SetupManager {
 		} catch (IOException e) {
 			Msg.println("Files will NOT be copied because an error occured: " + e.getMessage() + "\n");
 		}
+
+		// export-scripts
+		tmpSourceDir = getFullPathResolveVariables(
+				localDir + File.separatorChar + "configure-templates" + File.separatorChar + "export-scripts");
+		tmpTargetDir = getFullPathResolveVariables(swDirectory + File.separatorChar + "export-scripts");
+
+		Msg.println("\n----------------------------------------------------------\n");
+		Msg.println("copy sw files from: " + tmpSourceDir + "\n              to  : " + tmpTargetDir + "\n");
+		try {
+			FileUtils.copyDirectory(new File(tmpSourceDir), new File(tmpTargetDir));
+		} catch (IOException e) {
+			Msg.println("Files will NOT be copied because an error occured: " + e.getMessage() + "\n");
+		}
+
+		// export-templates
+		tmpSourceDir = getFullPathResolveVariables(
+				localDir + File.separatorChar + "configure-templates" + File.separatorChar + "export-templates");
+		tmpTargetDir = getFullPathResolveVariables(swDirectory + File.separatorChar + "export-templates");
+
+		Msg.println("\n----------------------------------------------------------\n");
+		Msg.println("copy sw files from: " + tmpSourceDir + "\n              to  : " + tmpTargetDir + "\n");
+		try {
+			FileUtils.copyDirectory(new File(tmpSourceDir), new File(tmpTargetDir));
+		} catch (IOException e) {
+			Msg.println("Files will NOT be copied because an error occured: " + e.getMessage() + "\n");
+		}
 	}
 
 	private void processConfDirectory(Scanner kbd) {

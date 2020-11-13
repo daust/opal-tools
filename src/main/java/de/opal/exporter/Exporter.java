@@ -3,11 +3,14 @@ package de.opal.exporter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.sql.CallableStatement;
+import java.sql.Clob;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -23,6 +26,7 @@ import de.opal.db.SQLclUtil;
 import de.opal.installer.db.DBUtils;
 import de.opal.installer.util.Msg;
 import de.opal.installer.util.Utils;
+import de.opal.utils.FileIO;
 import oracle.dbtools.db.ResultSetFormatter;
 import oracle.dbtools.raptor.newscriptrunner.ScriptExecutor;
 import oracle.dbtools.raptor.newscriptrunner.ScriptRunnerContext;
@@ -47,6 +51,9 @@ public class Exporter {
 	private String workingDirectorySQLcl;
 	private boolean skipExport;
 	private HashMap<String, String> filenameTemplatesMap;
+	private String exportTemplateDir;
+	
+
 
 	/**
 	 * 
@@ -58,7 +65,7 @@ public class Exporter {
 			HashMap<String, ArrayList<String>> dependentObjectsMap, boolean isSilent,
 			/*HashMap<String, String> extensionMappingsMap, HashMap<String, String> directoryMappingsMap,
 			String filenameTemplate,*/ boolean filenameReplaceBlanks, String workingDirectorySQLcl, boolean skipExport,
-			HashMap<String, String> filenameTemplatesMap) {
+			HashMap<String, String> filenameTemplatesMap, String exportTemplateDir) {
 		super();
 		this.user = user;
 		this.pwd = pwd;
@@ -74,6 +81,7 @@ public class Exporter {
 		this.workingDirectorySQLcl = workingDirectorySQLcl;
 		this.skipExport = skipExport;
 		this.filenameTemplatesMap=filenameTemplatesMap;
+		this.exportTemplateDir=exportTemplateDir;
 
 	}
 
@@ -380,6 +388,22 @@ public class Exporter {
 		}
 	}
 
+	
+	private String getTemplateQuery(String objectType) throws IOException {
+		String query="";
+		
+		if (this.exportTemplateDir!=null) {
+			File templateFile=new File(this.exportTemplateDir+File.separator+objectType+".sql");
+			if (templateFile.exists()) {
+				query=FileIO.fileToString(templateFile.getAbsolutePath());
+			}
+		}
+		
+		
+		return query;
+	}
+	
+	
 	/**
 	 * Export a single object.
 	 * 
@@ -396,40 +420,66 @@ public class Exporter {
 		PreparedStatement ddlStmtDependent = null;
 		ResultSet ddlRS = null;
 		String actualObjectType = ObjectTypeMappingMetadata.map2TypeForDBMS(objectType);
+		CallableStatement ddlStmtCallable = null;
 
-		// get object ddl
-		try {
-			// ddlStmt = sqlcl.getConn().pre .createStatement();
-			// The query can be update query or can be select query
-			// String ddlQuery = "SELECT dbms_metadata.get_ddl(object_type=>'" +
-			// actualObjectType + "', name=>'"
-			// + objectName + "', schema=>'" + schemaName + "') ddl from dual";
-			String ddlQuery = "SELECT dbms_metadata.get_ddl(object_type=>?, name=>?, schema=>?) ddl from dual";
-			ddlStmt = sqlcl.getConn().prepareStatement(ddlQuery);
-			ddlStmt.setString(1, actualObjectType);
-			ddlStmt.setString(2, objectName);
-			ddlStmt.setString(3, schemaName);
-
-			boolean ddlQueryStatus = ddlStmt.execute();
-			if (ddlQueryStatus) {
-				// query is a select query.
-				ddlRS = ddlStmt.getResultSet();
-				while (ddlRS.next()) {
-					content = DBUtils.clobToString(ddlRS.getClob(1));
-					log.debug(content);
-				}
-				ddlRS.close();
-			} else {
-				// query can be update or any query apart from select query
-				int count = ddlStmt.getUpdateCount();
-				log.debug("Total records updated: " + count);
+		// template query exists?
+		String templateQuery = getTemplateQuery(actualObjectType);
+		if (!templateQuery.isEmpty()) {
+     		// get ddl based on template query
+			try {
+				String ddlQuery = templateQuery;
+				ddlStmtCallable = sqlcl.getConn().prepareCall(ddlQuery);
+				ddlStmtCallable.setString(1, schemaName);
+				ddlStmtCallable.setString(2, actualObjectType);
+				ddlStmtCallable.setString(3, objectName);
+				ddlStmtCallable.registerOutParameter(4, Types.CLOB);
+					
+				ddlStmtCallable.execute();
+				Clob cl = ddlStmtCallable.getClob(4);
+				content = DBUtils.clobToString(cl);
+				log.debug(content);
+			} finally {
+				if (ddlRS != null)
+					ddlRS.close();
+				if (ddlStmt != null)
+					ddlStmt.close();
+				if (ddlStmtCallable != null)
+					ddlStmtCallable.close();
 			}
-		} finally {
-			if (ddlRS != null)
-				ddlRS.close();
-			if (ddlStmt != null)
-				ddlStmt.close();
+		}else {
+			// get regular object ddl
+			try {
+				String ddlQuery = "SELECT dbms_metadata.get_ddl(schema=>?, object_type=>?, name=>? ) ddl from dual";
+				ddlStmt = sqlcl.getConn().prepareStatement(ddlQuery);
+				ddlStmt.setString(1, schemaName);
+				ddlStmt.setString(2, actualObjectType);
+				ddlStmt.setString(3, objectName);
+				
+					
+
+				boolean ddlQueryStatus = ddlStmt.execute();
+				if (ddlQueryStatus) {
+					// query is a select query.
+					ddlRS = ddlStmt.getResultSet();
+					while (ddlRS.next()) {
+						content = DBUtils.clobToString(ddlRS.getClob(1));
+						log.debug(content);
+					}
+					ddlRS.close();
+				} else {
+					// query can be update or any query apart from select query
+					int count = ddlStmt.getUpdateCount();
+					log.debug("Total records updated: " + count);
+				}
+			} finally {
+				if (ddlRS != null)
+					ddlRS.close();
+				if (ddlStmt != null)
+					ddlStmt.close();
+			}
 		}
+
+		
 
 		// export dependent objects
 		if (this.dependentObjectsMap.containsKey(objectType)) {
