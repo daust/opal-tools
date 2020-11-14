@@ -53,8 +53,6 @@ public class Exporter {
 	private HashMap<String, String> filenameTemplatesMap;
 	private String exportTemplateDir;
 	
-
-
 	/**
 	 * 
 	 * @param user
@@ -398,7 +396,6 @@ public class Exporter {
 				query=FileIO.fileToString(templateFile.getAbsolutePath());
 			}
 		}
-		
 		
 		return query;
 	}

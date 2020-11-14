@@ -6,6 +6,8 @@ import java.util.Properties;
 
 public class VersionInfo {
 	private static String version = null;
+	public static final String OPAL_INSTALLER="OPAL Installer";
+	public static final String OPAL_EXPORTER="OPAL Exporter";
 
 	/**
 	 * readVersionFromFile
@@ -36,6 +38,12 @@ public class VersionInfo {
 
 		if (exitProgram)
 			System.exit(0);
+	}
+	public static String getVersionInfo(@SuppressWarnings("rawtypes") Class myClass, String program, boolean exitProgram) {
+		if (version == null)
+			readVersionFromFile(myClass);
+
+		return program + " version: " + version;
 	}
 
 	public static String getVersion(@SuppressWarnings("rawtypes") Class myClass) {

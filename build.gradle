@@ -59,6 +59,9 @@ dependencies {
     // https://mvnrepository.com/artifact/commons-logging/commons-logging
     //implementation group: 'commons-logging', name: 'commons-logging', version: '1.2'
 
+    // https://mvnrepository.com/artifact/org.apache.commons/commons-text
+    compile group: 'org.apache.commons', name: 'commons-text', version: '1.9'
+
     // https://mvnrepository.com/artifact/org.apache.commons/commons-lang3
     compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.11'
 

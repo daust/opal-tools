@@ -1,15 +1,19 @@
 package de.opal.exporter;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.text.StringSubstitutor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.kohsuke.args4j.Argument;
@@ -22,6 +26,7 @@ import org.kohsuke.args4j.ParserProperties;
 import de.opal.installer.config.ConfigConnectionPool;
 import de.opal.installer.config.ConfigManagerConnectionPool;
 import de.opal.installer.util.Msg;
+import de.opal.utils.FileIO;
 import de.opal.utils.VersionInfo;
 
 public class ExporterMain {
@@ -33,8 +38,6 @@ public class ExporterMain {
 	private String user;
 	private String pwd;
 	private String connectStr;
-	private String version; // will be loaded from file version.txt which will be populated by the gradle
-							// build process
 	private HashMap<String, ArrayList<String>> dependentObjectsMap = new HashMap<String, ArrayList<String>>();
 	// private HashMap<String, String> extensionMappingsMap = new HashMap<String,
 	// String>();
@@ -164,6 +167,9 @@ public class ExporterMain {
 	@Option(name = "--export-template-dir", usage = "directory for object templates, e.g. /u01/project/opal-tools/export-templates", metaVar = "<directory>", required = false)
 	private String exportTemplateDir;
 
+	@Option(name = "--config-file", usage = "configuration file\ne.g.: connections-dev.json", metaVar = "<file>")
+	private String configFileName;
+
 	/**
 	 * Main entry point to the DB Exporter
 	 * 
@@ -173,9 +179,18 @@ public class ExporterMain {
 	public static void main(String[] args) throws Exception {
 		log.debug("*** start ***");
 
+		// we need second instance because in the first parsing 
+		// for the switch --config-file all variables are already initialized
+		// and we need to reset them ... or create a new instance
+		ExporterMain configFileExporter = new ExporterMain();
+		String[] configFileArgs=configFileExporter.parseConfigFileArgs(args);
+		
+		// now initialize the real class
 		ExporterMain dbExporter = new ExporterMain();
 
-		dbExporter.parseParameters(args);
+		// merge the argument lists so that the command line args can OVERRIDE the 
+		// ones from the config file
+		dbExporter.parseParameters(dbExporter.mergeArgs(configFileArgs,args));
 		dbExporter.transformParams();
 		dbExporter.dumpParameters();
 		dbExporter.showHeaderInfo();
@@ -208,6 +223,86 @@ public class ExporterMain {
 		out.println("  Example: java de.opal.exporter.DBExporter" + parser.printExample(OptionHandlerFilter.PUBLIC));
 	}
 
+	private String[] readArgsFromConfigFile(String configFilename) {
+		ArrayList<String> args = new ArrayList<String>();
+
+		try {
+			String textContent = FileIO.fileToString(configFilename);
+			BufferedReader bufReader = new BufferedReader(new StringReader(textContent));
+
+			String line = null;
+			while ((line = bufReader.readLine()) != null) {
+				line = line.trim();
+
+				if (!line.startsWith("#") && !line.isEmpty()) {
+					// https://stackoverflow.com/questions/7804335/split-string-on-spaces-in-java-except-if-between-quotes-i-e-treat-hello-wor
+					// split string on blanks but not within quotes
+					Matcher m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(line);
+					while (m.find()) {
+						String arg = m.group(1);
+
+						// https://commons.apache.org/proper/commons-text/apidocs/org/apache/commons/text/StringSubstitutor.html
+						final StringSubstitutor interpolator = StringSubstitutor.createInterpolator();
+						interpolator.setEnableSubstitutionInVariables(true); // Allows for nested $'s.
+						arg = interpolator.replace(arg);
+						
+						// remove surrounding quotes
+						arg=arg.replace("\"", "");
+
+						args.add(arg); 
+					}
+				}
+			}
+
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		/*
+		 * try { props.load(new FileInputStream(configFilename));
+		 * 
+		 * Set<String> keys = props.stringPropertyNames(); for (String key : keys) {
+		 * args.add(key); args.add(props.getProperty(key)); } } catch (IOException e) {
+		 * // TODO Auto-generated catch block e.printStackTrace(); }
+		 */
+
+		return args.stream().toArray(String[]::new);
+	}
+
+	private String[] mergeArgs(String[] args1, String[] args2) {
+		if (args1==null)
+			return args2;
+		if (args2==null)
+			return args1;
+		
+		List<String> list = new ArrayList<String>(Arrays.asList(args1));
+		list.addAll(Arrays.asList(args2));
+		String[] args3 = list.stream().toArray(String[]::new);
+
+		return args3;
+	}
+
+	public String[] parseConfigFileArgs(String[] args) throws IOException {
+		CmdLineParser parser = new CmdLineParser(this);
+		String[] configFileArgs = null;
+
+		try {
+			// first parse to get config file name
+			parser.parseArgument(args);
+
+		} catch (Exception e) {
+			// suppress first exception
+			// it could be that required fields are in the config file
+		}
+
+		if (this.configFileName != null && !this.configFileName.isEmpty()) {
+			// read optional properties file and put it in the args[] array
+			configFileArgs = readArgsFromConfigFile(this.configFileName);
+		}
+		return configFileArgs;
+	}
+
 	/**
 	 * doMain is actually doing the work
 	 * 
@@ -222,6 +317,7 @@ public class ExporterMain {
 
 		log.debug("start parsing");
 		try {
+
 			// parse the arguments.
 			parser.parseArgument(args);
 
@@ -418,7 +514,7 @@ public class ExporterMain {
 		String lSep = System.getProperty("line.separator");
 		StringBuilder sb = new StringBuilder();
 
-		sb.append("OPAL Exporter version " + this.version + lSep);
+		sb.append(VersionInfo.getVersionInfo(this.getClass(), VersionInfo.OPAL_EXPORTER, false) + lSep);
 		sb.append("****************************" + lSep);
 		sb.append("* User                     : " + this.user + lSep);
 		sb.append("* ConnectStr               : " + this.connectStr + lSep);
@@ -463,7 +559,7 @@ public class ExporterMain {
 				sb.append("* Filename Templates       : " + this.filenameTemplates.toString() + lSep);
 			}
 			sb.append("* Filename Replace Blanks? : " + this.filenameReplaceBlanks + lSep);
-			if (this.exportTemplateDir!=null) {
+			if (this.exportTemplateDir != null) {
 				sb.append("* Export Template Directory: " + this.exportTemplateDir + lSep);
 			}
 		}
