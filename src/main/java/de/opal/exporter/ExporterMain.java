@@ -170,6 +170,9 @@ public class ExporterMain {
 	@Option(name = "--config-file", usage = "configuration file\ne.g.: connections-dev.json", metaVar = "<file>")
 	private String configFileName;
 
+	@Option(name = "--parallel-level", usage = "the database statements are executed in parallel, e.g. 10", metaVar = "<level>")
+	private int parallelThreads=1;
+
 	/**
 	 * Main entry point to the DB Exporter
 	 * 
@@ -179,18 +182,18 @@ public class ExporterMain {
 	public static void main(String[] args) throws Exception {
 		log.debug("*** start ***");
 
-		// we need second instance because in the first parsing 
+		// we need second instance because in the first parsing
 		// for the switch --config-file all variables are already initialized
 		// and we need to reset them ... or create a new instance
 		ExporterMain configFileExporter = new ExporterMain();
-		String[] configFileArgs=configFileExporter.parseConfigFileArgs(args);
-		
+		String[] configFileArgs = configFileExporter.parseConfigFileArgs(args);
+
 		// now initialize the real class
 		ExporterMain dbExporter = new ExporterMain();
 
-		// merge the argument lists so that the command line args can OVERRIDE the 
+		// merge the argument lists so that the command line args can OVERRIDE the
 		// ones from the config file
-		dbExporter.parseParameters(dbExporter.mergeArgs(configFileArgs,args));
+		dbExporter.parseParameters(dbExporter.mergeArgs(configFileArgs, args));
 		dbExporter.transformParams();
 		dbExporter.dumpParameters();
 		dbExporter.showHeaderInfo();
@@ -202,7 +205,7 @@ public class ExporterMain {
 				 * dbExporter.filenameTemplate,
 				 */
 				dbExporter.filenameReplaceBlanks, dbExporter.workingDirectorySQLcl, dbExporter.skipExport,
-				dbExporter.filenameTemplatesMap, dbExporter.exportTemplateDir);
+				dbExporter.filenameTemplatesMap, dbExporter.exportTemplateDir, dbExporter.parallelThreads);
 		exporter.export(dbExporter.preScripts, dbExporter.postScripts, dbExporter.includeFilters,
 				dbExporter.excludeFilters, dbExporter.schemas, dbExporter.includeTypes, dbExporter.excludeTypes);
 
@@ -245,11 +248,11 @@ public class ExporterMain {
 						final StringSubstitutor interpolator = StringSubstitutor.createInterpolator();
 						interpolator.setEnableSubstitutionInVariables(true); // Allows for nested $'s.
 						arg = interpolator.replace(arg);
-						
-						// remove surrounding quotes
-						arg=arg.replace("\"", "");
 
-						args.add(arg); 
+						// remove surrounding quotes
+						arg = arg.replace("\"", "");
+
+						args.add(arg);
 					}
 				}
 			}
@@ -271,11 +274,11 @@ public class ExporterMain {
 	}
 
 	private String[] mergeArgs(String[] args1, String[] args2) {
-		if (args1==null)
+		if (args1 == null)
 			return args2;
-		if (args2==null)
+		if (args2 == null)
 			return args1;
-		
+
 		List<String> list = new ArrayList<String>(Arrays.asList(args1));
 		list.addAll(Arrays.asList(args2));
 		String[] args3 = list.stream().toArray(String[]::new);
@@ -561,6 +564,9 @@ public class ExporterMain {
 			sb.append("* Filename Replace Blanks? : " + this.filenameReplaceBlanks + lSep);
 			if (this.exportTemplateDir != null) {
 				sb.append("* Export Template Directory: " + this.exportTemplateDir + lSep);
+			}
+			if (this.parallelThreads > 1) {
+				sb.append("* Parallel Level           : " + this.parallelThreads + lSep);
 			}
 		}
 

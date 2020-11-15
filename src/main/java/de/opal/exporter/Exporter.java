@@ -2,20 +2,17 @@ package de.opal.exporter;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.sql.CallableStatement;
-import java.sql.Clob;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-
-import javax.sql.PooledConnection;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -23,14 +20,10 @@ import org.apache.logging.log4j.Logger;
 
 import de.opal.db.ConnectionUtility;
 import de.opal.db.SQLclUtil;
-import de.opal.installer.db.DBUtils;
 import de.opal.installer.util.Msg;
 import de.opal.installer.util.Utils;
 import de.opal.utils.FileIO;
-import oracle.dbtools.db.ResultSetFormatter;
 import oracle.dbtools.raptor.newscriptrunner.ScriptExecutor;
-import oracle.dbtools.raptor.newscriptrunner.ScriptRunnerContext;
-import oracle.jdbc.pool.OracleConnectionPoolDataSource;
 
 public class Exporter {
 
@@ -44,15 +37,18 @@ public class Exporter {
 	private boolean skipErrors;
 	private HashMap<String, ArrayList<String>> dependentObjectsMap;
 	private boolean isSilent;
-	//private HashMap<String, String> extensionMappingsMap;
-	//private HashMap<String, String> directoryMappingsMap;
-	//private String filenameTemplate;
+	// private HashMap<String, String> extensionMappingsMap;
+	// private HashMap<String, String> directoryMappingsMap;
+	// private String filenameTemplate;
 	private boolean filenameReplaceBlanks;
 	private String workingDirectorySQLcl;
 	private boolean skipExport;
 	private HashMap<String, String> filenameTemplatesMap;
 	private String exportTemplateDir;
-	
+
+	private ConnectionUtility connPool;
+	private int parallelThreads;
+
 	/**
 	 * 
 	 * @param user
@@ -61,9 +57,11 @@ public class Exporter {
 	 */
 	public Exporter(String user, String pwd, String connectStr, String outputDir, boolean skipErrors,
 			HashMap<String, ArrayList<String>> dependentObjectsMap, boolean isSilent,
-			/*HashMap<String, String> extensionMappingsMap, HashMap<String, String> directoryMappingsMap,
-			String filenameTemplate,*/ boolean filenameReplaceBlanks, String workingDirectorySQLcl, boolean skipExport,
-			HashMap<String, String> filenameTemplatesMap, String exportTemplateDir) {
+			/*
+			 * HashMap<String, String> extensionMappingsMap, HashMap<String, String>
+			 * directoryMappingsMap, String filenameTemplate,
+			 */ boolean filenameReplaceBlanks, String workingDirectorySQLcl, boolean skipExport,
+			HashMap<String, String> filenameTemplatesMap, String exportTemplateDir, int parallelThreads) {
 		super();
 		this.user = user;
 		this.pwd = pwd;
@@ -72,23 +70,24 @@ public class Exporter {
 		this.skipErrors = skipErrors;
 		this.dependentObjectsMap = dependentObjectsMap;
 		this.isSilent = isSilent;
-		//this.extensionMappingsMap = extensionMappingsMap;
-		//this.directoryMappingsMap = directoryMappingsMap;
-		//this.filenameTemplate = filenameTemplate;
+		// this.extensionMappingsMap = extensionMappingsMap;
+		// this.directoryMappingsMap = directoryMappingsMap;
+		// this.filenameTemplate = filenameTemplate;
 		this.filenameReplaceBlanks = filenameReplaceBlanks;
 		this.workingDirectorySQLcl = workingDirectorySQLcl;
 		this.skipExport = skipExport;
-		this.filenameTemplatesMap=filenameTemplatesMap;
-		this.exportTemplateDir=exportTemplateDir;
+		this.filenameTemplatesMap = filenameTemplatesMap;
+		this.exportTemplateDir = exportTemplateDir;
+		this.parallelThreads = parallelThreads;
 
 	}
 
 	private String computeExportFilename(String schemaName, String objectType, String objectName) {
-		String filename="";
-		//String suffix = "sql";
+		String filename = "";
+		// String suffix = "sql";
 		String objectTypePath = objectType;
 		String objectTypePlural = objectTypePath;
-		//boolean objectTypePathChanged = false;
+		// boolean objectTypePathChanged = false;
 
 		// make plural form
 		if (objectTypePlural.endsWith("Y"))
@@ -103,20 +102,6 @@ public class Exporter {
 			filename = this.filenameTemplatesMap.get(objectType);
 		else if (this.filenameTemplatesMap.containsKey("DEFAULT"))
 			filename = this.filenameTemplatesMap.get("DEFAULT");
-		
-		/*
-		// map object types to suffixes
-		if (this.extensionMappingsMap.containsKey(objectType))
-			suffix = this.extensionMappingsMap.get(objectType);
-		else if (this.extensionMappingsMap.containsKey("DEFAULT"))
-			suffix = this.extensionMappingsMap.get("DEFAULT");
-
-		if (this.directoryMappingsMap.containsKey(objectType)) {
-			objectTypePath = this.directoryMappingsMap.get(objectType);
-			// override both variables later
-			objectTypePathChanged = true;
-		}
-		*/
 
 		/*
 		 * schema - schema name in lower case type - lower case type name: 'table'
@@ -133,27 +118,13 @@ public class Exporter {
 		filename = filename.replace("#object_name#", objectName.toLowerCase());
 		filename = filename.replace("#OBJECT_NAME#", objectName.toUpperCase());
 
-		// when it is overriden on the command line ...
-		// it will affect it completely .. AS IS
-		//if (objectTypePathChanged) {
-		//	filename = filename.replace("#object_type_plural#", objectTypePath.toLowerCase());
-		//	filename = filename.replace("#OBJECT_TYPE_PLURAL#", objectTypePath.toUpperCase());
-		//	filename = filename.replace("#object_type#", objectTypePath.toLowerCase());
-		//	filename = filename.replace("#OBJECT_TYPE#", objectTypePath.toUpperCase());
-		//} else {
-			filename = filename.replace("#object_type_plural#", objectTypePlural.toLowerCase());
-			filename = filename.replace("#OBJECT_TYPE_PLURAL#", objectTypePlural.toUpperCase());
-			filename = filename.replace("#object_type#", objectType.toLowerCase());
-			filename = filename.replace("#OBJECT_TYPE#", objectType.toUpperCase());
-		//}
-
-		//filename = filename.replace("#ext#", suffix.toLowerCase());
-		//filename = filename.replace("#EXT#", suffix.toUpperCase());
+		filename = filename.replace("#object_type_plural#", objectTypePlural.toLowerCase());
+		filename = filename.replace("#OBJECT_TYPE_PLURAL#", objectTypePlural.toUpperCase());
+		filename = filename.replace("#object_type#", objectType.toLowerCase());
+		filename = filename.replace("#OBJECT_TYPE#", objectType.toUpperCase());
 
 		filename = filename.replace("/", "" + File.separatorChar);
 
-		// filename = schemaName + File.separatorChar + objectTypePath +
-		// File.separatorChar + objectName + "." + suffix;
 		if (this.filenameReplaceBlanks)
 			filename = filename.replace(" ", "_");
 
@@ -261,20 +232,13 @@ public class Exporter {
 
 		log.debug("start");
 		try {
+			// first initialize the connection pool (we need parallelThreads + 1 for the
+			// main query)
+			this.connPool = ConnectionUtility.getInstance();
+			this.connPool.initializeConnPool(this.parallelThreads + 1, this.user, this.pwd, this.connectStr);
+
 			// initialize connection
-			sqlcl = getScriptExecutor(user, pwd, connectStr);
-
-			// run pre-script(s)
-			if (preScripts.size() > 0) {
-				for (File preScript : preScripts) {
-					Msg.println("*** run pre script: " + preScript + "\n");
-					if (this.workingDirectorySQLcl != null)
-						SQLclUtil.setWorkingDirectory(this.workingDirectorySQLcl, sqlcl);
-					// sqlcl.setDirectory(this.workingDirectorySQLcl);
-
-					SQLclUtil.executeFile(preScript, sqlcl, null);
-				}
-			}
+			sqlcl = SQLclUtil.getScriptExecutor(user, pwd, connectStr);
 
 			if (!this.skipExport) {
 				/*------------------------------------------------------------
@@ -297,8 +261,19 @@ public class Exporter {
 				if (!this.isSilent)
 					Utils.waitForEnter("*** Please press <enter> to start the process ");
 
+				startTime = System.currentTimeMillis();
+
 				boolean status = objectStmt.execute(objectQuery);
 				if (status) {
+
+					Msg.println("*** run pre scripts\n");
+					SQLclUtil.executeScripts(sqlcl, preScripts, workingDirectorySQLcl, true);
+
+					// run in parallel
+					ExecutorService executors = Executors.newFixedThreadPool(this.parallelThreads);
+					// thread list
+					List<Future<Integer>> futures = new ArrayList<Future<Integer>>();
+
 					// query is a select query.
 					ResultSet objectRS = objectStmt.getResultSet();
 					while (objectRS.next()) {
@@ -307,22 +282,49 @@ public class Exporter {
 						objectName = objectRS.getString(2);
 						objectType = objectRS.getString(3);
 
-						Msg.print(padRight("  export: " + objectName + "[" + objectType + "]", 47) + "=> ");
-						try {
-							exportObject(schemaName, objectName, objectType);
-						} catch (SQLException e) {
-							log.error("sql error: " + e.getLocalizedMessage());
-							errorList.add(objectName + "[" + objectType + "]");
+						String actualObjectType = ObjectTypeMappingMetadata.map2TypeForDBMS(objectType);
+						String relativeFilename = computeExportFilename(schemaName, objectType, objectName);
+						String exportFilename = this.outputDir + File.separatorChar + relativeFilename;
 
-							// re-raise error if errors should abort program
-							if (this.skipErrors == false)
-								throw (e);
-						}
+						String templateQuery = getTemplateQuery(actualObjectType);
+						Callable<Integer> w = new ExporterCallable(schemaName, objectName, objectType, templateQuery,
+								sqlcl, dependentObjectsMap, relativeFilename, exportFilename, errorList, preScripts,
+								user, pwd, connectStr, workingDirectorySQLcl, parallelThreads);
+
+						Future<Integer> future = executors.submit(w);
+						futures.add(future);
 
 					}
+					// now check parallel execution
+					try {
+
+						for (int i = 0; i < futures.size(); i++) {
+							try {
+								// System.out.println("Result from Future " + i + ":" + futures.get(i).get());
+								futures.get(i).get();
+							} catch (InterruptedException e) {
+
+								log.error(e.getLocalizedMessage());
+							} catch (ExecutionException e) {
+								if (e.getCause() instanceof SQLException) {
+
+									// re-raise error if errors should abort program
+									if (this.skipErrors == false)
+										throw (e);
+									else
+										log.error("sql error: " + e.getLocalizedMessage());
+								} else
+									log.error(e.getLocalizedMessage());
+							}
+						}
+					} finally {
+						executors.shutdown();
+					}
+
 					objectStmt.close();
 					objectRS.close();
 				}
+
 			} else {
 				/*------------------------------------------------------------
 				 *  skip object export
@@ -330,35 +332,24 @@ public class Exporter {
 
 				if (!this.isSilent)
 					Utils.waitForEnter("\n*** Please press <enter> to start the process ");
+
+				startTime = System.currentTimeMillis();
 			}
 
-			// run post-script(s)
-			if (postScripts.size() > 0) {
-				for (File postScript : postScripts) {
-					Msg.println("\n*** run post script: " + postScript + "\n");
-					if (this.workingDirectorySQLcl != null)
-						SQLclUtil.setWorkingDirectory(this.workingDirectorySQLcl, sqlcl);
-					// sqlcl.setDirectory(this.workingDirectorySQLcl);
-
-					SQLclUtil.executeFile(postScript, sqlcl, null);
-				}
-			}
-			// sqlclUtil.setWorkingDirectory(this.workingDirectorySQLcl, sqlcl);
-			// log.debug("\ncurrent working directory (after change): "
-			// +
-			// oracle.dbtools.common.utils.FileUtils.getCWD(sqlcl.getScriptRunnerContext()));
+			Msg.println("*** run post scripts\n");
+			SQLclUtil.executeScripts(sqlcl, preScripts, workingDirectorySQLcl, true);
 
 			displayStatsFooter(errorList, totalObjectCnt, startTime);
 		} catch (Exception e) {
-			log.error(e.getMessage());
+			//log.error(e.getMessage());
 			// close connection
-			closeConnection();
+			SQLclUtil.closeConnection(sqlcl.getConn());
 
 			// reraise exception
 			throw (e);
 		} finally {
 			// close connection
-			closeConnection();
+			SQLclUtil.closeConnection(sqlcl.getConn());
 		}
 		log.debug("end");
 	}
@@ -386,231 +377,16 @@ public class Exporter {
 		}
 	}
 
-	
 	private String getTemplateQuery(String objectType) throws IOException {
-		String query="";
-		
-		if (this.exportTemplateDir!=null) {
-			File templateFile=new File(this.exportTemplateDir+File.separator+objectType+".sql");
+		String query = "";
+
+		if (this.exportTemplateDir != null) {
+			File templateFile = new File(this.exportTemplateDir + File.separator + objectType + ".sql");
 			if (templateFile.exists()) {
-				query=FileIO.fileToString(templateFile.getAbsolutePath());
+				query = FileIO.fileToString(templateFile.getAbsolutePath());
 			}
 		}
-		
+
 		return query;
-	}
-	
-	
-	/**
-	 * Export a single object.
-	 * 
-	 * @param schemaName
-	 * @param objectName
-	 * @param objectType
-	 * @throws SQLException
-	 * @throws IOException
-	 */
-	private void exportObject(String schemaName, String objectName, String objectType)
-			throws SQLException, IOException {
-		String content = "";
-		PreparedStatement ddlStmt = null;
-		PreparedStatement ddlStmtDependent = null;
-		ResultSet ddlRS = null;
-		String actualObjectType = ObjectTypeMappingMetadata.map2TypeForDBMS(objectType);
-		CallableStatement ddlStmtCallable = null;
-
-		// template query exists?
-		String templateQuery = getTemplateQuery(actualObjectType);
-		if (!templateQuery.isEmpty()) {
-     		// get ddl based on template query
-			try {
-				String ddlQuery = templateQuery;
-				ddlStmtCallable = sqlcl.getConn().prepareCall(ddlQuery);
-				ddlStmtCallable.setString(1, schemaName);
-				ddlStmtCallable.setString(2, actualObjectType);
-				ddlStmtCallable.setString(3, objectName);
-				ddlStmtCallable.registerOutParameter(4, Types.CLOB);
-					
-				ddlStmtCallable.execute();
-				Clob cl = ddlStmtCallable.getClob(4);
-				content = DBUtils.clobToString(cl);
-				log.debug(content);
-			} finally {
-				if (ddlRS != null)
-					ddlRS.close();
-				if (ddlStmt != null)
-					ddlStmt.close();
-				if (ddlStmtCallable != null)
-					ddlStmtCallable.close();
-			}
-		}else {
-			// get regular object ddl
-			try {
-				String ddlQuery = "SELECT dbms_metadata.get_ddl(schema=>?, object_type=>?, name=>? ) ddl from dual";
-				ddlStmt = sqlcl.getConn().prepareStatement(ddlQuery);
-				ddlStmt.setString(1, schemaName);
-				ddlStmt.setString(2, actualObjectType);
-				ddlStmt.setString(3, objectName);
-				
-					
-
-				boolean ddlQueryStatus = ddlStmt.execute();
-				if (ddlQueryStatus) {
-					// query is a select query.
-					ddlRS = ddlStmt.getResultSet();
-					while (ddlRS.next()) {
-						content = DBUtils.clobToString(ddlRS.getClob(1));
-						log.debug(content);
-					}
-					ddlRS.close();
-				} else {
-					// query can be update or any query apart from select query
-					int count = ddlStmt.getUpdateCount();
-					log.debug("Total records updated: " + count);
-				}
-			} finally {
-				if (ddlRS != null)
-					ddlRS.close();
-				if (ddlStmt != null)
-					ddlStmt.close();
-			}
-		}
-
-		
-
-		// export dependent objects
-		if (this.dependentObjectsMap.containsKey(objectType)) {
-			for (String depObjectType : this.dependentObjectsMap.get(objectType)) {
-				actualObjectType = ObjectTypeMappingMetadata.map2TypeForDBMS(depObjectType);
-				log.debug("object type mapping: " + depObjectType + " => " + actualObjectType);
-
-				// get dependent DDL
-				try {
-					// The query can be update query or can be select query
-					/*
-					 * DBMS_METADATA.GET_DEPENDENT_DDL ( object_type IN VARCHAR2, base_object_name
-					 * IN VARCHAR2, base_object_schema IN VARCHAR2 DEFAULT NULL, version IN VARCHAR2
-					 * DEFAULT 'COMPATIBLE', model IN VARCHAR2 DEFAULT 'ORACLE', transform IN
-					 * VARCHAR2 DEFAULT 'DDL', object_count IN NUMBER DEFAULT 10000) RETURN CLOB;
-					 */
-					// Msg.println(" - " + depObjectType);
-//					String ddlQuery = "SELECT dbms_metadata.get_dependent_ddl(object_type=>'" + actualObjectType
-//							+ "', base_object_name =>'" + objectName + "', base_object_schema=>'" + schemaName
-//							+ "') ddl from dual";
-					String ddlQuery = "SELECT dbms_metadata.get_dependent_ddl(object_type=>?, base_object_name =>?, base_object_schema=>?) ddl from dual";
-					ddlStmtDependent = sqlcl.getConn().prepareStatement(ddlQuery);
-					ddlStmtDependent.setString(1, actualObjectType);
-					ddlStmtDependent.setString(2, objectName);
-					ddlStmtDependent.setString(3, schemaName);
-
-					boolean ddlQueryStatus = ddlStmtDependent.execute();
-					if (ddlQueryStatus) {
-						// query is a select query.
-						ddlRS = ddlStmtDependent.getResultSet();
-						while (ddlRS.next()) {
-							content += "\n\n" + DBUtils.clobToString(ddlRS.getClob(1));
-							log.debug(content);
-
-						}
-						ddlRS.close();
-					} else {
-						// query can be update or any query apart from select query
-						int count = ddlStmtDependent.getUpdateCount();
-						log.debug("Total records updated: " + count);
-					}
-				} catch (SQLException e) {
-					if (e.getErrorCode() == 31608) {
-						// ORA-31608: specified object of type <TYPE> not found
-						// do nothing, it just indicates that no data was found for the subobject
-					} else {
-						throw (e);
-					}
-				} finally {
-					if (ddlStmtDependent != null)
-						ddlStmtDependent.close();
-					if (ddlStmt != null)
-						ddlStmt.close();
-					if (ddlRS != null)
-						ddlRS.close();
-					if (ddlStmt != null)
-						ddlStmt.close();
-				}
-			}
-		}
-
-		// write file
-		String relativeFilename = computeExportFilename(schemaName, objectType, objectName);
-		String filename = this.outputDir + File.separatorChar + relativeFilename;
-
-		// output file in console
-		Msg.println(relativeFilename);
-		org.apache.commons.io.FileUtils.writeStringToFile(new File(filename), content, Charset.defaultCharset());
-
-	}
-
-	/**
-	 * Retrieves or creates the corresponding ScriptExecutor based on the filename
-	 * 
-	 * @param filename
-	 * @return
-	 * @throws SQLException
-	 */
-	private ScriptExecutor getScriptExecutor(String user, String pwd, String connectStr) throws SQLException {
-		Connection conn;
-		ScriptExecutor sqlcl;
-		ScriptRunnerContext ctx;
-
-		conn = openConnection(user, pwd, connectStr);
-
-		// then create ScriptRunner Context
-		// create sqlcl
-		sqlcl = new ScriptExecutor(conn);
-		// set up context
-		ctx = new ScriptRunnerContext();
-		// set the output max rows
-		ResultSetFormatter.setMaxRows(10000);
-		// set the context
-		sqlcl.setScriptRunnerContext(ctx);
-		ctx.setBaseConnection(conn);
-
-		return sqlcl;
-	}
-
-	public Connection openConnection(String user, String pwd, String connectStr) {
-		Connection conn = null;
-
-		OracleConnectionPoolDataSource ocpds;
-		PooledConnection pc;
-
-		try {
-
-			// set cache properties
-			java.util.Properties prop = new java.util.Properties();
-			prop.setProperty("InitialLimit", "1");
-			prop.setProperty("MinLimit", "1");
-			prop.setProperty("MaxLimit", "1");
-
-			ocpds = new OracleConnectionPoolDataSource();
-
-			ocpds.setURL(ConnectionUtility.transformJDBCConnectString(connectStr));
-			ocpds.setUser(user);
-			ocpds.setPassword(pwd);
-
-			// set connection parameters
-			ocpds.setConnectionProperties(prop);
-
-			pc = ocpds.getPooledConnection();
-			conn = pc.getConnection();
-			conn.setAutoCommit(false);
-
-		} catch (SQLException e) {
-			Utils.throwRuntimeException("Could not connect via JDBC: " + e.getMessage());
-		}
-
-		return conn;
-	}
-
-	private void closeConnection() {
-		DBUtils.closeQuietly(this.sqlcl.getConn());
 	}
 }
