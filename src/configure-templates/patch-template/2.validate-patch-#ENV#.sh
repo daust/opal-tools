@@ -15,5 +15,6 @@ SCRIPT_DIR=`dirname $0`
 opal-install.sh --validate-only \
                 --config-file "${SCRIPT_DIR}/opal-installer.json" \
                 --connection-pool-file "${OPAL_TOOLS_USER_CONFIG_DIR}/connections-#ENV#.json" \
-                --mandatory-attributes application patch author version
+                --mandatory-attributes application patch author version \
+                --no-logging
                 

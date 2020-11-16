@@ -5,6 +5,10 @@
 export PROJECT_ROOT="#PROJECT_ROOT#"
 export OPAL_TOOLS_USER_IDENTITY="#OPAL_TOOLS_USER_IDENTITY#"
 
+# --- change if needed ---
+# export ORACLE_HOME=c:\Progs\Oracle\Client\12.1\Home
+# export JAVA_HOME=c:\Program Files (x86)\Java\jdk1.8.0_251 
+
 #--------------------------------------------------------------------------
 # General configuration settings, typically unchanged 
 #--------------------------------------------------------------------------
@@ -18,10 +22,6 @@ export OPAL_TOOLS_USER_CONFIG_DIR="#OPAL_TOOLS_USER_CONFIG_DIR#"
 export OPAL_TOOLS_SRC_SQL_DIR="#OPAL_TOOLS_SRC_SQL_DIR#"
 export OPAL_TOOLS_PATCH_TEMPLATE_DIR="#OPAL_TOOLS_PATCH_TEMPLATE_DIR#"
 export OPAL_TOOLS_PATCH_DIR="#OPAL_TOOLS_PATCH_DIR#"
-
-# --- change if needed ---
-# export ORACLE_HOME=c:\Progs\Oracle\Client\12.1\Home
-# export JAVA_HOME=c:\Program Files (x86)\Java\jdk1.8.0_251 
 
 # --- typically unchanged ---
 # Date Strings to be used in scripts

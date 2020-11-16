@@ -9,6 +9,8 @@ export PATCH_DIRECTORY=${OPAL_TOOLS_PATCH_DIR}/${YEAR}/${DATE_STRING}-${PATCH_NA
 # patch directory
 opal-install-copy-template.sh --source-path "${OPAL_TOOLS_PATCH_TEMPLATE_DIR}" --target-path "${PATCH_DIRECTORY}"
 
+echo cd "${PATCH_DIRECTORY}"
+
 echo
 echo "To open the finder/explorer in new window automatically, add in this file:"  
 echo "-------------------------------------------------------------------------:"

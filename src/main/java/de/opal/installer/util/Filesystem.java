@@ -13,6 +13,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import de.opal.installer.config.ConfigManager;
+import de.opal.utils.MsgLog;
 
 public class Filesystem {
 
@@ -52,7 +53,7 @@ public class Filesystem {
 		List<FileNode> fileList = new ArrayList<FileNode>();
 
 		log.debug("\n*** Scan Tree: directory: " + baseDirName);
-		// Msg.println("\ntraversalType: " + traversalType.toString());
+		// MsgLog.println("\ntraversalType: " + traversalType.toString());
 
 		Path start = FileSystems.getDefault().getPath(this.baseDirName);
 		try {
@@ -85,7 +86,7 @@ public class Filesystem {
 		log.debug("\n*** filterTreeInorder ");
 		log.debug("\nregex: " + sqlFileRegEx);
 
-		// Msg.print("*** List of files to be installed:\n\n");
+		// MsgLog.print("*** List of files to be installed:\n\n");
 
 		Pattern p = Pattern.compile(sqlFileRegEx);
 
@@ -97,13 +98,13 @@ public class Filesystem {
 			if (p.matcher(relativeFilename).find()) {
 				String overrideEncoding = configManager.getEncoding(relativeFilename);
 				if (overrideEncoding.isEmpty()) {
-					Msg.println("file: (system encoding) - " + relativeFilename);
+					MsgLog.println("file: (system encoding) - " + relativeFilename);
 				} else {
-					Msg.println(
+					MsgLog.println(
 							"file: (override encoding: " + overrideEncoding + ") - " + relativeFilename);
 				}
 
-				logfile.appendln("file: " + fileNode.getFile().toString());
+				//MsgLog.println("file: " + fileNode.getFile().toString());
 				fileList.add(fileNode);
 			}
 		}
@@ -116,8 +117,9 @@ public class Filesystem {
 	 * 
 	 * @param srcFileList
 	 * @return
+	 * @throws IOException 
 	 */
-	public List<FileNode> filterTreeStaticFiles(List<FileNode> srcFileList, ArrayList<String> staticFiles) {
+	public List<FileNode> filterTreeStaticFiles(List<FileNode> srcFileList, ArrayList<String> staticFiles) throws IOException {
 
 		List<FileNode> fileList = new ArrayList<FileNode>();
 
@@ -128,7 +130,7 @@ public class Filesystem {
 			for (FileNode fileNode : srcFileList) {
 
 				if (fileNode.getFile().getName().equals(staticFile)) {
-					Msg.println("file: " + fileNode.getFile().toString());
+					MsgLog.println("file: " + fileNode.getFile().toString());
 					fileList.add(fileNode);
 				}
 			}

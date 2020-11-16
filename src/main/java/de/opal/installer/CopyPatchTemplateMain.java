@@ -2,10 +2,8 @@ package de.opal.installer;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintStream;
 import java.sql.SQLException;
-import java.util.Properties;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -16,8 +14,8 @@ import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.OptionHandlerFilter;
 import org.kohsuke.args4j.ParserProperties;
 
-import de.opal.installer.config.ConfigManager;
 import de.opal.installer.util.Msg;
+import de.opal.utils.VersionInfo;
 
 public class CopyPatchTemplateMain {
 	
@@ -25,8 +23,6 @@ public class CopyPatchTemplateMain {
 	 * Other variables
 	 */
 	public static final Logger log = LogManager.getLogger(InstallerMain.class.getName());
-	private String version; // will be loaded from file version.txt which will be populated by the gradle
-							// build process
 
 	/*--------------------------------------------------------------------------------------
 	 * Command line parameters
@@ -37,32 +33,14 @@ public class CopyPatchTemplateMain {
 	@Option(name = "-h", aliases = "--help", usage = "show this help page", help = true)
 	private boolean showHelp;
 
+	@Option(name = "-v", aliases = "--version", usage = "show version information", help = true)
+	private boolean showVersion;
+
 	@Option(name = "--source-path", usage = "path to the template directory structure", metaVar = "<path>", required=true)
 	private String sourcePathName;
 
 	@Option(name = "--target-path", usage = "target path for the patch", metaVar = "<path>", required=true)
 	private String targetPathName;
-
-	/**
-	 * readVersionFromFile
-	 * 
-	 * Read version from file version.properties in same package
-	 */
-	private void readVersionFromFile() {
-		Properties prop = new Properties();
-		String result = "";
-
-		try (InputStream inputStream = getClass().getResourceAsStream("version.properties")) {
-
-			prop.load(inputStream);
-			result = prop.getProperty("version");
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		this.version = result;
-	}
 
 	public CopyPatchTemplateMain() {
 	
@@ -73,7 +51,6 @@ public class CopyPatchTemplateMain {
 
 		CopyPatchTemplateMain main = new CopyPatchTemplateMain();
 		
-		main.readVersionFromFile();
 		main.parseParameters(args);
 		main.transformParams();
 		main.dumpParameters();
@@ -110,6 +87,10 @@ public class CopyPatchTemplateMain {
 		try {
 			// parse the arguments.
 			parser.parseArgument(args);
+			
+			if (this.showVersion) {
+				VersionInfo.showVersionInfo(this.getClass(), "OPAL Installer", true);
+			}
 
 			// check whether jdbcURL OR connection pool is specified correctly
 			if (this.showHelp) {

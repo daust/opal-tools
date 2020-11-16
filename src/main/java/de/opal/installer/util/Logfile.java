@@ -8,7 +8,6 @@ import java.io.IOException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-
 public class Logfile {
 
 	private static Logfile _instance;
@@ -33,7 +32,7 @@ public class Logfile {
 	}
 
 	public void open(String fileName) throws IOException {
-		
+
 		logger.debug("open logfile for " + fileName);
 		// create file object
 		if (this.file == null) {
@@ -52,12 +51,14 @@ public class Logfile {
 	public void append(String msg) throws IOException {
 		this.bw.write(msg);
 	}
+
 	public void appendln(String msg) throws IOException {
-		this.bw.write(msg+"\n");
+		this.bw.write(msg + "\n");
 	}
 
 	public void close() throws IOException {
-		this.bw.close();
+		if (this.bw != null)
+			this.bw.close();
 	}
 
 }

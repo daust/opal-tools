@@ -1,9 +1,10 @@
 package de.opal.exporter;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintStream;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -12,6 +13,7 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.text.StringSubstitutor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.kohsuke.args4j.Argument;
@@ -22,8 +24,10 @@ import org.kohsuke.args4j.OptionHandlerFilter;
 import org.kohsuke.args4j.ParserProperties;
 
 import de.opal.installer.config.ConfigConnectionPool;
-import de.opal.installer.config.ConfigManager;
+import de.opal.installer.config.ConfigManagerConnectionPool;
 import de.opal.installer.util.Msg;
+import de.opal.utils.FileIO;
+import de.opal.utils.VersionInfo;
 
 public class ExporterMain {
 
@@ -34,11 +38,11 @@ public class ExporterMain {
 	private String user;
 	private String pwd;
 	private String connectStr;
-	private String version; // will be loaded from file version.txt which will be populated by the gradle
-							// build process
 	private HashMap<String, ArrayList<String>> dependentObjectsMap = new HashMap<String, ArrayList<String>>();
-	//private HashMap<String, String> extensionMappingsMap = new HashMap<String, String>();
-	//private HashMap<String, String> directoryMappingsMap = new HashMap<String, String>();
+	// private HashMap<String, String> extensionMappingsMap = new HashMap<String,
+	// String>();
+	// private HashMap<String, String> directoryMappingsMap = new HashMap<String,
+	// String>();
 	private HashMap<String, String> filenameTemplatesMap = new HashMap<String, String>();
 
 	/*--------------------------------------------------------------------------------------
@@ -47,8 +51,11 @@ public class ExporterMain {
 	 * - https://args4j.kohsuke.org/args4j/apidocs 
 	 */
 
-	@Option(name = "-h", aliases = "--help", usage = "show this help page", help=true)
+	@Option(name = "-h", aliases = "--help", usage = "show this help page", help = true)
 	private boolean showHelp;
+
+	@Option(name = "-v", aliases = "--version", usage = "show version information", help = true)
+	private boolean showVersion;
 
 	@Option(name = "--url", usage = "database connection jdbc url, \ne.g.: scott/tiger@localhost:1521:ORCL", metaVar = "<jdbc url>", forbids = {
 			"--connection-pool-file", "--connection-pool-name" })
@@ -57,8 +64,8 @@ public class ExporterMain {
 	@Option(name = "--connection-pool-file", usage = "connection pool file\ne.g.: connections-dev.json", metaVar = "<file>", forbids = {
 			"--url" })
 	private String connectionPoolFile;
-	
-	@Option(name ="--connection-pool-name", usage = "connection pool name\ne.g.: scott", metaVar = "<connection pool name>", forbids = {
+
+	@Option(name = "--connection-pool-name", usage = "connection pool name\ne.g.: scott", metaVar = "<connection pool name>", forbids = {
 			"--url" })
 	private String connectionPoolName;
 
@@ -118,21 +125,24 @@ public class ExporterMain {
 	@Option(name = "--silent", usage = "turns off prompts")
 	private boolean isSilent = false;
 
-/*	@Option(name = "--filename-template", usage = "template for constructing the filename\n"
-			+ "e.g.: #schema#/#object_type#/#object_name#.#ext#\n\n"
-			+ "#schema#             - schema name in lower case\n"
-			+ "#object_type#        - lower case type name: 'table'\n"
-			+ "#object_type_plural# - lower case type name in plural: 'tables'\n"
-			+ "#object_name#        - lower case object name\n"
-			+ "#ext#                - lower case extension: 'sql' or 'pks'\n"
-			+ "#SCHEMA#             - upper case schema name\n"
-			+ "#OBJECT_TYPE#        - upper case object type name: 'TABLE' or 'INDEX'\n"
-			+ "#OBJECT_TYPE_PLURAL# - upper case object type name in plural: 'TABLES'\n"
-			+ "#OBJECT_NAME#        - upper case object name\n"
-			+ "#EXT#                - upper case extension: 'SQL' or 'PKS'", metaVar = "<template structure>", required = false)
-	private String filenameTemplate = "#schema#/#object_type_plural#/#object_name#.#ext#";
-*/
-	
+	/*
+	 * @Option(name = "--filename-template", usage =
+	 * "template for constructing the filename\n" +
+	 * "e.g.: #schema#/#object_type#/#object_name#.#ext#\n\n" +
+	 * "#schema#             - schema name in lower case\n" +
+	 * "#object_type#        - lower case type name: 'table'\n" +
+	 * "#object_type_plural# - lower case type name in plural: 'tables'\n" +
+	 * "#object_name#        - lower case object name\n" +
+	 * "#ext#                - lower case extension: 'sql' or 'pks'\n" +
+	 * "#SCHEMA#             - upper case schema name\n" +
+	 * "#OBJECT_TYPE#        - upper case object type name: 'TABLE' or 'INDEX'\n" +
+	 * "#OBJECT_TYPE_PLURAL# - upper case object type name in plural: 'TABLES'\n" +
+	 * "#OBJECT_NAME#        - upper case object name\n" +
+	 * "#EXT#                - upper case extension: 'SQL' or 'PKS'", metaVar =
+	 * "<template structure>", required = false) private String filenameTemplate =
+	 * "#schema#/#object_type_plural#/#object_name#.#ext#";
+	 */
+
 	@Option(name = "--filename-templates", handler = WellBehavedStringArrayOptionHandler.class, usage = "templates for constructing the filename per object type\n"
 			+ "e.g.: #schema#/#object_type#/#object_name#.#ext#\n\n"
 			+ "#schema#             - schema name in lower case\n"
@@ -154,25 +164,14 @@ public class ExporterMain {
 	@Option(name = "--script-working-directory", usage = "working directory for running sqlcl scripts (-pre and -post), e.g. '.' or '/u01/project/src/sql'. The default is the environment variable OPAL_TOOLS_SRC_SQL_DIR", metaVar = "<directory>", required = false)
 	private String workingDirectorySQLcl;
 
-	// @Option(name = "-h", aliases = "--help", usage = "display this help page")
-	// private boolean showHelp = false;
+	@Option(name = "--export-template-dir", usage = "directory for object templates, e.g. /u01/project/opal-tools/export-templates", metaVar = "<directory>", required = false)
+	private String exportTemplateDir;
 
-	private void readVersionFromFile() {
-		Properties prop = new Properties();
-		String result = "";
+	@Option(name = "--config-file", usage = "configuration file\ne.g.: connections-dev.json", metaVar = "<file>")
+	private String configFileName;
 
-		try (InputStream inputStream = getClass().getResourceAsStream("version.properties")) {
-
-			prop.load(inputStream);
-			result = prop.getProperty("version");
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		this.version = result;
-
-	}
+	@Option(name = "--parallel-degree", usage = "the database statements are executed in parallel, e.g. 10", metaVar = "<level>")
+	private int parallelThreads=1;
 
 	/**
 	 * Main entry point to the DB Exporter
@@ -183,18 +182,30 @@ public class ExporterMain {
 	public static void main(String[] args) throws Exception {
 		log.debug("*** start ***");
 
+		// we need second instance because in the first parsing
+		// for the switch --config-file all variables are already initialized
+		// and we need to reset them ... or create a new instance
+		ExporterMain configFileExporter = new ExporterMain();
+		String[] configFileArgs = configFileExporter.parseConfigFileArgs(args);
+
+		// now initialize the real class
 		ExporterMain dbExporter = new ExporterMain();
 
-		dbExporter.readVersionFromFile();
-		dbExporter.parseParameters(args);
+		// merge the argument lists so that the command line args can OVERRIDE the
+		// ones from the config file
+		dbExporter.parseParameters(dbExporter.mergeArgs(configFileArgs, args));
 		dbExporter.transformParams();
 		dbExporter.dumpParameters();
 		dbExporter.showHeaderInfo();
 
 		Exporter exporter = new Exporter(dbExporter.user, dbExporter.pwd, dbExporter.connectStr, dbExporter.outputDir,
 				dbExporter.skipErrors, dbExporter.dependentObjectsMap, dbExporter.isSilent,
-				/*dbExporter.extensionMappingsMap, dbExporter.directoryMappingsMap, dbExporter.filenameTemplate,*/
-				dbExporter.filenameReplaceBlanks, dbExporter.workingDirectorySQLcl, dbExporter.skipExport, dbExporter.filenameTemplatesMap);
+				/*
+				 * dbExporter.extensionMappingsMap, dbExporter.directoryMappingsMap,
+				 * dbExporter.filenameTemplate,
+				 */
+				dbExporter.filenameReplaceBlanks, dbExporter.workingDirectorySQLcl, dbExporter.skipExport,
+				dbExporter.filenameTemplatesMap, dbExporter.exportTemplateDir, dbExporter.parallelThreads);
 		exporter.export(dbExporter.preScripts, dbExporter.postScripts, dbExporter.includeFilters,
 				dbExporter.excludeFilters, dbExporter.schemas, dbExporter.includeTypes, dbExporter.excludeTypes);
 
@@ -202,17 +213,97 @@ public class ExporterMain {
 
 		log.debug("*** end ***");
 	}
-	
+
 	private void showUsage(PrintStream out, CmdLineParser parser) {
 		out.println("\njava de.opal.exporter.DBExporter [options...]");
 
 		// print the list of available options
 		parser.printUsage(out);
-		
+
 		out.println();
 
 		// print option sample. This is useful some time
 		out.println("  Example: java de.opal.exporter.DBExporter" + parser.printExample(OptionHandlerFilter.PUBLIC));
+	}
+
+	private String[] readArgsFromConfigFile(String configFilename) {
+		ArrayList<String> args = new ArrayList<String>();
+
+		try {
+			String textContent = FileIO.fileToString(configFilename);
+			BufferedReader bufReader = new BufferedReader(new StringReader(textContent));
+
+			String line = null;
+			while ((line = bufReader.readLine()) != null) {
+				line = line.trim();
+
+				if (!line.startsWith("#") && !line.isEmpty()) {
+					// https://stackoverflow.com/questions/7804335/split-string-on-spaces-in-java-except-if-between-quotes-i-e-treat-hello-wor
+					// split string on blanks but not within quotes
+					Matcher m = Pattern.compile("([^\"]\\S*|\".+?\")\\s*").matcher(line);
+					while (m.find()) {
+						String arg = m.group(1);
+
+						// https://commons.apache.org/proper/commons-text/apidocs/org/apache/commons/text/StringSubstitutor.html
+						final StringSubstitutor interpolator = StringSubstitutor.createInterpolator();
+						interpolator.setEnableSubstitutionInVariables(true); // Allows for nested $'s.
+						arg = interpolator.replace(arg);
+
+						// remove surrounding quotes
+						arg = arg.replace("\"", "");
+
+						args.add(arg);
+					}
+				}
+			}
+
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		/*
+		 * try { props.load(new FileInputStream(configFilename));
+		 * 
+		 * Set<String> keys = props.stringPropertyNames(); for (String key : keys) {
+		 * args.add(key); args.add(props.getProperty(key)); } } catch (IOException e) {
+		 * // TODO Auto-generated catch block e.printStackTrace(); }
+		 */
+
+		return args.stream().toArray(String[]::new);
+	}
+
+	private String[] mergeArgs(String[] args1, String[] args2) {
+		if (args1 == null)
+			return args2;
+		if (args2 == null)
+			return args1;
+
+		List<String> list = new ArrayList<String>(Arrays.asList(args1));
+		list.addAll(Arrays.asList(args2));
+		String[] args3 = list.stream().toArray(String[]::new);
+
+		return args3;
+	}
+
+	public String[] parseConfigFileArgs(String[] args) throws IOException {
+		CmdLineParser parser = new CmdLineParser(this);
+		String[] configFileArgs = null;
+
+		try {
+			// first parse to get config file name
+			parser.parseArgument(args);
+
+		} catch (Exception e) {
+			// suppress first exception
+			// it could be that required fields are in the config file
+		}
+
+		if (this.configFileName != null && !this.configFileName.isEmpty()) {
+			// read optional properties file and put it in the args[] array
+			configFileArgs = readArgsFromConfigFile(this.configFileName);
+		}
+		return configFileArgs;
 	}
 
 	/**
@@ -229,9 +320,10 @@ public class ExporterMain {
 
 		log.debug("start parsing");
 		try {
+
 			// parse the arguments.
 			parser.parseArgument(args);
-			
+
 			// help can be displayed without -url being given
 			// else -url is required
 			/*
@@ -258,12 +350,16 @@ public class ExporterMain {
 			// if (arguments.isEmpty())
 			// throw new CmdLineException(parser, "No argument is given");
 
+			if (this.showVersion) {
+				VersionInfo.showVersionInfo(this.getClass(), "OPAL Installer", true);
+			}
+
 			// check whether jdbcURL OR connection pool is specified correctly
 			if (this.showHelp) {
 				showUsage(System.out, parser);
 				System.exit(0);
 			}
-			
+
 			// check more complex parameters
 			if (this.jdbcURL != null || (this.connectionPoolFile != null && this.connectionPoolName != null)) {
 				// ok
@@ -294,20 +390,22 @@ public class ExporterMain {
 							"connection pool file " + this.connectionPoolFile + " not found");
 				}
 
-				ConfigManager configManagerConnectionPools = new ConfigManager(this.connectionPoolFile);
+				ConfigManagerConnectionPool configManagerConnectionPools = new ConfigManagerConnectionPool(
+						this.connectionPoolFile);
 
 				// encrypt passwords if required
 				if (configManagerConnectionPools.hasUnencryptedPasswords()) {
 					configManagerConnectionPools.encryptPasswords(
 							configManagerConnectionPools.getEncryptionKeyFilename(this.connectionPoolFile));
 					// dump JSON file
-					configManagerConnectionPools.writeJSONConfPool();
+					configManagerConnectionPools.writeJSONConf();
 				}
 				// now decrypt the passwords so that they can be used internally in the program
 				configManagerConnectionPools.decryptPasswords(
 						configManagerConnectionPools.getEncryptionKeyFilename(this.connectionPoolFile));
 
-				for (ConfigConnectionPool pool : configManagerConnectionPools.getConfigData().connectionPools) {
+				for (ConfigConnectionPool pool : configManagerConnectionPools
+						.getConfigDataConnectionPool().connectionPools) {
 					if (pool.name.toUpperCase().contentEquals(this.connectionPoolName.toUpperCase())) {
 						this.user = pool.user;
 						this.pwd = pool.password;
@@ -328,7 +426,7 @@ public class ExporterMain {
 		} catch (CmdLineException e) {
 			System.err.println(e.getMessage());
 			showUsage(System.err, parser);
-			
+
 			System.exit(1);
 		}
 
@@ -370,39 +468,35 @@ public class ExporterMain {
 		for (int i = 0; i < this.dependentObjects.size(); i++) {
 			dependentObjects.set(i, dependentObjects.get(i).trim().toUpperCase());
 		}
-		
+
 		/*
-		// make extension mappings uppercase
-		for (String ext : this.extensionMappings) {
-			String objectType = ext.split(":")[0].trim();
-			String suffix = ext.split(":")[1].trim();
+		 * // make extension mappings uppercase for (String ext :
+		 * this.extensionMappings) { String objectType = ext.split(":")[0].trim();
+		 * String suffix = ext.split(":")[1].trim();
+		 * 
+		 * this.extensionMappingsMap.put(objectType.toUpperCase(), suffix); } // make
+		 * directory mappings uppercase for (String ext : this.directoryMappings) {
+		 * String objectType = ext.split(":")[0].trim(); String directory =
+		 * ext.split(":")[1].trim();
+		 * 
+		 * this.directoryMappingsMap.put(objectType.toUpperCase(), directory); }
+		 */
 
-			this.extensionMappingsMap.put(objectType.toUpperCase(), suffix);
-		}
-		// make directory mappings uppercase
-		for (String ext : this.directoryMappings) {
-			String objectType = ext.split(":")[0].trim();
-			String directory = ext.split(":")[1].trim();
-
-			this.directoryMappingsMap.put(objectType.toUpperCase(), directory);
-		}
-		*/
-		
 		// transform dependent object list into map
 		for (String dep : this.dependentObjects) {
 			String objType = dep.split(":")[0].trim();
 			String depObj = dep.split(":")[1].trim();
-		
-			ArrayList<String> depObjects= new ArrayList<String>();
+
+			ArrayList<String> depObjects = new ArrayList<String>();
 			Arrays.asList(depObj.split(",")).forEach((e) -> depObjects.add(e.trim()));
-			
+
 			this.dependentObjectsMap.put(objType, depObjects);
 		}
-		
+
 		// filename templates => set default
-		if (filenameTemplates.size()==0)
+		if (filenameTemplates.size() == 0)
 			filenameTemplates.add("default:#schema#/#object_type_plural#/#object_name#.sql");
-		
+
 		// filename templates => convert to map
 		for (String template : this.filenameTemplates) {
 			String objectType = template.split(":")[0].trim();
@@ -415,15 +509,15 @@ public class ExporterMain {
 			// set default to environment variable OPAL_TOOLS_SRC_SQL_DIR
 			log.debug("set default for workingDirectorySQLcl: " + this.workingDirectorySQLcl);
 			this.workingDirectorySQLcl = System.getenv("OPAL_TOOLS_SRC_SQL_DIR").trim();
-		}else
-			this.workingDirectorySQLcl=this.workingDirectorySQLcl.trim();
+		} else
+			this.workingDirectorySQLcl = this.workingDirectorySQLcl.trim();
 	}
 
 	private void showHeaderInfo() {
 		String lSep = System.getProperty("line.separator");
 		StringBuilder sb = new StringBuilder();
 
-		sb.append("OPAL Exporter version " + this.version + lSep);
+		sb.append(VersionInfo.getVersionInfo(this.getClass(), VersionInfo.OPAL_EXPORTER, false) + lSep);
 		sb.append("****************************" + lSep);
 		sb.append("* User                     : " + this.user + lSep);
 		sb.append("* ConnectStr               : " + this.connectStr + lSep);
@@ -446,29 +540,34 @@ public class ExporterMain {
 				sb.append("* Dependent Objects        : " + this.dependentObjects + lSep);
 		}
 
-		if (this.preScripts.size() >0 || this.postScripts.size()> 0) {
+		if (this.preScripts.size() > 0 || this.postScripts.size() > 0) {
 			sb.append("*" + lSep);
 			// sb.append("* Arguments : " + this.arguments+lSep);
-			if (this.workingDirectorySQLcl != null && (this.preScripts.size() >0 || this.postScripts.size()> 0))
+			if (this.workingDirectorySQLcl != null && (this.preScripts.size() > 0 || this.postScripts.size() > 0))
 				sb.append("* Script Working Directory : " + this.workingDirectorySQLcl + lSep);
-			if (this.preScripts.size() >0)
+			if (this.preScripts.size() > 0)
 				sb.append("* Pre Scripts              : " + this.preScripts.toString() + lSep);
-			if (this.postScripts.size() > 0 )
+			if (this.postScripts.size() > 0)
 				sb.append("* Post Scripts             : " + this.postScripts.toString() + lSep);
 		}
 
 		if (!this.skipExport) {
 			sb.append("*" + lSep);
-/*
-			if (this.extensionMappings != null)
-				sb.append("* Extension Mapping        : " + this.extensionMappings + lSep);
-			if (this.directoryMappings != null)
-				sb.append("* Directory Mapping        : " + this.directoryMappings + lSep);
-*/				
-			if (this.filenameTemplates.size()>0) {
+			/*
+			 * if (this.extensionMappings != null) sb.append("* Extension Mapping        : "
+			 * + this.extensionMappings + lSep); if (this.directoryMappings != null)
+			 * sb.append("* Directory Mapping        : " + this.directoryMappings + lSep);
+			 */
+			if (this.filenameTemplates.size() > 0) {
 				sb.append("* Filename Templates       : " + this.filenameTemplates.toString() + lSep);
 			}
 			sb.append("* Filename Replace Blanks? : " + this.filenameReplaceBlanks + lSep);
+			if (this.exportTemplateDir != null) {
+				sb.append("* Export Template Directory: " + this.exportTemplateDir + lSep);
+			}
+			if (this.parallelThreads > 1) {
+				sb.append("* Parallel Degree          : " + this.parallelThreads + lSep);
+			}
 		}
 
 		sb.append("*" + lSep);

@@ -12,8 +12,6 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -29,9 +27,10 @@ import org.kohsuke.args4j.ParserProperties;
 
 import de.opal.installer.config.ConfigConnectionMapping;
 import de.opal.installer.config.ConfigConnectionPool;
-import de.opal.installer.config.ConfigData;
+import de.opal.installer.config.ConfigDataConnectionPool;
 import de.opal.installer.config.ConfigEncodingMapping;
 import de.opal.installer.config.ConfigManager;
+import de.opal.installer.config.ConfigManagerConnectionPool;
 import de.opal.installer.util.Msg;
 import de.opal.installer.util.Utils;
 import de.opal.utils.OSDetector;
@@ -213,13 +212,12 @@ public class SetupManager {
 
 			// first we create an empty file
 			FileUtils.writeStringToFile(new File(confFilename), "{}", Charset.defaultCharset());
-
+			
 			// prompt for url for all connections in this file
-			String envJDBCUrl = promptForInput(kbd, "    JDBC url for environment " + env + " (hostname:port:sid or hostname:port/servicename): ",
+			String envJDBCUrl = promptForInput(kbd    , "    JDBC url for environment " + env + " (hostname:port:sid or hostname:port/servicename): ",
 					"127.0.0.1:1521:xe");
-
-			ConfigData configData = new ConfigData();
-			configData.clearDefaults();
+			
+			ConfigDataConnectionPool configData = new ConfigDataConnectionPool();
 			configData.targetSystem = env;
 
 			// loop over all schemas for the current environment
@@ -242,11 +240,11 @@ public class SetupManager {
 				configData.connectionPools.add(conn);
 			}
 
-			ConfigManager confMgr = new ConfigManager(confFilename);
+			ConfigManagerConnectionPool confMgr = new ConfigManagerConnectionPool(confFilename);
 			confMgr.setConfigData(configData);
 			confMgr.encryptPasswords(confMgr.getEncryptionKeyFilename(confFilename));
 
-			confMgr.writeJSONConfPool();
+			confMgr.writeJSONConf();
 		}
 		// process SET PROJECT ENVIRONMENT script
 		// replace contents in setProjectEnvironment script
@@ -268,6 +266,32 @@ public class SetupManager {
 
 		tmpSourceDir = getFullPathResolveVariables(localDir + File.separatorChar + "lib");
 		tmpTargetDir = getFullPathResolveVariables(swDirectory + File.separatorChar + "lib");
+
+		Msg.println("\n----------------------------------------------------------\n");
+		Msg.println("copy sw files from: " + tmpSourceDir + "\n              to  : " + tmpTargetDir + "\n");
+		try {
+			FileUtils.copyDirectory(new File(tmpSourceDir), new File(tmpTargetDir));
+		} catch (IOException e) {
+			Msg.println("Files will NOT be copied because an error occured: " + e.getMessage() + "\n");
+		}
+
+		// export-scripts
+		tmpSourceDir = getFullPathResolveVariables(
+				localDir + File.separatorChar + "configure-templates" + File.separatorChar + "export-scripts");
+		tmpTargetDir = getFullPathResolveVariables(swDirectory + File.separatorChar + "export-scripts");
+
+		Msg.println("\n----------------------------------------------------------\n");
+		Msg.println("copy sw files from: " + tmpSourceDir + "\n              to  : " + tmpTargetDir + "\n");
+		try {
+			FileUtils.copyDirectory(new File(tmpSourceDir), new File(tmpTargetDir));
+		} catch (IOException e) {
+			Msg.println("Files will NOT be copied because an error occured: " + e.getMessage() + "\n");
+		}
+
+		// export-templates
+		tmpSourceDir = getFullPathResolveVariables(
+				localDir + File.separatorChar + "configure-templates" + File.separatorChar + "export-templates");
+		tmpTargetDir = getFullPathResolveVariables(swDirectory + File.separatorChar + "export-templates");
 
 		Msg.println("\n----------------------------------------------------------\n");
 		Msg.println("copy sw files from: " + tmpSourceDir + "\n              to  : " + tmpTargetDir + "\n");
@@ -397,14 +421,6 @@ public class SetupManager {
 
 		// add connection pool mappings to file system paths
 		// read opal-installer.json file
-		// ConfigData configDataInst = new ConfigData();
-		// configDataInst.clearDefaults();
-		/*
-		String fileContents = "{\n" + "	\"application\": \"\",\n" + "    \"patch\": \"\",\n" + "    \"author\": \"\",\n"
-				+ "    \"version\": \"\",\n" + "    \"connectionMappings\": [],\n"
-				+ "	 \"waitAfterEachStatement\": \"true\"," + "    \"sqlFileRegEx\": \"\\\\.(sql|pks|pkb|trg)$\",\n"
-				+ "    \"registryTargets\": [],\n" + "    \"encodingMappings\": [ ]	\n" + "}";
-		*/
 		String fileContents=FileUtils.readFileToString(new File(tmpSourceDir+File.separator+"opal-installer.json"), Charset.defaultCharset());
 		
 		FileUtils.writeStringToFile(new File(tmpTargetDir + File.separator + "opal-installer.json"), fileContents,
@@ -529,8 +545,8 @@ public class SetupManager {
 					System.out.println(line);
 				}
 
+				@SuppressWarnings("unused")
 				int exitCode = process.waitFor();
-				//System.out.println("\nExited with error code : " + exitCode);
 
 			} catch (IOException e) {
 				e.printStackTrace();
@@ -588,6 +604,7 @@ public class SetupManager {
 
 			if (color != null) {
 				if (osIsWindows()) {
+					@SuppressWarnings("serial")
 					Map<String, String> colorMap = new HashMap<String, String>() {
 						{
 							put("green", "0A");
@@ -603,6 +620,7 @@ public class SetupManager {
 					}
 
 				} else {
+					@SuppressWarnings("serial")
 					Map<String, String> colorMap = new HashMap<String, String>() {
 						{
 							put("green", "2");
@@ -666,7 +684,7 @@ public class SetupManager {
 		projectRootDir = promptForInput(kbd, "\nProject root directory, typically the target of a GIT or SVN export",
 				projectRootDir.trim());
 		swDirectory = promptForInput(kbd,
-				"SW install directory (contains bin and lib directories, use '.' for local files)",
+				"SW install directory (contains bin and lib directories, use '.' for local directory)",
 				getOsDependentProjectRootVariable() + File.separatorChar + "opal-tools");
 		templateDirectory = promptForInput(kbd, "Patch template directory",
 				getOsDependentProjectRootVariable() + File.separatorChar + "patch-template");
