@@ -684,7 +684,7 @@ public class SetupManager {
 		projectRootDir = promptForInput(kbd, "\nProject root directory, typically the target of a GIT or SVN export",
 				projectRootDir.trim());
 		swDirectory = promptForInput(kbd,
-				"SW install directory (contains bin and lib directories, use '.' for local files)",
+				"SW install directory (contains bin and lib directories, use '.' for local directory)",
 				getOsDependentProjectRootVariable() + File.separatorChar + "opal-tools");
 		templateDirectory = promptForInput(kbd, "Patch template directory",
 				getOsDependentProjectRootVariable() + File.separatorChar + "patch-template");

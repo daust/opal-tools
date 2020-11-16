@@ -170,7 +170,7 @@ public class ExporterMain {
 	@Option(name = "--config-file", usage = "configuration file\ne.g.: connections-dev.json", metaVar = "<file>")
 	private String configFileName;
 
-	@Option(name = "--parallel-level", usage = "the database statements are executed in parallel, e.g. 10", metaVar = "<level>")
+	@Option(name = "--parallel-degree", usage = "the database statements are executed in parallel, e.g. 10", metaVar = "<level>")
 	private int parallelThreads=1;
 
 	/**
@@ -566,7 +566,7 @@ public class ExporterMain {
 				sb.append("* Export Template Directory: " + this.exportTemplateDir + lSep);
 			}
 			if (this.parallelThreads > 1) {
-				sb.append("* Parallel Level           : " + this.parallelThreads + lSep);
+				sb.append("* Parallel Degree          : " + this.parallelThreads + lSep);
 			}
 		}
 
