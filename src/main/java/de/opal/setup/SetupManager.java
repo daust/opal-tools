@@ -223,9 +223,13 @@ public class SetupManager {
 			// loop over all schemas for the current environment
 			for (String schema : schemaListArr) {
 				String password = "";
+				String user="";
 
 				Console con = System.console();
 				// hide password on real console
+				// input password in Eclipse
+				user = promptForInput(kbd,
+						"    User to connect to schema " + schema + " in environment " + env + ": ", schema);
 				if (con == null || showPasswords) {
 					// input password in Eclipse
 					password = promptForInput(kbd,
@@ -235,7 +239,7 @@ public class SetupManager {
 					char[] ch = con.readPassword();
 					password = String.valueOf(ch);
 				}
-				ConfigConnectionPool conn = new ConfigConnectionPool(schema, schema, password, envJDBCUrl);
+				ConfigConnectionPool conn = new ConfigConnectionPool(schema, user, password, envJDBCUrl);
 				// add connection to configFile
 				configData.connectionPools.add(conn);
 			}
@@ -458,7 +462,7 @@ public class SetupManager {
 
 	private void processDBSourceDirectory(Scanner kbd) throws IOException {
 		tmpSourceDir = getFullPathResolveVariables(
-				localDir + File.separatorChar + "configure-templates" + File.separatorChar + "src-sql");
+				localDir + File.separatorChar + "configure-templates" + File.separatorChar + "patch-template-sql");
 
 		Msg.println("db source directory from: " + tmpSourceDir + "\n                    to  : " + dbSourceDirectory
 				+ "\n");
@@ -636,26 +640,6 @@ public class SetupManager {
 					}
 				}
 
-				/*
-				 * # Pick shell tput setaf using command "tput setaf color" # e.g. green
-				 * foreground: "tput setaf 2" # # green : "tput setaf 2" # yellow:
-				 * "tput setaf 3" # red : "tput setaf 1"
-				 * 
-				 * @REM Pick shell color using command "color <background><foreground>"
-				 * 
-				 * @REM e.g. black background with green foreground: "color 0A"
-				 * 
-				 * @REM call help for details "color ?"
-				 * 
-				 * @REM
-				 * 
-				 * @REM green : "color 0A"
-				 * 
-				 * @REM yellow: "color 0E"
-				 * 
-				 * @REM red : "color 0C"
-				 * 
-				 */
 			} else {
 				// no color wanted
 				colorCommand = "";
@@ -684,7 +668,7 @@ public class SetupManager {
 		projectRootDir = promptForInput(kbd, "\nProject root directory, typically the target of a GIT or SVN export",
 				projectRootDir.trim());
 		swDirectory = promptForInput(kbd,
-				"SW install directory (contains bin and lib directories, use '.' for local directory)",
+				"SW install directory (contains bin and lib directories)",
 				getOsDependentProjectRootVariable() + File.separatorChar + "opal-tools");
 		templateDirectory = promptForInput(kbd, "Patch template directory",
 				getOsDependentProjectRootVariable() + File.separatorChar + "patch-template");
