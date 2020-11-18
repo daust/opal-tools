@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,6 +26,7 @@ import de.opal.installer.config.ConfigConnectionPool;
 import de.opal.installer.config.ConfigManagerConnectionPool;
 import de.opal.installer.util.Msg;
 import de.opal.utils.FileIO;
+import de.opal.utils.StringUtils;
 import de.opal.utils.VersionInfo;
 
 public class ExporterMain {
@@ -35,6 +35,7 @@ public class ExporterMain {
 	 * Other variables
 	 */
 	public static final Logger log = LogManager.getLogger(ExporterMain.class.getName());
+	private String schemaName;
 	private String user;
 	private String pwd;
 	private String connectStr;
@@ -215,7 +216,7 @@ public class ExporterMain {
 	}
 
 	private void showUsage(PrintStream out, CmdLineParser parser) {
-		out.println("\njava de.opal.exporter.DBExporter [options...]");
+		out.println("\njava de.opal.exporter.ExporterMain [options...]");
 
 		// print the list of available options
 		parser.printUsage(out);
@@ -223,7 +224,7 @@ public class ExporterMain {
 		out.println();
 
 		// print option sample. This is useful some time
-		out.println("  Example: java de.opal.exporter.DBExporter" + parser.printExample(OptionHandlerFilter.PUBLIC));
+		out.println("  Example: java de.opal.exporter.ExporterMain" + parser.printExample(OptionHandlerFilter.PUBLIC));
 	}
 
 	private String[] readArgsFromConfigFile(String configFilename) {
@@ -323,6 +324,9 @@ public class ExporterMain {
 
 			// parse the arguments.
 			parser.parseArgument(args);
+			
+			if (!this.skipExport && this.outputDir == null)
+		        throw new CmdLineException("Option \"--output-dir\" is required"); 
 
 			// help can be displayed without -url being given
 			// else -url is required
@@ -370,48 +374,33 @@ public class ExporterMain {
 
 			// jdbcURL
 			if (this.jdbcURL != null) {
-				// extract parts of jdbcURL into separate variables
-				Pattern p = Pattern.compile("^(.+)/(.+)@(.*)$");
-				Matcher m = p.matcher(this.jdbcURL);
-
-				// if an occurrence if a pattern was found in a given string...
-				if (m.find()) {
-					// ...then you can use group() methods.
-					// System.out.println(m.group(0)); // whole matched expression
-					this.user = m.group(1);
-					this.pwd = m.group(2);
-					this.connectStr = m.group(3);
-				}
-			} else {
-				// conn pool
-				// both have the same structure
-				if (!new File(this.connectionPoolFile).exists()) {
-					throw new CmdLineException(parser,
-							"connection pool file " + this.connectionPoolFile + " not found");
-				}
-
-				ConfigManagerConnectionPool configManagerConnectionPools = new ConfigManagerConnectionPool(
-						this.connectionPoolFile);
-
-				// encrypt passwords if required
-				if (configManagerConnectionPools.hasUnencryptedPasswords()) {
-					configManagerConnectionPools.encryptPasswords(
-							configManagerConnectionPools.getEncryptionKeyFilename(this.connectionPoolFile));
-					// dump JSON file
-					configManagerConnectionPools.writeJSONConf();
-				}
-				// now decrypt the passwords so that they can be used internally in the program
-				configManagerConnectionPools.decryptPasswords(
-						configManagerConnectionPools.getEncryptionKeyFilename(this.connectionPoolFile));
-
-				for (ConfigConnectionPool pool : configManagerConnectionPools
-						.getConfigDataConnectionPool().connectionPools) {
-					if (pool.name.toUpperCase().contentEquals(this.connectionPoolName.toUpperCase())) {
-						this.user = pool.user;
-						this.pwd = pool.password;
-						this.connectStr = pool.connectString;
-					}
-				}
+		          Pattern p = Pattern.compile("^(.+)/(.+)@(.*)$");
+		          Matcher m = p.matcher(this.jdbcURL);
+		          if (m.find()) {
+		            this.user = m.group(1);
+		            this.schemaName = StringUtils.extractSchemaFromUserName(this.user);
+		            this.pwd = m.group(2);
+		            this.connectStr = m.group(3);
+		          } 
+		        } else {
+		          if (!(new File(this.connectionPoolFile)).exists())
+		            throw new CmdLineException(parser, "connection pool file " + this.connectionPoolFile + " not found"); 
+		          ConfigManagerConnectionPool configManagerConnectionPools = new ConfigManagerConnectionPool(this.connectionPoolFile);
+		          if (configManagerConnectionPools.hasUnencryptedPasswords()) {
+		            configManagerConnectionPools.encryptPasswords(configManagerConnectionPools
+		                .getEncryptionKeyFilename(this.connectionPoolFile));
+		            configManagerConnectionPools.writeJSONConf();
+		          } 
+		          configManagerConnectionPools.decryptPasswords(configManagerConnectionPools
+		              .getEncryptionKeyFilename(this.connectionPoolFile));
+		          for (ConfigConnectionPool pool : (configManagerConnectionPools.getConfigDataConnectionPool()).connectionPools) {
+		            if (pool.name.toUpperCase().contentEquals(this.connectionPoolName.toUpperCase())) {
+		              this.user = pool.user;
+		              this.schemaName = StringUtils.extractSchemaFromUserName(this.user);
+		              this.pwd = pool.password;
+		              this.connectStr = pool.connectString;
+		            } 
+		          } 
 				if (this.user == null)
 					throw new CmdLineException(parser, "connection pool " + this.connectionPoolName
 							+ " could not be found in file " + this.connectionPoolFile);
@@ -442,7 +431,7 @@ public class ExporterMain {
 
 		// use user as first entry in empty schemas list
 		if (schemas.isEmpty()) {
-			schemas.add(user);
+			schemas.add(this.schemaName);
 		}
 		// make schemas uppercase
 		for (int i = 0; i < schemas.size(); i++) {
@@ -469,19 +458,6 @@ public class ExporterMain {
 			dependentObjects.set(i, dependentObjects.get(i).trim().toUpperCase());
 		}
 
-		/*
-		 * // make extension mappings uppercase for (String ext :
-		 * this.extensionMappings) { String objectType = ext.split(":")[0].trim();
-		 * String suffix = ext.split(":")[1].trim();
-		 * 
-		 * this.extensionMappingsMap.put(objectType.toUpperCase(), suffix); } // make
-		 * directory mappings uppercase for (String ext : this.directoryMappings) {
-		 * String objectType = ext.split(":")[0].trim(); String directory =
-		 * ext.split(":")[1].trim();
-		 * 
-		 * this.directoryMappingsMap.put(objectType.toUpperCase(), directory); }
-		 */
-
 		// transform dependent object list into map
 		for (String dep : this.dependentObjects) {
 			String objType = dep.split(":")[0].trim();
@@ -505,12 +481,11 @@ public class ExporterMain {
 			this.filenameTemplatesMap.put(objectType.toUpperCase(), filenameTemplate);
 		}
 
-		if (this.workingDirectorySQLcl == null) {
-			// set default to environment variable OPAL_TOOLS_SRC_SQL_DIR
-			log.debug("set default for workingDirectorySQLcl: " + this.workingDirectorySQLcl);
-			this.workingDirectorySQLcl = System.getenv("OPAL_TOOLS_SRC_SQL_DIR").trim();
-		} else
-			this.workingDirectorySQLcl = this.workingDirectorySQLcl.trim();
+	    if (this.workingDirectorySQLcl == null) {
+	        this.workingDirectorySQLcl = System.getProperty("user.dir");
+	      } else {
+	        this.workingDirectorySQLcl = this.workingDirectorySQLcl.trim();
+	      } 
 	}
 
 	private void showHeaderInfo() {
