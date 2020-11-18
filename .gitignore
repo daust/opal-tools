@@ -1,6 +1,9 @@
 # ignore all Mac OS specific hidden files
 **/.DS_Store
 
+# ignore changes on _no-github
+_no-github
+
 # ignore all build files from eclipse
 bin/**
 
