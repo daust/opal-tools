@@ -334,14 +334,16 @@ public class Exporter {
 					Utils.waitForEnter("\n*** Please press <enter> to start the process ");
 
 				startTime = System.currentTimeMillis();
+				Msg.println("*** run pre scripts\n");
+				SQLclUtil.executeScripts(this.sqlcl, preScripts, this.workingDirectorySQLcl, true);
 			}
 
 			Msg.println("*** run post scripts\n");
-			SQLclUtil.executeScripts(sqlcl, preScripts, workingDirectorySQLcl, true);
+			SQLclUtil.executeScripts(sqlcl, postScripts, workingDirectorySQLcl, true);
 
 			displayStatsFooter(errorList, totalObjectCnt, startTime);
 		} catch (Exception e) {
-			//log.error(e.getMessage());
+			// log.error(e.getMessage());
 			// close connection
 			SQLclUtil.closeConnection(sqlcl.getConn());
 

@@ -70,7 +70,7 @@ public class ExporterMain {
 			"--url" })
 	private String connectionPoolName;
 
-	@Option(name = "--output-dir", usage = "output directory, e.g. '.' or '/u01/project/src/sql'", metaVar = "<directory>", required = true)
+	@Option(name = "--output-dir", usage = "output directory, e.g. '.' or '/u01/project/src/sql'", metaVar = "<directory>", forbids= {"--skip-export"})
 	private String outputDir;
 
 	// passing in multiple parameters: -p p1 p2 p3
@@ -96,25 +96,14 @@ public class ExporterMain {
 	@Option(name = "--dependent-objects", handler = WellBehavedStringArrayOptionHandler.class, usage = "dependent objects, e.g. TABLE:COMMENT,INDEX", metaVar = "<type>:<deptype1>,<deptype2> ... [n]")
 	private List<String> dependentObjects = new ArrayList<String>();
 
-//	@Option(name = "--extension-mappings", handler = WellBehavedStringArrayOptionHandler.class, usage = "mapping of object types to filename suffixes, e.g.: DEFAULT:sql PACKAGE:pks", metaVar = "<map1> [<map2>] ... [n]")
-//	private List<String> extensionMappings = new ArrayList<String>();
-
-//	@Option(name = "--directory-mappings", handler = WellBehavedStringArrayOptionHandler.class, usage = "mapping of object types to directories, e.g.: PACKAGE:package \"package body:package\"", metaVar = "<map1> [<map2>] ... [n]")
-//	private List<String> directoryMappings = new ArrayList<String>();
-
 	// receives other command line parameters than options
 	@Argument
 	private List<String> arguments = new ArrayList<String>();
 
-	// @Option(name = "-a", aliases = "--all_objects", usage = "by default, the
-	// objects are selected from user_objects. With this switch it will be selected
-	// from all_objects")
-	// private boolean selectFromAllObjects = false;
-
 	@Option(name = "--skip-errors", usage = "ORA- errors will not cause the program to abort")
 	private boolean skipErrors = false;
 
-	@Option(name = "--skip-export", usage = "skip the export, this way only the pre- and post-scripts are run")
+	@Option(name = "--skip-export", usage = "skip the export, this way only the pre- and post-scripts are run", forbids= {"--output-dir"})
 	private boolean skipExport = false;
 
 	@Option(name = "--pre-scripts", usage = "script (sqlplus/sqlcl) that is running to initialize the session, similar to the login.sql file for sqlplus, e.g. ./login.sql or ./init.sql", metaVar = "<script> [<script2>] ...")
@@ -126,36 +115,18 @@ public class ExporterMain {
 	@Option(name = "--silent", usage = "turns off prompts")
 	private boolean isSilent = false;
 
-	/*
-	 * @Option(name = "--filename-template", usage =
-	 * "template for constructing the filename\n" +
-	 * "e.g.: #schema#/#object_type#/#object_name#.#ext#\n\n" +
-	 * "#schema#             - schema name in lower case\n" +
-	 * "#object_type#        - lower case type name: 'table'\n" +
-	 * "#object_type_plural# - lower case type name in plural: 'tables'\n" +
-	 * "#object_name#        - lower case object name\n" +
-	 * "#ext#                - lower case extension: 'sql' or 'pks'\n" +
-	 * "#SCHEMA#             - upper case schema name\n" +
-	 * "#OBJECT_TYPE#        - upper case object type name: 'TABLE' or 'INDEX'\n" +
-	 * "#OBJECT_TYPE_PLURAL# - upper case object type name in plural: 'TABLES'\n" +
-	 * "#OBJECT_NAME#        - upper case object name\n" +
-	 * "#EXT#                - upper case extension: 'SQL' or 'PKS'", metaVar =
-	 * "<template structure>", required = false) private String filenameTemplate =
-	 * "#schema#/#object_type_plural#/#object_name#.#ext#";
-	 */
-
 	@Option(name = "--filename-templates", handler = WellBehavedStringArrayOptionHandler.class, usage = "templates for constructing the filename per object type\n"
-			+ "e.g.: #schema#/#object_type#/#object_name#.#ext#\n\n"
+			+ "e.g.: default:#schema#/#object_type#/#object_name#.sql\n"
+			+ "e.g.: package:#schema#/#object_type#/#object_name#.pks\n"
+			+ "e.g.: \"package body:#schema#/packages/#object_name#.pkb\"\n\n"
 			+ "#schema#             - schema name in lower case\n"
 			+ "#object_type#        - lower case type name: 'table'\n"
 			+ "#object_type_plural# - lower case type name in plural: 'tables'\n"
 			+ "#object_name#        - lower case object name\n"
-			+ "#ext#                - lower case extension: 'sql' or 'pks'\n"
 			+ "#SCHEMA#             - upper case schema name\n"
 			+ "#OBJECT_TYPE#        - upper case object type name: 'TABLE' or 'INDEX'\n"
 			+ "#OBJECT_TYPE_PLURAL# - upper case object type name in plural: 'TABLES'\n"
-			+ "#OBJECT_NAME#        - upper case object name\n"
-			+ "#EXT#                - upper case extension: 'SQL' or 'PKS'", metaVar = "<template structure>", required = false)
+			+ "#OBJECT_NAME#        - upper case object name\n", metaVar = "<definition 1> [<definition 2>] [...]", required = false)
 	private List<String> filenameTemplates = new ArrayList<String>();
 	// default will be: "default:#schema#/#object_type_plural#/#object_name#.#ext#";
 

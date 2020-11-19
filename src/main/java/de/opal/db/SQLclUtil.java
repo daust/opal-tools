@@ -174,7 +174,7 @@ public class SQLclUtil {
 				if (workingDirectorySQLcl != null)
 					SQLclUtil.setWorkingDirectory(workingDirectorySQLcl, sqlcl);
 
-				SQLclUtil.executeFile(script, sqlcl, null, false);
+				SQLclUtil.executeFile(script, sqlcl, null, displayFeedback);
 			}
 		}
 
