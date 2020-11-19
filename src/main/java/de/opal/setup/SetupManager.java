@@ -200,7 +200,7 @@ public class SetupManager {
 				localDir + File.separatorChar + "configure-templates" + File.separatorChar + "conf-user");
 		String tmpTargetDir = getFullPathResolveVariables(localConfigDirectory);
 
-		Msg.println("\nprocess local conf directory in: " + tmpTargetDir + "\n");
+		Msg.println("\nprocess local conf directory in: " + tmpTargetDir);
 
 		// loop over all environments, create a new file for each one
 		// create CONNECTION POOL files
@@ -208,7 +208,7 @@ public class SetupManager {
 
 			// create connection pool file
 			String confFilename = tmpTargetDir + File.separator + "connections-" + env + ".json";
-			Msg.println("  Process environment: " + env + " => " + confFilename);
+			Msg.println("\n  Process environment: " + env + " => " + confFilename);
 
 			// first we create an empty file
 			FileUtils.writeStringToFile(new File(confFilename), "{}", Charset.defaultCharset());
@@ -219,11 +219,13 @@ public class SetupManager {
 			
 			ConfigDataConnectionPool configData = new ConfigDataConnectionPool();
 			configData.targetSystem = env;
-
+			
 			// loop over all schemas for the current environment
 			for (String schema : schemaListArr) {
 				String password = "";
 				String user="";
+				
+				Msg.println("");
 
 				Console con = System.console();
 				// hide password on real console
@@ -233,9 +235,9 @@ public class SetupManager {
 				if (con == null || showPasswords) {
 					// input password in Eclipse
 					password = promptForInput(kbd,
-							"    Password for schema " + schema + " in environment " + env + ": ", "");
+							"    Password : ", "");
 				} else {
-					System.out.println("    Password for schema " + schema + " in environment " + env + ": ");
+					System.out.println("    Password : ");
 					char[] ch = con.readPassword();
 					password = String.valueOf(ch);
 				}
@@ -462,7 +464,7 @@ public class SetupManager {
 
 	private void processDBSourceDirectory(Scanner kbd) throws IOException {
 		tmpSourceDir = getFullPathResolveVariables(
-				localDir + File.separatorChar + "configure-templates" + File.separatorChar + "patch-template-sql");
+				localDir + File.separatorChar + "configure-templates" + File.separatorChar + "src-sql");
 
 		Msg.println("db source directory from: " + tmpSourceDir + "\n                    to  : " + dbSourceDirectory
 				+ "\n");
