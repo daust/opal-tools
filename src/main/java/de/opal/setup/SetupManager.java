@@ -443,9 +443,9 @@ public class SetupManager {
 		for (String schema : schemaListArr) {
 			ConfigConnectionMapping map = null;
 			if (osIsWindows()) {
-				map = new ConfigConnectionMapping(schema, "\\\\sql\\\\.*" + schema + ".*");
+				map = new ConfigConnectionMapping(schema, "\\\\sql\\\\.*" + schema + ".*", null);
 			} else {
-				map = new ConfigConnectionMapping(schema, "/sql/.*" + schema + ".*");
+				map = new ConfigConnectionMapping(schema, "/sql/.*" + schema + ".*", null);
 			}
 
 			// add connection to configFile
@@ -454,14 +454,14 @@ public class SetupManager {
 		// add encoding mapping
 		ConfigEncodingMapping map = null;
 		if (osIsWindows()) {
-			map = new ConfigEncodingMapping(utf8_default, "\\\\sql\\\\.*apex.*\\\\.*f*sql");
+			map = new ConfigEncodingMapping(utf8_default, "\\\\sql\\\\.*apex.*\\\\.*f*sql", "encoding for APEX files is always UTF8");
 			confMgrInst.getConfigData().encodingMappings.add(map);
-			map = new ConfigEncodingMapping(utf8_default, "\\\\sql\\\\.*");
+			map = new ConfigEncodingMapping(this.fileEncoding, "\\\\sql\\\\.*", "all other files will get this explicit mapping");
 			confMgrInst.getConfigData().encodingMappings.add(map);
 		} else {
-			map = new ConfigEncodingMapping(utf8_default, "/sql/.*apex.*/.*f*sql");
+			map = new ConfigEncodingMapping(utf8_default, "/sql/.*apex.*/.*f*sql", "encoding for APEX files is always UTF8");
 			confMgrInst.getConfigData().encodingMappings.add(map);
-			map = new ConfigEncodingMapping(utf8_default, "/sql/.*");
+			map = new ConfigEncodingMapping(this.fileEncoding, "/sql/.*", "all other files will get this explicit mapping");
 			confMgrInst.getConfigData().encodingMappings.add(map);
 		}
 		// write opal-installer.json file
