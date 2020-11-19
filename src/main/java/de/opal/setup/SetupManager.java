@@ -12,8 +12,10 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
@@ -51,16 +53,18 @@ public class SetupManager {
 
 	private String environmentColorListString = "";
 	private String environmentColorListArr[] = null;
-	
-	private String environmentExportConnection=null;
-	
+
+	private String environmentExportConnection = null;
+	private List<String> connFilenameList = new ArrayList<String>();
+
 	// File encoding in Java, UTF8, Cp1252, etc.
-	// See column "Canonical Name for java.io and java.lang API" here: 
+	// See column "Canonical Name for java.io and java.lang API" here:
 	// https://docs.oracle.com/javase/8/docs/technotes/guides/intl/encoding.doc.html
-	// both UTF8 and UTF-8 work, but UTF-8 seems to be the default - confusing, doesn't match the documentation
+	// both UTF8 and UTF-8 work, but UTF-8 seems to be the default - confusing,
+	// doesn't match the documentation
 	// it is different on Windows and Mac ... the value is not in the same column!
-	private String fileEncoding=null;
-	private String utf8_default=StandardCharsets.UTF_8.toString();
+	private String fileEncoding = null;
+	private String utf8_default = StandardCharsets.UTF_8.toString();
 
 	String localDir = System.getProperty("user.dir");
 
@@ -208,34 +212,35 @@ public class SetupManager {
 
 			// create connection pool file
 			String confFilename = tmpTargetDir + File.separator + "connections-" + env + ".json";
+			connFilenameList.add("connections-" + env + ".json");
 			Msg.println("\n  Process environment: " + env + " => " + confFilename);
 
 			// first we create an empty file
 			FileUtils.writeStringToFile(new File(confFilename), "{}", Charset.defaultCharset());
-			
+
 			// prompt for url for all connections in this file
-			String envJDBCUrl = promptForInput(kbd    , "    JDBC url for environment " + env + " (hostname:port:sid or hostname:port/servicename): ",
+			String envJDBCUrl = promptForInput(kbd,
+					"    JDBC url for environment " + env + " (hostname:port:sid or hostname:port/servicename): ",
 					"127.0.0.1:1521:xe");
-			
+
 			ConfigDataConnectionPool configData = new ConfigDataConnectionPool();
 			configData.targetSystem = env;
-			
+
 			// loop over all schemas for the current environment
 			for (String schema : schemaListArr) {
 				String password = "";
-				String user="";
-				
+				String user = "";
+
 				Msg.println("");
 
 				Console con = System.console();
 				// hide password on real console
 				// input password in Eclipse
-				user = promptForInput(kbd,
-						"    User to connect to schema " + schema + " in environment " + env + ": ", schema);
+				user = promptForInput(kbd, "    User to connect to schema " + schema + " in environment " + env + ": ",
+						schema);
 				if (con == null || showPasswords) {
 					// input password in Eclipse
-					password = promptForInput(kbd,
-							"    Password : ", "");
+					password = promptForInput(kbd, "    Password : ", "");
 				} else {
 					System.out.println("    Password : ");
 					char[] ch = con.readPassword();
@@ -427,8 +432,9 @@ public class SetupManager {
 
 		// add connection pool mappings to file system paths
 		// read opal-installer.json file
-		String fileContents=FileUtils.readFileToString(new File(tmpSourceDir+File.separator+"opal-installer.json"), Charset.defaultCharset());
-		
+		String fileContents = FileUtils.readFileToString(
+				new File(tmpSourceDir + File.separator + "opal-installer.json"), Charset.defaultCharset());
+
 		FileUtils.writeStringToFile(new File(tmpTargetDir + File.separator + "opal-installer.json"), fileContents,
 				Charset.defaultCharset());
 		ConfigManager confMgrInst = new ConfigManager(tmpTargetDir + File.separator + "opal-installer.json");
@@ -538,9 +544,11 @@ public class SetupManager {
 		} else {
 			Msg.println("\nset privileges for *.sh files\n");
 			ProcessBuilder builder = new ProcessBuilder();
-			builder.command("bash", "-c", "find \"" + getFullPathResolveVariables(localConfigDirectory) + "\" \""
-					+ getFullPathResolveVariables(swDirectory) + "\" \"" + getFullPathResolveVariables(templateDirectory)
-					+ "\" -type f -iname \"*.sh\" -exec chmod +x {} \\;");
+			builder.command("bash", "-c",
+					"find \"" + getFullPathResolveVariables(localConfigDirectory) + "\" \""
+							+ getFullPathResolveVariables(swDirectory) + "\" \""
+							+ getFullPathResolveVariables(templateDirectory)
+							+ "\" -type f -iname \"*.sh\" -exec chmod +x {} \\;");
 			try {
 				Process process = builder.start();
 
@@ -601,7 +609,6 @@ public class SetupManager {
 			newContents = newContents.replace("#SCHEMA#", schema);
 		if (env != null)
 			newContents = newContents.replace("#ENV#", env);
-		
 
 		// only relevant if environment was passed
 		if (env != null) {
@@ -650,10 +657,19 @@ public class SetupManager {
 			newContents = newContents.replace("#OPAL_TOOLS_SET_COLOR_COMMAND#", colorCommand);
 
 		}
-		
+
 		newContents = newContents.replace("#FILE.ENCODING#", this.fileEncoding);
 		newContents = newContents.replace("#OPAL_TOOLS_USER_IDENTITY#", System.getProperty("user.name"));
-		
+
+		String connFileListString = "";
+		for (String filename : connFilenameList) {
+			if (osIsWindows())
+				connFileListString += "\""	+ "%OPAL_TOOLS_USER_CONFIG_DIR%" + File.separator + filename + "\" ";
+			else
+				connFileListString += "\""	+ "${OPAL_TOOLS_USER_CONFIG_DIR}" + File.separator + filename + "\" ";
+		}
+		newContents = newContents.replace("#OPAL_CONNECTION_FILE_LIST#", connFileListString);
+
 		return newContents;
 	}
 
@@ -669,8 +685,7 @@ public class SetupManager {
 
 		projectRootDir = promptForInput(kbd, "\nProject root directory, typically the target of a GIT or SVN export",
 				projectRootDir.trim());
-		swDirectory = promptForInput(kbd,
-				"SW install directory (contains bin and lib directories)",
+		swDirectory = promptForInput(kbd, "SW install directory (contains bin and lib directories)",
 				getOsDependentProjectRootVariable() + File.separatorChar + "opal-tools");
 		templateDirectory = promptForInput(kbd, "Patch template directory",
 				getOsDependentProjectRootVariable() + File.separatorChar + "patch-template");
@@ -691,8 +706,11 @@ public class SetupManager {
 		environmentColorListString = promptForInput(kbd,
 				"List of shell colors for the environments (comma-separated, e.g. green,yellow,red)",
 				"green,yellow,red");
-		environmentExportConnection = promptForInput(kbd, "which is your developement environment? This is used for the export: ", environmentListString.split(",")[0].trim());
-		fileEncoding = promptForInput(kbd, "file encoding (e.g. UTF-8 or Cp1252, default is current system encoding): ", System.getProperty("file.encoding"));
+		environmentExportConnection = promptForInput(kbd,
+				"which is your developement environment? This is used for the export: ",
+				environmentListString.split(",")[0].trim());
+		fileEncoding = promptForInput(kbd, "file encoding (e.g. UTF-8 or Cp1252, default is current system encoding): ",
+				System.getProperty("file.encoding"));
 
 		log.debug("***");
 		log.debug("Project root directory, typically the target of a GIT or SVN export: " + projectRootDir);
@@ -713,16 +731,21 @@ public class SetupManager {
 
 		environmentListArr = environmentListString.split(",");
 		for (int i = 0; i < environmentListArr.length; i++) {
-			environmentListArr[i]=environmentListArr[i].trim();
+			environmentListArr[i] = environmentListArr[i].trim();
 		}
 		schemaListArr = schemaListString.split(",");
 		for (int i = 0; i < schemaListArr.length; i++) {
-			schemaListArr[i]=schemaListArr[i].trim();
+			schemaListArr[i] = schemaListArr[i].trim();
 		}
 		environmentColorListArr = environmentColorListString.split(",");
 		for (int i = 0; i < environmentColorListArr.length; i++) {
-			environmentColorListArr[i]=environmentColorListArr[i].trim();
+			environmentColorListArr[i] = environmentColorListArr[i].trim();
 		}
+
+		// ----------------------------------------------------------
+		// conf-user directory
+		// ----------------------------------------------------------
+		processUserConfDir(kbd);
 
 		// ----------------------------------------------------------
 		// software installation
@@ -738,11 +761,6 @@ public class SetupManager {
 		// patch template directory
 		// ----------------------------------------------------------
 		processPatchTemplateDirectory(kbd);
-
-		// ----------------------------------------------------------
-		// conf-user directory
-		// ----------------------------------------------------------
-		processUserConfDir(kbd);
 
 		// ----------------------------------------------------------
 		// db source directory
@@ -761,7 +779,7 @@ public class SetupManager {
 
 		// close keyboard input scanner
 		kbd.close();
-		
+
 		// ----------------------------------------------------------
 		// open folder $PROJECT_ROOT
 		// ----------------------------------------------------------
