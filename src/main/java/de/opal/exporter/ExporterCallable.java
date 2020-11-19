@@ -11,7 +11,9 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
 import org.apache.commons.lang3.StringUtils;
@@ -142,8 +144,18 @@ public class ExporterCallable implements Callable<Integer> {
 			}
 
 			// export dependent objects
-			if (this.dependentObjectsMap.containsKey(objectType)) {
-				for (String depObjectType : this.dependentObjectsMap.get(objectType)) {
+			if (this.dependentObjectsMap.containsKey(objectType) || this.dependentObjectsMap.containsKey("DEFAULT")) {
+
+				// merge object dependencies with DEFAULT
+
+				Set<String> set = new LinkedHashSet<>();
+				if (this.dependentObjectsMap.get(objectType) != null)
+					set.addAll(this.dependentObjectsMap.get(objectType));
+				if (this.dependentObjectsMap.get("DEFAULT") != null)
+					set.addAll(this.dependentObjectsMap.get("DEFAULT"));
+				List<String> mergedList = new ArrayList<>(set);
+
+				for (String depObjectType : mergedList) {
 					actualObjectType = ObjectTypeMappingMetadata.map2TypeForDBMS(depObjectType);
 					log.debug("object type mapping: " + depObjectType + " => " + actualObjectType);
 

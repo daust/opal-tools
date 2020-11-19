@@ -378,7 +378,7 @@ public class ExporterMain {
 
 				log.debug("get connection " + this.connectionPoolName + " from " + this.connectionPoolFile);
 				log.debug("user: " + this.user);
-				log.debug("pwd: " + this.pwd);
+				//log.debug("pwd: " + this.pwd);
 				log.debug("connectStr: " + this.connectStr);
 
 			}
