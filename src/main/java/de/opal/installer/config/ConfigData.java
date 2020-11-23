@@ -33,6 +33,8 @@ public class ConfigData {
 	public ArrayList<RegistryTarget> registryTargets;
 	@Expose(serialize = true, deserialize = true)
 	public ArrayList<ConfigEncodingMapping> encodingMappings;
+	@Expose(serialize = true, deserialize = true)
+	public ArrayList<PatchDependency> patchDependencies;
 
 	// settings only read but not written back
 	// upon writing back ... we could introduce absolute paths
@@ -54,6 +56,8 @@ public class ConfigData {
 				+ (encodingMappings == null ? "" : encodingMappings.toString()) 
 				+ (sqlFileRegEx == null ? "" : sqlFileRegEx.toString()) + "; connectionPools: "
 				+ "; waitAfterEachStatement: "
-				+ (waitAfterEachStatement == null ? "" : waitAfterEachStatement.toString());
+				+ (waitAfterEachStatement == null ? "" : waitAfterEachStatement.toString())
+				+ "; patchDependencies: "
+				+ (patchDependencies == null ? "" : patchDependencies.toString());
 	}
 }
