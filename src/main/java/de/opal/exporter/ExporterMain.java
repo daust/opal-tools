@@ -70,7 +70,8 @@ public class ExporterMain {
 			"--url" })
 	private String connectionPoolName;
 
-	@Option(name = "--output-dir", usage = "output directory, e.g. '.' or '/u01/project/src/sql'", metaVar = "<directory>", forbids= {"--skip-export"})
+	@Option(name = "--output-dir", usage = "output directory, e.g. '.' or '/u01/project/src/sql'", metaVar = "<directory>", forbids = {
+			"--skip-export" })
 	private String outputDir;
 
 	// passing in multiple parameters: -p p1 p2 p3
@@ -93,6 +94,9 @@ public class ExporterMain {
 	@Option(name = "--include-schemas", handler = WellBehavedStringArrayOptionHandler.class, usage = "schemas to be included, only relevant when connecting as DBA", metaVar = "<schema1> [<schema2>] ... [n]")
 	private List<String> schemas = new ArrayList<String>();
 
+	@Option(name = "--escape-char", usage = "add escape() clause to like queries for selecting objects, e.g. \\ or ~", metaVar = "<escape character>")
+	private String escapeCharacter;
+
 	@Option(name = "--dependent-objects", handler = WellBehavedStringArrayOptionHandler.class, usage = "dependent objects, e.g. TABLE:COMMENT,INDEX", metaVar = "<type>:<deptype1>,<deptype2> ... [n]")
 	private List<String> dependentObjects = new ArrayList<String>();
 
@@ -103,7 +107,8 @@ public class ExporterMain {
 	@Option(name = "--skip-errors", usage = "ORA- errors will not cause the program to abort")
 	private boolean skipErrors = false;
 
-	@Option(name = "--skip-export", usage = "skip the export, this way only the pre- and post-scripts are run", forbids= {"--output-dir"})
+	@Option(name = "--skip-export", usage = "skip the export, this way only the pre- and post-scripts are run", forbids = {
+			"--output-dir" })
 	private boolean skipExport = false;
 
 	@Option(name = "--pre-scripts", usage = "script (sqlplus/sqlcl) that is running to initialize the session, similar to the login.sql file for sqlplus, e.g. ./login.sql or ./init.sql", metaVar = "<script> [<script2>] ...")
@@ -122,8 +127,7 @@ public class ExporterMain {
 			+ "#schema#             - schema name in lower case\n"
 			+ "#object_type#        - lower case type name: 'table'\n"
 			+ "#object_type_plural# - lower case type name in plural: 'tables'\n"
-			+ "#object_name#        - lower case object name\n"
-			+ "#SCHEMA#             - upper case schema name\n"
+			+ "#object_name#        - lower case object name\n" + "#SCHEMA#             - upper case schema name\n"
 			+ "#OBJECT_TYPE#        - upper case object type name: 'TABLE' or 'INDEX'\n"
 			+ "#OBJECT_TYPE_PLURAL# - upper case object type name in plural: 'TABLES'\n"
 			+ "#OBJECT_NAME#        - upper case object name\n", metaVar = "<definition 1> [<definition 2>] [...]", required = false)
@@ -143,7 +147,7 @@ public class ExporterMain {
 	private String configFileName;
 
 	@Option(name = "--parallel-degree", usage = "the database statements are executed in parallel, e.g. 10", metaVar = "<level>")
-	private int parallelThreads=1;
+	private int parallelThreads = 1;
 
 	/**
 	 * Main entry point to the DB Exporter
@@ -162,16 +166,19 @@ public class ExporterMain {
 
 		// now initialize the real class
 		ExporterMain dbExporter = new ExporterMain();
+		String[] mergedArgs = dbExporter.mergeArgs(StringUtils.removeQuotes(configFileArgs), StringUtils.removeQuotes(args));
 
 		// merge the argument lists so that the command line args can OVERRIDE the
 		// ones from the config file
-		dbExporter.parseParameters(dbExporter.mergeArgs(configFileArgs, args));
+		dbExporter.parseParameters(mergedArgs);
 		dbExporter.transformParams();
 		dbExporter.dumpParameters();
 		dbExporter.showHeaderInfo();
 
-		Exporter exporter = new Exporter(dbExporter.user, dbExporter.pwd, dbExporter.connectStr, dbExporter.outputDir,
-				dbExporter.skipErrors, dbExporter.dependentObjectsMap, dbExporter.isSilent,
+		CommandLineParameters params = new CommandLineParameters(dbExporter.escapeCharacter);
+
+		Exporter exporter = new Exporter(params, dbExporter.user, dbExporter.pwd, dbExporter.connectStr,
+				dbExporter.outputDir, dbExporter.skipErrors, dbExporter.dependentObjectsMap, dbExporter.isSilent,
 				/*
 				 * dbExporter.extensionMappingsMap, dbExporter.directoryMappingsMap,
 				 * dbExporter.filenameTemplate,
@@ -295,9 +302,9 @@ public class ExporterMain {
 
 			// parse the arguments.
 			parser.parseArgument(args);
-			
+
 			if (!this.skipExport && this.outputDir == null)
-		        throw new CmdLineException("Option \"--output-dir\" is required"); 
+				throw new CmdLineException("Option \"--output-dir\" is required");
 
 			// help can be displayed without -url being given
 			// else -url is required
@@ -345,40 +352,43 @@ public class ExporterMain {
 
 			// jdbcURL
 			if (this.jdbcURL != null) {
-		          Pattern p = Pattern.compile("^(.+)/(.+)@(.*)$");
-		          Matcher m = p.matcher(this.jdbcURL);
-		          if (m.find()) {
-		            this.user = m.group(1);
-		            this.schemaName = StringUtils.extractSchemaFromUserName(this.user);
-		            this.pwd = m.group(2);
-		            this.connectStr = m.group(3);
-		          } 
-		        } else {
-		          if (!(new File(this.connectionPoolFile)).exists())
-		            throw new CmdLineException(parser, "connection pool file " + this.connectionPoolFile + " not found"); 
-		          ConfigManagerConnectionPool configManagerConnectionPools = new ConfigManagerConnectionPool(this.connectionPoolFile);
-		          if (configManagerConnectionPools.hasUnencryptedPasswords()) {
-		            configManagerConnectionPools.encryptPasswords(configManagerConnectionPools
-		                .getEncryptionKeyFilename(this.connectionPoolFile));
-		            configManagerConnectionPools.writeJSONConf();
-		          } 
-		          configManagerConnectionPools.decryptPasswords(configManagerConnectionPools
-		              .getEncryptionKeyFilename(this.connectionPoolFile));
-		          for (ConfigConnectionPool pool : (configManagerConnectionPools.getConfigDataConnectionPool()).connectionPools) {
-		            if (pool.name.toUpperCase().contentEquals(this.connectionPoolName.toUpperCase())) {
-		              this.user = pool.user;
-		              this.schemaName = StringUtils.extractSchemaFromUserName(this.user);
-		              this.pwd = pool.password;
-		              this.connectStr = pool.connectString;
-		            } 
-		          } 
+				Pattern p = Pattern.compile("^(.+)/(.+)@(.*)$");
+				Matcher m = p.matcher(this.jdbcURL);
+				if (m.find()) {
+					this.user = m.group(1);
+					this.schemaName = StringUtils.extractSchemaFromUserName(this.user);
+					this.pwd = m.group(2);
+					this.connectStr = m.group(3);
+				}
+			} else {
+				if (!(new File(this.connectionPoolFile)).exists())
+					throw new CmdLineException(parser,
+							"connection pool file " + this.connectionPoolFile + " not found");
+				ConfigManagerConnectionPool configManagerConnectionPools = new ConfigManagerConnectionPool(
+						this.connectionPoolFile);
+				if (configManagerConnectionPools.hasUnencryptedPasswords()) {
+					configManagerConnectionPools.encryptPasswords(
+							configManagerConnectionPools.getEncryptionKeyFilename(this.connectionPoolFile));
+					configManagerConnectionPools.writeJSONConf();
+				}
+				configManagerConnectionPools.decryptPasswords(
+						configManagerConnectionPools.getEncryptionKeyFilename(this.connectionPoolFile));
+				for (ConfigConnectionPool pool : (configManagerConnectionPools
+						.getConfigDataConnectionPool()).connectionPools) {
+					if (pool.name.toUpperCase().contentEquals(this.connectionPoolName.toUpperCase())) {
+						this.user = pool.user;
+						this.schemaName = StringUtils.extractSchemaFromUserName(this.user);
+						this.pwd = pool.password;
+						this.connectStr = pool.connectString;
+					}
+				}
 				if (this.user == null)
 					throw new CmdLineException(parser, "connection pool " + this.connectionPoolName
 							+ " could not be found in file " + this.connectionPoolFile);
 
 				log.debug("get connection " + this.connectionPoolName + " from " + this.connectionPoolFile);
 				log.debug("user: " + this.user);
-				//log.debug("pwd: " + this.pwd);
+				// log.debug("pwd: " + this.pwd);
 				log.debug("connectStr: " + this.connectStr);
 
 			}
@@ -452,11 +462,11 @@ public class ExporterMain {
 			this.filenameTemplatesMap.put(objectType.toUpperCase(), filenameTemplate);
 		}
 
-	    if (this.workingDirectorySQLcl == null) {
-	        this.workingDirectorySQLcl = System.getProperty("user.dir");
-	      } else {
-	        this.workingDirectorySQLcl = this.workingDirectorySQLcl.trim();
-	      } 
+		if (this.workingDirectorySQLcl == null) {
+			this.workingDirectorySQLcl = System.getProperty("user.dir");
+		} else {
+			this.workingDirectorySQLcl = this.workingDirectorySQLcl.trim();
+		}
 	}
 
 	private void showHeaderInfo() {
@@ -484,6 +494,8 @@ public class ExporterMain {
 				sb.append("* Schemas                  : " + this.schemas + lSep);
 			if (!this.dependentObjects.isEmpty())
 				sb.append("* Dependent Objects        : " + this.dependentObjects + lSep);
+			if (this.escapeCharacter != null)
+				sb.append("* Escape Character         : " + this.escapeCharacter + lSep);
 		}
 
 		if (this.preScripts.size() > 0 || this.postScripts.size() > 0) {

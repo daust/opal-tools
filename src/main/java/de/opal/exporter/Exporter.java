@@ -30,6 +30,8 @@ public class Exporter {
 	private static final Logger log = LogManager.getLogger(Exporter.class.getName());
 	private ScriptExecutor sqlcl = null;
 
+	private CommandLineParameters params;
+
 	private String user;
 	private String pwd;
 	private String connectStr;
@@ -55,14 +57,15 @@ public class Exporter {
 	 * @param pwd
 	 * @param connectStr
 	 */
-	public Exporter(String user, String pwd, String connectStr, String outputDir, boolean skipErrors,
-			HashMap<String, ArrayList<String>> dependentObjectsMap, boolean isSilent,
+	public Exporter(CommandLineParameters params, String user, String pwd, String connectStr, String outputDir,
+			boolean skipErrors, HashMap<String, ArrayList<String>> dependentObjectsMap, boolean isSilent,
 			/*
 			 * HashMap<String, String> extensionMappingsMap, HashMap<String, String>
 			 * directoryMappingsMap, String filenameTemplate,
 			 */ boolean filenameReplaceBlanks, String workingDirectorySQLcl, boolean skipExport,
 			HashMap<String, String> filenameTemplatesMap, String exportTemplateDir, int parallelThreads) {
 		super();
+		this.params = params;
 		this.user = user;
 		this.pwd = pwd;
 		this.connectStr = connectStr;
@@ -134,6 +137,11 @@ public class Exporter {
 	private String computeWhereClause(List<String> includeFilters, List<String> excludeFilters, List<String> schemas,
 			List<String> includeTypes, List<String> excludeTypes) {
 		String whereClause = "";
+		String escapeClause = "";
+		if (this.params.escapeCharacter != null)
+			escapeClause = " escape('" + this.params.escapeCharacter + "') ";
+		
+		//escapeClause = " escape('" + this.params.escapeCharacter.replace("\\", "\\\\") + "') ";
 
 		// SCHEMAS
 		StringBuilder schemaBuilder = new StringBuilder();
@@ -150,9 +158,9 @@ public class Exporter {
 			if (includeBuilder.length() != 0)
 				includeBuilder.append(" or ");
 			if (schemas.size() == 1) {
-				includeBuilder.append("object_name like '" + flt + "'");
+				includeBuilder.append("object_name like '" + flt + "'" + escapeClause);
 			} else {
-				includeBuilder.append("owner||'.'||object_name like '" + flt + "'");
+				includeBuilder.append("owner||'.'||object_name like '" + flt + "'" + escapeClause);
 			}
 
 		}
@@ -172,9 +180,9 @@ public class Exporter {
 				excludeBuilder.append(" and ");
 			}
 			if (schemas.size() == 1) {
-				excludeBuilder.append("object_name not like '" + flt + "'");
+				excludeBuilder.append("object_name not like '" + flt + "'" + escapeClause);
 			} else {
-				excludeBuilder.append("owner||'.'||object_name not like '" + flt + "'");
+				excludeBuilder.append("owner||'.'||object_name not like '" + flt + "'" + escapeClause);
 			}
 		}
 

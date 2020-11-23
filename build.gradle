@@ -41,7 +41,6 @@ import org.gradle.internal.os.OperatingSystem
 /* define repositories to look for maven modules */
 repositories {
     maven {url "https://plugins.gradle.org/m2/"}
-    maven {url "https://jaspersoft.jfrog.io/jaspersoft/third-party-ce-artifacts"}
     mavenCentral()
     flatDir {dirs "lib/sqlcl-$sqlclVersion"}
     flatDir {dirs "lib/sqlcl-$sqlclVersion/ext"}

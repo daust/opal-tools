@@ -10,10 +10,10 @@
 		</Console>
 
 		<!-- error.log -->
-		<File name="error" fileName="logs/error.log">
+		<!--File name="error" fileName="logs/error.log">
 			<PatternLayout
 				pattern="%d{dd.MM.yyyy HH:mm:ss} *%-5p* %c{1}: %m (%F, line %L)%n" />
-		</File>
+		</File-->
 
 	</Appenders>
 

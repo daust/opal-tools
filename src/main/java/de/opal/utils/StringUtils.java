@@ -14,4 +14,14 @@ public class StringUtils {
     } 
     return userName;
   }
+  
+  public static String[] removeQuotes(String[] arr) {
+	  String[] newArr=new String[(arr.length)];
+	  
+	  for (int i = 0; i < arr.length; i++) {
+		newArr[i] = arr[i].replaceAll("^\"|\"$", "");
+	  }
+	  
+	  return newArr;
+  }
 }
