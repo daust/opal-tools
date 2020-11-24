@@ -119,7 +119,6 @@ distributions {
             from('src/configure-templates'){include "setup*"}
             from('src/doc'){into 'doc' filter(ReplaceTokens, tokens: ['project.version': project.version, 'sqlcl.version': sqlclVersion])}
             from('src/doc/Documentation.html'){ filter(ReplaceTokens, tokens: ['project.version': project.version, 'sqlcl.version': sqlclVersion])}
-
             from (jar.outputs){into 'lib'}
             from (configurations.compile){into 'lib'}
         }
