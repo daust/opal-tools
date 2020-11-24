@@ -137,7 +137,7 @@ public class ExporterMain {
 	@Option(name = "--filename-replace-blanks", usage = "replaces blanks in the filename with an _, e.g. PACKAGE BODY=>PACKAGE_BODY")
 	private boolean filenameReplaceBlanks = true;
 
-	@Option(name = "--script-working-directory", usage = "working directory for running sqlcl scripts (-pre and -post), e.g. '.' or '/u01/project/src/sql'. The default is the environment variable OPAL_TOOLS_SRC_SQL_DIR", metaVar = "<directory>", required = false)
+	@Option(name = "--script-working-dir", usage = "working directory for running sqlcl scripts (-pre and -post), e.g. '.' or '/u01/project/src/sql'. The default is the environment variable OPAL_TOOLS_SRC_SQL_DIR", metaVar = "<directory>", required = false)
 	private String workingDirectorySQLcl;
 
 	@Option(name = "--export-template-dir", usage = "directory for object templates, e.g. /u01/project/opal-tools/export-templates", metaVar = "<directory>", required = false)

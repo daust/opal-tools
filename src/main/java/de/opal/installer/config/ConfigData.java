@@ -34,7 +34,7 @@ public class ConfigData {
 	@Expose(serialize = true, deserialize = true)
 	public ArrayList<ConfigEncodingMapping> encodingMappings;
 	@Expose(serialize = true, deserialize = true)
-	public ArrayList<PatchDependency> patchDependencies;
+	public ArrayList<PatchDependency> dependencies;
 
 	// settings only read but not written back
 	// upon writing back ... we could introduce absolute paths
@@ -58,6 +58,6 @@ public class ConfigData {
 				+ "; waitAfterEachStatement: "
 				+ (waitAfterEachStatement == null ? "" : waitAfterEachStatement.toString())
 				+ "; patchDependencies: "
-				+ (patchDependencies == null ? "" : patchDependencies.toString());
+				+ (dependencies == null ? "" : dependencies.toString());
 	}
 }

@@ -136,7 +136,7 @@ public class PatchRegistry {
 
 		String cmd = "select count(*) from #PREFIX#_installer_patches where (pat_application=nvl(?,pat_application) and pat_name=nvl(?,pat_name) and pat_version=nvl(?,pat_version) and pat_target_system=?)";
 
-		Msg.println("*** Check patch dependencies");
+		Msg.println("*** Check patch dependencies\n");
 
 		if (registryTargets != null) {
 			for (RegistryTarget registryTarget : this.registryTargets) {
