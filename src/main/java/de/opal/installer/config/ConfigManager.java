@@ -57,11 +57,11 @@ public class ConfigManager {
 		String envValue = "";
 
 		// replace parent_folder_name
-		newValue = newValue.replace("#PARENT_FOLDER_NAME#", this.configFile.getParentFile().getName());
+		newValue = newValue.replace("#PARENT_FOLDER_NAME#", this.packageDir.getName());
 
 		// replace placeholder with env variable value
 		// if env variable is null, at least replace placeholder
-		envValue = DBUtils.nvl(System.getenv("OPAL_TOOLS_USER_IDENTITY"),""); 
+		envValue = DBUtils.nvl(System.getenv("OPAL_TOOLS_USER_IDENTITY"), "");
 		newValue = newValue.replace("#ENV_OPAL_TOOLS_USER_IDENTITY#", envValue);
 
 		return newValue;
@@ -71,7 +71,7 @@ public class ConfigManager {
 	 * trim() and replace() placeholders
 	 */
 	public void replacePlaceholders() {
-		
+
 		this.configData.application = replacePlaceholders(this.configData.application);
 		this.configData.author = replacePlaceholders(this.configData.author);
 		this.configData.packageDir = replacePlaceholders(this.configData.packageDir);

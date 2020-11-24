@@ -3,17 +3,17 @@
 	<Appenders>
 
 		<Console name="console">
+			<!--PatternLayout
+				pattern="%d{HH:mm:ss} (%c{1},%-5p) %m %n"  /-->
 			<PatternLayout
-				pattern="%d{HH:mm:ss} (%c{1},%-5p) %m %n"  />
-			<!--  PatternLayout
-				pattern="%d{dd.MM.yyyy HH:mm:ss} *%-5p* %c{1}: %m (%F, line %L)%n" /-->
+				pattern="%d{dd.MM.yyyy HH:mm:ss} *%-5p* %c{1}: %m (%F, line %L)%n" />
 		</Console>
 
 		<!-- error.log -->
-		<File name="error" fileName="logs/docx4j.log">
+		<!--File name="error" fileName="logs/error.log">
 			<PatternLayout
 				pattern="%d{dd.MM.yyyy HH:mm:ss} *%-5p* %c{1}: %m (%F, line %L)%n" />
-		</File>
+		</File-->
 
 	</Appenders>
 

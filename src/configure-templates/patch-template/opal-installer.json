@@ -9,5 +9,6 @@
     "sqlFileRegEx": "\\.(sql|pks|pkb|trg)$",
     "waitAfterEachStatement": "true",
     "registryTargets": [],
+    "dependencies": [],
     "encodingMappings": []	
 }

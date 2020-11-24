@@ -128,7 +128,8 @@ public class Installer {
 
 		this.connectionManager = ConnectionManager.getInstance();
 		// store definitions but don't create connections
-		this.connectionManager.initialize(this.configManagerConnectionPools.getConfigDataConnectionPool().connectionPools);
+		this.connectionManager
+				.initialize(this.configManagerConnectionPools.getConfigDataConnectionPool().connectionPools);
 
 	}
 
@@ -193,8 +194,8 @@ public class Installer {
 			MsgLog.println("** Version               : " + this.configManager.getConfigData().version);
 			MsgLog.println("** Author                : " + this.configManager.getConfigData().author);
 			MsgLog.println("**");
-			MsgLog.println(
-					"** Target system         : " + this.configManagerConnectionPools.getConfigDataConnectionPool().targetSystem);
+			MsgLog.println("** Target system         : "
+					+ this.configManagerConnectionPools.getConfigDataConnectionPool().targetSystem);
 			MsgLog.println("** Run mode              : " + this.configManager.getConfigData().runMode);
 			MsgLog.println("**");
 			MsgLog.println("** Config File           : " + this.configManager.getConfigFileName());
@@ -204,6 +205,28 @@ public class Installer {
 			MsgLog.println("** File Encoding (System): " + System.getProperty("file.encoding"));
 			MsgLog.println("** Current User          : " + this.userIdentity);
 			MsgLog.println("*************************\n");
+
+			// check patch dependencies first, can we install?
+
+			if (this.configManager.getConfigData().registryTargets != null
+					&& this.configManager.getConfigData().registryTargets.size() > 0
+					&& this.configManager.getConfigData().dependencies != null
+					&& this.configManager.getConfigData().dependencies.size() > 0) {
+				log.debug("check patch dependencies ...");
+				log.debug("  registryTargets:" + this.configManager.getConfigData().registryTargets.toString());
+				log.debug("  patchDependencies:" + this.configManager.getConfigData().dependencies.toString());
+
+				// initialize patch registry and register patch
+				this.patchRegistry = new PatchRegistry(this.configManager.getConfigData().registryTargets, this);
+
+				this.patchRegistry.checkPatchDependencies(configManager.getConfigData().application,
+						configManager.getConfigData().patch, configManager.getConfigData().version,
+						configManagerConnectionPools.getConfigDataConnectionPool().targetSystem,
+						configManager.getConfigData().dependencies);
+			} else {
+				log.debug(
+						"*** checking patch dependencies skipped, either no registryTargets defined or no dependencies defined ");
+			}
 
 			Utils.waitForEnter("Please press <enter> to list the files to be installed ...");
 
@@ -229,7 +252,8 @@ public class Installer {
 			// during VALIDATE_ONLY
 			if (this.configManager.getConfigData().runMode.equals("EXECUTE")) {
 
-				if (this.configManager.getConfigData().registryTargets != null) {
+				if (this.configManager.getConfigData().registryTargets != null
+						&& this.configManager.getConfigData().registryTargets.size() > 0) {
 					log.debug("registryTargets:" + this.configManager.getConfigData().registryTargets.toString());
 
 					// read releaseNotes file if exists
@@ -243,7 +267,9 @@ public class Installer {
 					}
 
 					// initialize patch registry and register patch
-					this.patchRegistry = new PatchRegistry(this.configManager.getConfigData().registryTargets, this);
+					if (this.patchRegistry == null)
+						this.patchRegistry = new PatchRegistry(this.configManager.getConfigData().registryTargets,
+								this);
 					this.patchRegistry.registerPatch(configManager.getConfigData().application,
 							configManager.getConfigData().patch, configManager.getConfigData().version,
 							configManager.getConfigData().author, configManager.getConfigFileName(),
@@ -260,7 +286,7 @@ public class Installer {
 			 * Finalize patch, update column pat_ended_on
 			 */
 			if (this.configManager.getConfigData().runMode.equals("EXECUTE")) {
-				if (this.configManager.getConfigData().registryTargets != null) {
+				if (patchRegistry != null) {
 					patchRegistry.finalizePatch();
 				}
 			}
@@ -489,14 +515,13 @@ public class Installer {
 			// sqlcl.setStmt(new FileInputStream(file));
 			sqlcl.setStmt(statement);
 			sqlcl.run();
-		}
+			String results = bout.toString("UTF8");
+			results = results.replaceAll(" force_print\n", "");
 
-		String results = bout.toString("UTF8");
-		results = results.replaceAll(" force_print\n", "");
-
-		// suppress output when "name is already used by existing object
-		if (!results.contains("ORA-00955")) {
-			MsgLog.println(results);
+			// suppress output when "name is already used by existing object
+			if (!results.contains("ORA-00955")) {
+				MsgLog.println(results);
+			}
 		}
 	}
 
