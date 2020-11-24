@@ -1,26 +1,276 @@
-cd c:\app
-echo cleanup
-rm -Rf opal-installer opal-tools opal-installer-1* opal-installer-local opal-tools* project1
+-----------------------------------------------------------------------------
+-- Local tests
+-----------------------------------------------------------------------------
 
-echo copy zip file
-copy z:\opal-tools-*.zip c:\app
+rm -rf /tmp/project1
+# smallest install
+./setup.sh -s \
+--project-root-dir /tmp/project1 \
+--software-dir "\${PROJECT_ROOT}/opal-tools" \
+--template-dir "\${PROJECT_ROOT}/patch-template" \
+--local-config-dir /tmp/project1/conf-user \
+--environment-script /tmp/project1/conf-user/setProjectEnvironment.sh \
+--db-source-dir "\${PROJECT_ROOT}/src/sql" \
+--patch-dir "\${PROJECT_ROOT}/patches" \
+--schemas jri_test test \
+--environments dev test \
+--environment-colors green yellow \
+--export-environment dev \
+--file-encoding UTF-8
 
-unzip c:\app\opal-tools*.zip
+cd /tmp/project1
+. /tmp/project1/conf-user/setProjectEnvironment.sh
+export-schema-jri_test-prompt-with-filter.sh 
+initialize-patch.sh
+mv /tmp/project1/patches/2020/*patch1 /tmp/project1/patches/2020/patch1
+cd /tmp/project1/patches/2020/patch1
 
-cd opal-tools-1.1.1-sqlcl-20.3.0
+-----------------------------------------------------------------------------
+-- Config Files
+-----------------------------------------------------------------------------
 
-@REM setup.cmd -h
-call setup.cmd --project-root-directory c:\app\project1 --show-passwords 
+*) opal-installer.json
 
-----
+{
+    "application": "test",
+    "patch": "#PARENT_FOLDER_NAME#",
+    "author": "#ENV_OPAL_TOOLS_USER_IDENTITY#",
+    "version": "1.1.0",
+    "connectionMappings": [
+      {
+        "connectionPoolName": "jri_test",
+        "matchRegEx": "/sql/.*jri_test.*"
+      }
+    ],
+    "sqlFileRegEx": "\\.(sql|pks|pkb|trg)$",
+    "waitAfterEachStatement": "true",
+    "registryTargets": [{"connectionPoolName":"jri_test", "tablePrefix":"OPAL2"}],
+    "encodingMappings": [
+      {
+        "encoding": "UTF-8",
+        "matchRegEx": "/sql/.*apex.*/.*f*sql",
+        "description": "encoding for APEX files is always UTF8"
+      },
+      {
+        "encoding": "UTF-8",
+        "matchRegEx": "/sql/.*",
+        "description": "all other files will get this explicit mapping"
+      }
+    ],
+    "dependencies": [{"patch": "2020-11-12-test 123"}]
+  }
 
-Stats: 
-	- count() from all_objects
-	- count() of SUCCESSFULLY exported object
-	
-- list all failed exports at the end
+-----------------------------------------------------------------------------
+-- Command lines
+-----------------------------------------------------------------------------
 
-- sql init and custom export files as list
+*) setup
+
+  java de.opal.SetupManager [options...]
+  -s (--show-passwords)                            : when prompted for passwords, they will be shown in clear text (Vorgabe: true)
+  -h (--help)                                      : display this help page (Vorgabe: false)
+  --project-root-dir <directory>                   : Sets the root directory for the installation. Will be used to derive other
+                                                     parameters if not set explicitly. This directory is typically the target of a
+                                                     GIT or SVN export.
+  --software-dir <directory>                       : SW install directory (contains bin and lib directories)
+                                                     e.g. ${PROJECT_ROOT}/opal-tools or %PROJECT_ROOT%\opal-tools 
+  --template-dir <directory>                       : Patch template directory
+                                                     e.g. ${PROJECT_ROOT}/patch-template or %PROJECT_ROOT%\patch-template
+  --local-config-dir <directory>                   : Local configuration directory (connection pools, user dependent config),
+                                                     typically OUTSIDE of the git tree
+                                                     e.g. /local/conf-user or c:\local\conf-user
+  --environment-script <directory>                 : Local script to initialize the user environment for this project
+                                                     e.g. /local/conf-user/setProjectEnvironment.sh or
+                                                     c:\local\conf-user\setProjectEnvironment.cmd
+  --db-source-dir <directory>                      : Database source directory (sql, has subdirectories e.g.
+                                                     sql/oracle_schema/tables, sql/oracle_schema/packages, etc.)
+                                                     e.g. ${PROJECT_ROOT}/src/sql or %PROJECT_ROOT%\src\sql (Vorgabe: )
+  --patch-dir <directory>                          : Patch directory (patches, has subdirectories e.g. year/patch_name)
+                                                     e.g. ${PROJECT_ROOT}/patches or %PROJECT_ROOT%\patches
+  --schemas schema1[,schema2][,schema3]...         : List of database schemas (comma-separated, e.g. hr,scott)
+                                                     e.g. schema1,schema2
+  --environments env1[,env2][,env3]...             : List of environments (comma-separated, e.g. dev,test,prod)
+                                                     e.g. dev,test,prod
+  --environment-colors color1[,color2][,color3]... : List of shell colors for the environments (comma-separated, e.g.
+                                                     green,yellow,red)
+                                                     e.g. green,yellow,red: 
+  --export-environment environment                 : Which is your designated developement environment? This is used for the
+                                                     export.
+                                                     e.g. dev
+  --file-encoding file encoding                    : file encoding (e.g. UTF-8 or Cp1252, default is current system encoding)
+                                                     e.g. UTF-8
+
+
+*) opal-export
+
+java de.opal.exporter.ExporterMain [options...]
+ -h (--help)                                                : show this help page (Vorgabe: false)
+ -v (--version)                                             : show version information (Vorgabe: false)
+ --url <jdbc url>                                           : database connection jdbc url,
+                                                              e.g.: scott/tiger@localhost:1521:ORCL
+ --connection-pool-file <file>                              : connection pool file
+                                                              e.g.: connections-dev.json
+ --connection-pool-name <connection pool name>              : connection pool name
+                                                              e.g.: scott
+ --output-dir <directory>                                   : output directory, e.g. '.' or '/u01/project/src/sql'
+ --includes <filter1> [<filter2>] ... [n]                   : include filter, e.g.: %XLIB% or *XLIB*
+ --include-types <type1> [<type2>] ... [n]                  : include types, e.g.: TABLE PACKAGE
+ --excludes <type1> [<type2>] ... [n]                       : exclude filter, e.g.: %AQ$% %SYS_% or
+ --exclude-types <type1> [<type2>] ... [n]                  : exclude types, e.g.: JOB
+ --include-schemas <schema1> [<schema2>] ... [n]            : schemas to be included, only relevant when connecting as DBA
+ --escape-char <escape character>                           : add escape() clause to like queries for selecting objects, e.g. \
+                                                              or ~
+ --dependent-objects <type>:<deptype1>,<deptype2> ... [n]   : dependent objects, e.g. TABLE:COMMENT,INDEX
+ --skip-errors                                              : ORA- errors will not cause the program to abort (Vorgabe: false)
+ --skip-export                                              : skip the export, this way only the pre- and post-scripts are run
+                                                              (Vorgabe: false)
+ --pre-scripts <script> [<script2>] ...                     : script (sqlplus/sqlcl) that is running to initialize the session,
+                                                              similar to the login.sql file for sqlplus, e.g. ./login.sql or
+                                                              ./init.sql
+ --post-scripts <script> [<script2>] ...                    : script (sqlplus/sqlcl) that is running in the end to export custom
+                                                              objects, e.g. ./apex.sql
+ --silent                                                   : turns off prompts (Vorgabe: false)
+ --filename-templates <definition 1> [<definition 2>] [...] : templates for constructing the filename per object type
+                                                              e.g.: default:#schema#/#object_type#/#object_name#.sql
+                                                              e.g.: package:#schema#/#object_type#/#object_name#.pks
+                                                              e.g.: "package body:#schema#/packages/#object_name#.pkb"
+
+                                                              #schema#             - schema name in lower case
+                                                              #object_type#        - lower case type name: 'table'
+                                                              #object_type_plural# - lower case type name in plural: 'tables'
+                                                              #object_name#        - lower case object name
+                                                              #SCHEMA#             - upper case schema name
+                                                              #OBJECT_TYPE#        - upper case object type name: 'TABLE' or
+                                                              'INDEX'
+                                                              #OBJECT_TYPE_PLURAL# - upper case object type name in plural:
+                                                              'TABLES'
+                                                              #OBJECT_NAME#        - upper case object name
+ --filename-replace-blanks                                  : replaces blanks in the filename with an _, e.g. PACKAGE
+                                                              BODY=>PACKAGE_BODY (Vorgabe: true)
+ --script-working-dir <directory>                           : working directory for running sqlcl scripts (-pre and -post), e.g.
+                                                              '.' or '/u01/project/src/sql'. The default is the environment
+                                                              variable OPAL_TOOLS_SRC_SQL_DIR
+ --export-template-dir <directory>                          : directory for object templates, e.g. /u01/project/opal-tools/export-
+                                                              templates
+ --config-file <file>                                       : configuration file
+                                                              e.g.: connections-dev.json
+ --parallel-degree <level>                                  : the database statements are executed in parallel, e.g. 10 (Vorgabe:
+                                                              1)
+
+*) opal-install
+
+java de.opal.installer.InstallerMain [options...]
+ -h (--help)                                      : show this help page (Vorgabe: false)
+ --connection-pool-file <file>                    : connection pool file
+                                                    e.g.: connections-dev.json
+ --config-file <file>                             : configuration file
+                                                    e.g.: opal-installer.json
+ --validate-only                                  : don't execute patch, just validate the files and connection pools (Vorgabe:
+                                                    false)
+ --mandatory-attributes <attr1> [<attr2>] ... [n] : list of attributes that must not be null,
+                                                    e.g. patch author version
+ --no-logging                                     : disable writing a logfile (Vorgabe: false)
+
+*) opal-install-copy-patch-files
+
+java de.opal.installer.CopyPatchFiles [options...]
+ -h (--help)              : show this help page (Vorgabe: false)
+ -v (--version)           : show version information (Vorgabe: false)
+ --source-path <path>     : path to the template directory structure
+ --target-path <path>     : target path for the patch
+ --patch-file-name <path> : target path for the patch
+
+ *) opal-install-copy-template
+
+ java de.opal.installer.CopyPatchTemplate [options...]
+ -h (--help)          : show this help page (Vorgabe: false)
+ -v (--version)       : show version information (Vorgabe: false)
+ --source-path <path> : path to the template directory structure
+ --target-path <path> : target path for the patch
+
+ *) opal-install-validate-connection
+
+ java de.opal.utils.ValidateConnectionsMain [options...] <connection pool file1> [<connection pool file2>] [<connection pool file3>]
+ -h (--help)    : show this help page (Vorgabe: false)
+ -v (--version) : show version information (Vorgabe: false)
+
+
+-----------------------------------------------------------------------------
+-- installation scenarios
+-----------------------------------------------------------------------------
+
+# default full install
+
+./setup.sh -s \
+--software-dir ${PROJECT_ROOT}/opal-tools \
+--template-dir ${PROJECT_ROOT}/patch-template \
+--local-config-dir /tmp/project1/conf-user \
+--environment-script /tmp/project1/conf-user/setProjectEnvironment.sh \
+--db-source-dir ${PROJECT_ROOT}/src/sql \
+--patch-dir ${PROJECT_ROOT}/patches \
+--schemas jri_test,test \
+--environments dev,test,prod \
+--environment-colors green,yellow,red \
+--export-environment dev \
+--file-encoding UTF-8
+
+# smallest install
+./setup.sh -s \
+--project-root-dir /tmp/project1 \
+--software-dir "\${PROJECT_ROOT}/opal-tools" \
+--template-dir "\${PROJECT_ROOT}/patch-template" \
+--local-config-dir /tmp/project1/conf-user \
+--environment-script /tmp/project1/conf-user/setProjectEnvironment.sh \
+--db-source-dir "\${PROJECT_ROOT}/src/sql" \
+--patch-dir "\${PROJECT_ROOT}/patches" \
+--schemas jri_test \
+--environments dev \
+--environment-colors green \
+--export-environment dev \
+--file-encoding UTF-8
+
+# smallest install Windows
+setup.cmd -s ^
+--project-root-dir "c:\Projects\project 1" ^
+--software-dir "%PROJECT_ROOT%\opal-tools"
+--template-dir "\${PROJECT_ROOT}/patch-template" \
+--local-config-dir /tmp/project1/conf-user \
+--environment-script /tmp/project1/conf-user/setProjectEnvironment.sh \
+--db-source-dir "\${PROJECT_ROOT}/src/sql" \
+--patch-dir "\${PROJECT_ROOT}/patches" \
+--schemas jri_test \
+--environments dev \
+--environment-colors green \
+--export-environment dev \
+--file-encoding UTF-8
+
+
+# command line in Eclipse
+--project-root-dir /tmp/project1
+--software-dir "/tmp/project1/opal-tools"
+--template-dir /tmp/project1/patch-template
+--local-config-dir /tmp/project1/conf-user
+--environment-script /tmp/project1/conf-user/setProjectEnvironment.sh
+--db-source-dir /tmp/project1/src/sql
+--patch-dir /tmp/project1/patches
+--schemas jri_test test
+--environments dev test
+--environment-colors green yellow
+--export-environment dev
+--file-encoding UTF-8
+
+# 
+--project-root-dir /tmp/project1
+--schemas jri_test test
+--environments dev
+--environment-colors green yellow
+--export-environment dev
+--file-encoding UTF-8
+
+
+-----------------------------------------------------------------------------
+-- considerations for project layouts
+-----------------------------------------------------------------------------
 
 src
 	sql-manual
@@ -35,38 +285,170 @@ src
 		_scripts (manual)
 		user
 			table
-		
 
 ..\sql-manual\		
 sql-exported\it4fm\package => ....
 sql-manual\it4fm\package => ....
 
+-----------------------------------------------------------------------------
+-- Demo
+-----------------------------------------------------------------------------
+
+set FILE=opal-tools-2.2.0-sqlcl-20.3.0
+
+cd c:\
+rm -Rf c:\Projects
+mkdir c:\Projects
+
+cp z:\%FILE%.zip c:\Projects
+cp z:\ProjectStructure.zip c:\Projects
+cd c:\Projects
+
+unzip c:\Projects\ProjectStructure.zip
+mv c:\Projects\ProjectStructure "c:\Projects\project 1"
+
+unzip c:\Projects\opal-tools*.zip
+
+cd c:\Projects\%FILE%
+
+*) show command line options
+setup.cmd -h
+
+*) basic setup into directory "c:\Projects\basic"
+setup.cmd -s --project-root-dir "c:\Projects\basic"
+
+- schemas: jri_test
+- environments: dev
+- colors: green
+
+- connect with user daust[jri_test]
+
+*) show all generated files?
+
+*) run bin\export-schema-jri_test.cmd to export all objects, explain parameters
+
+*) run bin\export-schema-jri_test-prompt-with-filter.cmd 
+"xlib*"
+opal2%% "*log*"
+
+*) initialize patch
+jira_123
+
+*) copy patch files
+- add packages to PatchFiles.txt
+- run 1.copy-patch-files.cmd
+
+*) validate patch
+- run 2.validate-patch-dev.cmd
+
+*) remove patch registry if exists
+drop table opal2_installer_details;
+drop table opal2_installer_patches;
+
+delete from opal2_installer_details;
+delete from opal2_installer_patches;
+commit;
+
+*) install patch
+- add JIRA-123 to ReleaseNotes.txt
+- add registryTargets to the patch definition
+{ connectionPoolName="jri_test", "tablePrefix": "OPAL2" }
+- run 3.install-patch-dev.cmd
+
+*) check patch registry
+SELECT *
+  FROM opal2_installer_patches
+ ORDER BY pat_id DESC;
+    
+SELECT *
+  FROM opal2_installer_details
+ ORDER BY det_id DESC;    
+
+*) check logfile
+
+*) change passwords in connection pool
+- set wrong password
+- validate connection pool
+- correct password
+- validate connection pool
+ 
+*) actual project setup  
+
+cd %FILE%
+
+setup.cmd -s ^
+--project-root-dir "c:\Projects\project 1" ^
+--software-dir "%PROJECT_ROOT%\00.ProjectStandards\opal-tools" ^
+--template-dir "%PROJECT_ROOT%\00.ProjectStandards\Patch-Template" ^
+--local-config-dir "c:\Projects\conf-user" ^
+--environment-script "c:\Projects\conf-user\setProject1.cmd" ^
+--db-source-dir "%PROJECT_ROOT%\40.Implementation\Sources\sql" ^
+--patch-dir "%PROJECT_ROOT%\40.Implementation\Patches" ^
+--schemas jri_test test ^
+--environments dev test prod ^
+--environment-colors green yellow red ^
+--export-environment dev ^
+--file-encoding UTF-8
+
+*) move files from \bin directory into 40.Implementation ...
+
+*) initialize patch jri-123
+
+*) copy files
+
+*) validate test
+- add registryTargets to the patch definition
+{ connectionPoolName="jri_test", "tablePrefix": "OPAL2" }
+- run 3.install-patch-dev.cmd
+
+*) install dev
+*) install prod
+*) check 
+
+*) check patch registry
+SELECT *
+  FROM opal2_installer_patches
+ ORDER BY pat_id DESC;
+    
+SELECT *
+  FROM opal2_installer_details
+ ORDER BY det_id DESC;    
+ 
+*) use different directories for the installer
+- sql/010_jri_test
+- sql/020_test
+- sql/030_jri_test
+
+
+*) export apex application
+
+*) export ords module
+ 
+--------------------------------------------------------------------------------------------- 
+ 
+*) sample layout, distinction between generated/exported sources and manually created sources
 
 ----
+src
+	sql-manual
+		user
+			...
+	sql-exported
+		user
+			table
 
-Command line: 
-
-java de.opal.exporter.DBExporter [options...] arguments...
- -url <jdbc url>                                            : database connection jdbc url, e.g.:
-                                                              scott/tiger@localhost:1521:ORCL
- -o (--output-dir) <directory>                              : output directory, e.g. '.' or '/u01/project/src/sql'
- -i (--include) <filter1> [<filter2>] ... [n]               : include filter, e.g.: %XLIB%
- -it (--include-types) <type1> [<type2>] ... [n]            : include types, e.g.: TABLE PACKAGE
- -e (--exclude) <type1> [<type2>] ... [n]                   : exclude filter, e.g.: %AQ$% %SYS_%
- -et (--exclude-types) <type1> [<type2>] ... [n]            : exclude types, e.g.: JOB
- -s (--schemas) <schema1> [<schema2>] ... [n]               : schemas to be included, only relevant when connecting as
-                                                              DBA
- -d (--dependent-objects) <type>:<deptype1>,<deptype2> ...  : dependent objects, e.g. TABLE:COMMENTS,INDEXES
- [n]                                                           
- -se (--skip-errors)                                        : ORA- errors will not cause the program to abort (Vorgabe:
-                                                              false)
- -cf (--custom-file) <sql script>                           : custom export file, e.g. ./apex.sql
- -if (--init-file) <sql script>                             : sql initialization file that is executed when the db
-                                                              session is initialized, similar to the login.sql file for
-                                                              sqlplus, e.g. ./login.sql or ./init.sql
+src
+	sql
+		_scripts (manual)
+		user
+			table
+		
+..\sql-manual\		
+sql-exported\it4fm\package => ....
+sql-manual\it4fm\package => ....
 
 															  
-cd /d c:\app\opal-installer\sql
+cd /d c:\Projects\opal-installer\sql
 
 -- cleanup 
 rm -rf apex jri_test
@@ -118,57 +500,6 @@ opal-export.cmd ^
     --dependent-objects table:comment,index,object_grant,trigger view:comment,object_grant "materialized view:comment,index,materialized_view_log,object_grant" ^
     --init-file ./init.sql 
 
-# samples from scheme2ddl: 
-<util:map id="dependencies">
-        <entry key="TABLE"> 
-            <set>
-                <value>COMMENT</value>
-                <value>INDEX</value>
-                <value>OBJECT_GRANT</value>
-                <value>TRIGGER</value>
-            </set>
-        </entry>
-        <entry key="VIEW">
-            <set>
-                <value>COMMENT</value>
-                <value>OBJECT_GRANT</value>
-            </set>
-        </entry>
-        <entry key="MATERIALIZED VIEW">
-            <set>
-                <value>COMMENT</value>
-                <value>INDEX</value>
-                <value>MATERIALIZED_VIEW_LOG</value>
-                <value>OBJECT_GRANT</value>
-            </set>
-        </entry>
-        <entry key="FUNCTION">
-            <set>
-                <value>OBJECT_GRANT</value>
-            </set>
-        </entry>
-        <entry key="PROCEDURE">
-            <set>
-                <value>OBJECT_GRANT</value>
-            </set>
-        </entry>
-        <entry key="PACKAGE BODY">
-            <set>
-                <value>OBJECT_GRANT</value>
-            </set>
-        </entry>
-        <entry key="SYNONYM">
-            <set>
-                <value>OBJECT_GRANT</value>
-            </set>
-        </entry>
-        <entry key="TYPE">
-            <set>
-                <value>OBJECT_GRANT</value>
-            </set>
-        </entry>
-    </util:map>
-
 
 # run custom apex export 
 # specify dependent objects
@@ -215,62 +546,4 @@ opal-export.cmd ^
     --custom-file ./apex-export.sql ^
     --schemas training test jri_test ^
     --include-types table
-	
-	
-file: apex-export.sql:
 
-prompt *** exporting apex applications
-
-host mkdir ./apex
-cd ./apex
-
-apex export -applicationid 344
-apex export -applicationid 201
-
-file: init.sql
-
-set sqlformat ansiconsole
-
-prompt *** set dbms_metadata transform parameter
-begin
- dbms_metadata.set_transform_param( dbms_metadata.session_transform, 'SQLTERMINATOR', TRUE );
- dbms_metadata.set_transform_param( dbms_metadata.session_transform, 'SEGMENT_ATTRIBUTES', false) ; --undocumented remove segement creation
- DBMS_METADATA.SET_TRANSFORM_PARAM( DBMS_METADATA.SESSION_TRANSFORM, 'EMIT_SCHEMA', false );        --undocumented remove schema
- DBMS_METADATA.SET_TRANSFORM_PARAM( DBMS_METADATA.SESSION_TRANSFORM, 'SEGMENT_CREATION', false );  
- DBMS_METADATA.SET_TRANSFORM_PARAM( DBMS_METADATA.SESSION_TRANSFORM, 'CONSTRAINTS_AS_ALTER', true );
- 
- DBMS_METADATA.SET_TRANSFORM_PARAM(DBMS_METADATA.SESSION_TRANSFORM,'PRETTY',true);
-end;
-/
-
-
-{
-  "application": "",
-  "patch": "",
-  "author": "",
-  "version": "",
-  "connectionMappings": [
-    {
-      "connectionPoolName": "jri_test",
-      "matchRegEx": "/sql/.*jri_test.*"
-    }
-  ],
-  "sqlFileRegEx": "\\.(sql|pks|pkb|trg)$",
-  "waitAfterEachStatement": "true",
-  "registryTargets": [
-    {
-   "connectionPoolName": "jri_test",
-   "tablePrefix": "OPAL2"
-    }
-   ],
-   "encodingMappings": [
-    {
-      "encoding": "UTF-8",
-      "matchRegEx": "/sql/.*apex.*/.*f*sql"
-    },
-    {
-      "encoding": "UTF-8",
-      "matchRegEx": "/sql/.*"
-    }
-  ]
-}
