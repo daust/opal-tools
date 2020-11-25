@@ -4,3 +4,4 @@
 
 @java -cp "lib/*" de.opal.setup.SetupManager %*
 
+cmd /k
