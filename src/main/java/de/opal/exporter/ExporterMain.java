@@ -170,6 +170,11 @@ public class ExporterMain {
 
 		// merge the argument lists so that the command line args can OVERRIDE the
 		// ones from the config file
+		log.debug("*** Original ARGS");
+		for (int i = 0; i < mergedArgs.length; i++) {
+			log.debug(i+": "+mergedArgs[i]);
+		}
+		log.debug("");
 		dbExporter.parseParameters(mergedArgs);
 		dbExporter.transformParams();
 		dbExporter.dumpParameters();
@@ -467,6 +472,11 @@ public class ExporterMain {
 		} else {
 			this.workingDirectorySQLcl = this.workingDirectorySQLcl.trim();
 		}
+		
+		// fix ^^ issue on Windows. for some weird reason the command line switch: --escape-char "^" will automatically
+		// be escaped and ^^ is passed to the software ... don't understand why. 
+		//if (this.escapeCharacter!=null)
+		//	this.escapeCharacter.replace("^^", "^");
 	}
 
 	private void showHeaderInfo() {

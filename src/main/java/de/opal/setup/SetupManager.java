@@ -78,7 +78,7 @@ public class SetupManager {
 	@Option(name = "-h", aliases = "--help", usage = "display this help page")
 	private boolean showHelp = false;
 
-	@Option(name = "--project-root-dir", usage = "Sets the root directory for the installation. Will be used to derive other parameters if not set explicitly. This directory is typically the target of a GIT or SVN export.", metaVar = "<directory>", required = true)
+	@Option(name = "--project-root-dir", usage = "Sets the root directory for the installation. Will be used to derive other parameters if not set explicitly. This directory is typically the target of a GIT or SVN export.", metaVar = "<directory>", required = false)
 	private String projectRootDir;
 
 	@Option(name = "--software-dir", usage = "SW install directory (contains bin and lib directories)\ne.g. ${PROJECT_ROOT}/opal-tools or %PROJECT_ROOT%\\opal-tools ", metaVar = "<directory>")
@@ -719,9 +719,9 @@ public class SetupManager {
 
 		if (projectRootDir == null)
 			projectRootDir = promptForInput(kbd,
-					"\nProject root directory, typically the target of a GIT or SVN export", projectRootDir.trim());
+					"\nProject root directory, typically the target of a GIT or SVN export", "");
 		else
-			Msg.println("\nProject root directory, typically the target of a GIT or SVN export: " + projectRootDir);
+			Msg.println("\nProject root directory, typically the target of a GIT or SVN export: "+projectRootDir);
 
 		if (swDirectory == null)
 			swDirectory = promptForInput(kbd, "SW install directory (contains bin and lib directories)",

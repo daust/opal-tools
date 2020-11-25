@@ -134,7 +134,7 @@ public class PatchRegistry {
 	public void checkPatchDependencies(String application, String packageName, String version, String targetSystemName,
 			ArrayList<PatchDependency> patchDependencies) throws SQLException {
 
-		String cmd = "select count(*) from #PREFIX#_installer_patches where (pat_application=nvl(?,pat_application) and pat_name=nvl(?,pat_name) and pat_version=nvl(?,pat_version) and pat_target_system=?)";
+		String cmd = "select count(*) from #PREFIX#_installer_patches where (pat_application=nvl(?,pat_application) and pat_name=nvl(?,pat_name) and pat_version=nvl(?,pat_version) and pat_target_system=?) and pat_ended_on is not null";
 
 		Msg.println("*** Check patch dependencies\n");
 
