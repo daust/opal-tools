@@ -719,9 +719,9 @@ public class SetupManager {
 
 		if (projectRootDir == null)
 			projectRootDir = promptForInput(kbd,
-					"\nProject root directory, typically the target of a GIT or SVN export", projectRootDir.trim());
+					"\nProject root directory, typically the target of a GIT or SVN export", "");
 		else
-			Msg.println("\nProject root directory, typically the target of a GIT or SVN export: " + projectRootDir);
+			Msg.println("\nProject root directory, typically the target of a GIT or SVN export: "+projectRootDir);
 
 		if (swDirectory == null)
 			swDirectory = promptForInput(kbd, "SW install directory (contains bin and lib directories)",

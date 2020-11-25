@@ -467,7 +467,7 @@ When you are using manually created files for a patch, e.g. to manipulate data o
 
 By starting the script ``2.validate-<environment>.cmd|sh`` (on Windows you can just double-click it), the patch will be validated against the environment. 
 
-* dependencies are checked (are all required patches installed)
+* dependencies are checked (are all required patches installed?)
 * each file is visited: 
     * the connection pool mapping is tested and the connection pool actually used
     * the encoding mapping is calculated and displayed
@@ -478,7 +478,7 @@ Thus, you can easily see, which files will be executed in which order by which u
 
 By starting the script ``3.install-<environment>.cmd|sh`` (on Windows you can just double-click it), the patch will be installed in the environment. 
 
-* dependencies are checked (are all required patches installed)
+* dependencies are checked (are all required patches installed?)
 * each file is visited: 
     * the connection pool mapping is tested and the connection pool actually used
     * the encoding mapping is calculated and displayed
@@ -524,6 +524,17 @@ SELECT *
     * ``patch``: Name of the patch
     * ``version``: Version of the patch
 
+    This is the base query that will be used to determine whether the condition is satisfied: 
+    ```
+    select count(*) 
+      from #PREFIX#_installer_patches 
+     where (     pat_application=nvl(?,pat_application) 
+              and pat_name=nvl(?,pat_name) 
+              and pat_version=nvl(?,pat_version) 
+              and pat_target_system=?) 
+              and pat_ended_on is not null;
+    ```
+
 ### Windows example
 
 ```
@@ -561,6 +572,10 @@ SELECT *
   "dependencies": [
       {
           "patch": "2020-11-02-patch1"
+      },
+      {
+          "application": "myApp",
+          "version"    : "1.0.0"
       }
   ]
 }
@@ -603,6 +618,10 @@ SELECT *
   "dependencies": [
       {
           "patch": "2020-11-02-patch1"
+      },
+      {
+          "application": "myApp",
+          "version"    : "1.0.0"
       }
   ]
 }

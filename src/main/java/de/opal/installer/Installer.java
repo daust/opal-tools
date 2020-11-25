@@ -464,9 +464,9 @@ public class Installer {
 
 		String overrideEncoding = configManager.getEncoding(relativeFilename);
 		if (overrideEncoding.isEmpty()) {
-			MsgLog.print("\n*** User:" + sqlcl.getConn().getSchema() + "; " + relativeFilename);
+			MsgLog.println("*** User:" + sqlcl.getConn().getSchema() + "; " + relativeFilename);
 		} else {
-			MsgLog.print("*** Override encoding: " + overrideEncoding + "; User:" + sqlcl.getConn().getSchema() + "; "
+			MsgLog.println("*** Override encoding: " + overrideEncoding + "; User:" + sqlcl.getConn().getSchema() + "; "
 					+ relativeFilename);
 		}
 		// only execute if flag is set in config file
@@ -481,11 +481,11 @@ public class Installer {
 			}
 			sqlcl.setStmt(fileContents);
 			sqlcl.run();
-		}
 
-		String results = bout.toString("UTF8");
-		results = results.replaceAll(" force_print\n", "");
-		MsgLog.println(results);
+			String results = bout.toString("UTF8");
+			results = results.replaceAll(" force_print\n", "");
+			MsgLog.println(results);
+		}
 
 		if (this.configManager.getConfigData().waitAfterEachStatement.equals("true")
 				&& this.configManager.getConfigData().runMode.equals("EXECUTE")) {
