@@ -1,8 +1,10 @@
 {
 	"application": "",
     "patch": "#PARENT_FOLDER_NAME#",
+    "referenceId": "",
     "author": "#ENV_OPAL_TOOLS_USER_IDENTITY#",
     "version": "",
+    "extra": "",
     "packageDir": ".",
     "sqlDir": "sql",
     "connectionMappings": [],

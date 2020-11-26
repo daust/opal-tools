@@ -18,6 +18,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import de.opal.db.SQLclUtil;
 import de.opal.installer.config.ConfigConnectionMapping;
 import de.opal.installer.config.ConfigData;
 import de.opal.installer.config.ConfigManager;
@@ -271,7 +272,8 @@ public class Installer {
 						this.patchRegistry = new PatchRegistry(this.configManager.getConfigData().registryTargets,
 								this);
 					this.patchRegistry.registerPatch(configManager.getConfigData().application,
-							configManager.getConfigData().patch, configManager.getConfigData().version,
+							configManager.getConfigData().patch, configManager.getConfigData().referenceId,configManager.getConfigData().extra,
+							configManager.getConfigData().version,
 							configManager.getConfigData().author, configManager.getConfigFileName(),
 							configManagerConnectionPools.getConfigFileName(), releaseNotesContents,
 							configManagerConnectionPools.getConfigDataConnectionPool().targetSystem);
@@ -479,9 +481,16 @@ public class Installer {
 			} else {
 				fileContents = FileUtils.readFileToString(file, overrideEncoding);
 			}
+			SQLclUtil.redirectErrStreamToString();
 			sqlcl.setStmt(fileContents);
 			sqlcl.run();
-
+			// capture error stream and filter out "false" messages
+			String newErrString = SQLclUtil.getErrMessage();
+			// reset err
+			SQLclUtil.resetErrStream();
+			if (!newErrString.isEmpty())
+				System.err.println(newErrString);
+			
 			String results = bout.toString("UTF8");
 			results = results.replaceAll(" force_print\n", "");
 			MsgLog.println(results);
@@ -519,9 +528,11 @@ public class Installer {
 			results = results.replaceAll(" force_print\n", "");
 
 			// suppress output when "name is already used by existing object
-			if (!results.contains("ORA-00955")) {
+			// suppress output when "ORA-01430: Angefügte Spalte bereits in Tabelle vorhanden"
+			if (!results.contains("ORA-00955") && !results.contains("ORA-01430")) {
 				MsgLog.println(results);
 			}
+			
 		}
 	}
 
