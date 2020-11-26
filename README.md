@@ -497,6 +497,39 @@ SELECT *
  ORDER BY det_id DESC;  
 ```
 
+The tables are defined as follows: 
+```
+OPAL_INSTALLER_PATCHES
+
+Name                   Null?    Typ                 
+---------------------- -------- ------------------- 
+PAT_ID                 NOT NULL NUMBER              
+PAT_APPLICATION                 VARCHAR2(100 CHAR)  
+PAT_NAME                        VARCHAR2(100 CHAR)  
+PAT_REFERENCE_ID                VARCHAR2(100 CHAR)  
+PAT_VERSION                     VARCHAR2(100 CHAR)  
+PAT_AUTHOR                      VARCHAR2(100 CHAR)  
+PAT_TARGET_SYSTEM               VARCHAR2(50 CHAR)   
+PAT_EXTRA                       VARCHAR2(4000 CHAR)
+PAT_STARTED_ON                  DATE                
+PAT_ENDED_ON                    DATE                
+PAT_DESCRIPTION                 VARCHAR2(4000 CHAR) 
+PAT_CONFIG_FILENAME             VARCHAR2(4000 CHAR) 
+PAT_CONN_POOL_FILENAME          VARCHAR2(4000 CHAR) 
+```
+
+```
+OPAL_INSTALLER_DETAILS
+
+Name             Null?    Typ                 
+---------------- -------- ------------------- 
+DET_ID           NOT NULL NUMBER              
+DET_FILENAME              VARCHAR2(4000 CHAR) 
+DET_INSTALLED_ON          DATE                
+DET_PAT_ID                NUMBER              
+```
+
+
 # Configuration
 
 ## ``opal-installer.json`` configuration file
@@ -504,10 +537,18 @@ SELECT *
 * ``application``: Name of the application, e.g. the project name
 * ``patch``: Name of the patch. Accepts the placeholder ``#ENV_OPAL_TOOLS_USER_IDENTITY#`` for automatically replacing it with the current directory.
 * ``author``: Name of the person who installs the patch. Accepts the placeholder ``#ENV_OPAL_TOOLS_USER_IDENTITY#`` for the environment variable ``OPAL_TOOLS_USER_IDENTITY``. 
+* ``referenceId``: This is just a custom field to link this patch to other external tools you are using. It is a text string. 
 * ``version``: Version of the patch, e.g. 1.0.0, 1.0, pre-release, ...
+* ``extra``: This is a generic custom field that you can use any way you want. 
+  ```
+  This can be a plain string
+    "extra": "stuff",
+  or you might choose to embed a JSON string in it: 
+    "extra": "{\"stuff\": \"value\"}",
+  ```
 * ``connectionMappings``: List of mappings with attributes: 
     * ``connectionPoolName``: Name of the connection pool to execute the current script
-    * ``matchRegEx``: Regular expression to map the file path (e.g. /sql/<schema>/120_data/runme.sql) to a specific connection pool.
+    * ``matchRegEx``: Regular expression to map the file path (e.g. ``/sql/<schema>/120_data/runme.sql``) to a specific connection pool.
 * ``sqlFileRegEx``: Regular expression to indicate which files should be executed and which not. For example, we want to ignore files *.txt, *.doc or others. By default the suffixes .sql, .pks, .pkb, .trg are executed. 
 * ``waitAfterEachStatement``: This boolean expression will halt the execution after each statement. This is very helpful to make sure, each script is run successfully. 
 * ``registryTargets``: List of target database connections in which to register the patch tables (#PREFIX#_INSTALLER_PATCHES and #PREFIX_INSTALLER_DETAILS). In those tables the installer will register each execution of a patch. In most cases you will choose a connection pool from the current environment to put the registry tables there. But it also makes sense to have an additional connection pool to store each execution of ANY environment in that table, e.g. the development environment. Then you can have a consolidated view of all patches on all environments. 
@@ -516,7 +557,7 @@ SELECT *
     * ``tablePrefix``: Prefix of the two generated tables so that they will fit into your local naming scheme of database objects, e.g. "OPAL". In this case the installer will generate the table OPAL_INSTALLER_PATCHES and OPAL_INSTALLER_DETAILS. 
 * ``encodingMappings``: List of mappings with attributes: 
     * ``encoding``: File encoding, e.g. UTF-8 or Cp1252
-    * ``matchRegEx``: Regular expression to map the file path (e.g. /sql/<schema>/120_data/runme.sql) to a specific encoding.
+    * ``matchRegEx``: Regular expression to map the file path (e.g. ``/sql/<schema>/120_data/runme.sql``) to a specific encoding.
     * ``description``: Description
 * ``dependencies``: List of required patches. Before the patch can be installed, the required patches will be checked against the registry tables. If the patches don't exist on the target system, the patch cannot be installed. 
     They have the following attributes: 
@@ -527,12 +568,13 @@ SELECT *
     This is the base query that will be used to determine whether the condition is satisfied: 
     ```
     select count(*) 
-      from #PREFIX#_installer_patches 
-     where (     pat_application=nvl(?,pat_application) 
-              and pat_name=nvl(?,pat_name) 
-              and pat_version=nvl(?,pat_version) 
-              and pat_target_system=?) 
-              and pat_ended_on is not null;
+    from #PREFIX#_installer_patches 
+    where (   pat_application=nvl(?,pat_application) 
+            and pat_name=nvl(?,pat_name) 
+            and pat_reference_id=nvl(?,pat_reference_id) 
+            and pat_version=nvl(?,pat_version) 
+            and pat_target_system=?) 
+            and pat_ended_on is not null
     ```
 
 ### Windows example
@@ -542,7 +584,9 @@ SELECT *
   "application": "",
   "patch": "#PARENT_FOLDER_NAME#",
   "author": "#ENV_OPAL_TOOLS_USER_IDENTITY#",
+  "referenceId": "External-Ref-1",
   "version": "",
+  "extra": "{\"stuff\": \"value\"}",
   "connectionMappings": [
     {
       "connectionPoolName": "jri_test",
@@ -576,6 +620,10 @@ SELECT *
       {
           "application": "myApp",
           "version"    : "1.0.0"
+      },
+      {
+        "application": "myApp",
+        "referenceId": "REF-1"
       }
   ]
 }
@@ -588,7 +636,9 @@ SELECT *
   "application": "",
   "patch": "#PARENT_FOLDER_NAME#",
   "author": "#ENV_OPAL_TOOLS_USER_IDENTITY#",
+  "referenceId": "External-Ref-1",
   "version": "",
+  "extra": "{\"stuff\": \"value\"}",
   "connectionMappings": [
     {
       "connectionPoolName": "jri_test",
@@ -622,6 +672,10 @@ SELECT *
       {
           "application": "myApp",
           "version"    : "1.0.0"
+      },
+      {
+        "application": "myApp",
+        "referenceId": "REF-1"
       }
   ]
 }

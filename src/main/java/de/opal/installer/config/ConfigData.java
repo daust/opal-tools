@@ -13,8 +13,13 @@ public class ConfigData {
 	public String patch;
 	@Expose(serialize = true, deserialize = true)
 	public String author;
+	
+	@Expose(serialize = true, deserialize = true)
+	public String referenceId;
 	@Expose(serialize = true, deserialize = true)
 	public String version;
+	@Expose(serialize = true, deserialize = true)
+	public String extra;
 	@Expose(serialize = true, deserialize = true)
 	public String sqlDir = "sql";
 	@Expose(serialize = true, deserialize = true)
@@ -49,7 +54,7 @@ public class ConfigData {
 
 	@Override
 	public String toString() {
-		return "Application: " + application + "; Patch: " + patch + "; Author: " + author + "; Version: " + version + "; sqlDir: " + sqlDir
+		return "Application: " + application + "; Patch: " + patch+ "; referenceId: " + referenceId + "; Author: " + author + "; Version: " + version + "; extra: " + extra+ "; sqlDir: " + sqlDir
 				+ "; traversalType: " + traversalType + "; staticFiles: "
 				+ (staticFiles == null ? "" : staticFiles.toString()) + "; connections: "
 				+ (connectionMappings == null ? "" : connectionMappings.toString()) + "; sqlFileRegEx: "

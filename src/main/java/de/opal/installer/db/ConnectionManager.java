@@ -139,6 +139,9 @@ public class ConnectionManager {
 			// first determine connection pool definition for data source
 			ConfigConnectionPool configConnectionPool = this.dataSourceDefs.get(dsName);
 			
+			if (configConnectionPool == null)
+				throw new RuntimeException("Connection for data source \"" + dsName + "\" could not be found in connection pool file.");
+			
 			//ConfigConnectionPool configConnectionPool
 			conn = openConnection( configConnectionPool );
 		}else {

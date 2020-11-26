@@ -9,10 +9,12 @@ public class PatchDependency {
 	@Expose(serialize = true, deserialize = true)
 	public String patch;
 	@Expose(serialize = true, deserialize = true)
+	public String referenceId;
+	@Expose(serialize = true, deserialize = true)
 	public String version;
 
 	@Override
 	public String toString() {
-		return "application: " + application + "; patch: " + patch + "; version: " + version;
+		return "application: " + application + "; patch: " + patch+ "; referenceId: " + referenceId + "; version: " + version;
 	}
 }
