@@ -9,6 +9,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -24,10 +25,11 @@ import de.opal.installer.config.ConfigData;
 import de.opal.installer.config.ConfigManager;
 import de.opal.installer.config.ConfigManagerConnectionPool;
 import de.opal.installer.db.ConnectionManager;
-import de.opal.installer.util.FileNode;
 import de.opal.installer.util.Filesystem;
 import de.opal.installer.util.Logfile;
+import de.opal.installer.util.Msg;
 import de.opal.installer.util.Utils;
+import de.opal.utils.ListUtils;
 import de.opal.utils.MsgLog;
 import de.opal.utils.VersionInfo;
 import oracle.dbtools.db.ResultSetFormatter;
@@ -55,6 +57,10 @@ public class Installer {
 	private boolean validateOnly = false; // default is execute
 	private String userIdentity;
 	private List<String> mandatoryAttributes;
+
+	private String patchFilesName;
+	private String patchFilesSourceDir;
+	private String patchFilesTargetDir;
 
 	private boolean noLogging;
 
@@ -88,13 +94,16 @@ public class Installer {
 	}
 
 	public Installer(boolean validateOnly, String configFileName, String connectionPoolFileName, String userIdentity,
-			List<String> mandatoryAttributes, boolean noLogging) throws IOException {
+			List<String> mandatoryAttributes, boolean noLogging, String patchFilesName, String patchFilesSourceDir)
+			throws IOException {
 		this.validateOnly = validateOnly;
 		this.configFileName = configFileName;
 		this.connectionPoolFileName = connectionPoolFileName;
 		this.userIdentity = userIdentity;
 		this.mandatoryAttributes = mandatoryAttributes;
 		this.noLogging = noLogging;
+		this.patchFilesName = patchFilesName;
+		this.patchFilesSourceDir = patchFilesSourceDir;
 
 		this.configManager = new ConfigManager(this.configFileName);
 
@@ -132,6 +141,8 @@ public class Installer {
 		this.connectionManager
 				.initialize(this.configManagerConnectionPools.getConfigDataConnectionPool().connectionPools);
 
+		this.patchFilesTargetDir = this.configManager.getRelativeFilename(configManager.getSqlDir().getAbsolutePath());
+				
 	}
 
 	// empty constructor
@@ -172,7 +183,9 @@ public class Installer {
 	 */
 	public void run() throws Exception {
 		long startTime = System.currentTimeMillis();
-		List<FileNode> fsTree, fsTreeFull;
+		List<PatchFileMapping> fsTree, fsTreeFull;
+		List<PatchFileMapping> fsTreePatchFiles;
+		PatchFilesTxtWrapper patchFilesTxtWrapper = null;
 
 		String logFileDir = this.configManager.getPackageDir().getAbsolutePath() + File.separator + "logs";
 		String logfileName = generateLogFileName(logFileDir, this.configManager.getConfigData().runMode,
@@ -194,6 +207,7 @@ public class Installer {
 			MsgLog.println("** Patch                 : " + this.configManager.getConfigData().patch);
 			MsgLog.println("** Version               : " + this.configManager.getConfigData().version);
 			MsgLog.println("** Author                : " + this.configManager.getConfigData().author);
+
 			MsgLog.println("**");
 			MsgLog.println("** Target system         : "
 					+ this.configManagerConnectionPools.getConfigDataConnectionPool().targetSystem);
@@ -202,13 +216,21 @@ public class Installer {
 			MsgLog.println("** Config File           : " + this.configManager.getConfigFileName());
 			MsgLog.println("** SQL directory         : " + this.configManager.getSqlDir());
 			MsgLog.println("** Connection Pool File  : " + this.configManagerConnectionPools.getConfigFileName());
+
+			MsgLog.println("**");
+			if (this.patchFilesName != null)
+				MsgLog.println("** Patch File            : " + this.patchFilesName);
+			if (this.patchFilesSourceDir != null)
+				MsgLog.println("** Patch File Source Dir : " + this.patchFilesSourceDir);
+			if (this.patchFilesTargetDir != null)
+				MsgLog.println("** Patch File Target Dir : " + this.patchFilesTargetDir);
+
 			MsgLog.println("**");
 			MsgLog.println("** File Encoding (System): " + System.getProperty("file.encoding"));
 			MsgLog.println("** Current User          : " + this.userIdentity);
 			MsgLog.println("*************************\n");
 
 			// check patch dependencies first, can we install?
-
 			if (this.configManager.getConfigData().registryTargets != null
 					&& this.configManager.getConfigData().registryTargets.size() > 0
 					&& this.configManager.getConfigData().dependencies != null
@@ -234,13 +256,30 @@ public class Installer {
 			// scan all files in tree and store in TreeFull
 			fsTreeFull = fs.scanTree();
 
+
 			// different traversal strategies, generate ordered list of files to process
 			if (configManager.getTraversalType() == ConfigManager.TraversalType.STATIC_FILES) {
 				fsTree = fs.filterTreeStaticFiles(fsTreeFull, configManager.getConfigData().staticFiles);
 			} else {
 				fsTree = fs.filterTreeInorder(fsTreeFull, configManager.getConfigData().sqlFileRegEx, logfile,
 						configManager);
+				
+				// scan files from PatchFiles.txt and merge with list
+				if (this.patchFilesName != null) {
+					patchFilesTxtWrapper = new PatchFilesTxtWrapper(this.patchFilesName, this.patchFilesSourceDir,
+							this.patchFilesTargetDir);
+					fsTreePatchFiles = patchFilesTxtWrapper.getFileList();
+					if (fsTreePatchFiles != null)
+						log.debug(fsTreePatchFiles.toString());
+					
+					//Collections.sort(fsTree);
+					//Collections.sort(fsTreePatchFiles);
+					//fsTree = ListUtils.mergeWithIterator(fsTree, fsTreePatchFiles);
+					fsTree.addAll(fsTreePatchFiles);
+					Collections.sort(fsTree);
+				}
 			}
+			fs.displayTree(fsTree, configManager.getConfigData().sqlFileRegEx, configManager);
 			Utils.waitForEnter("\nPlease press <enter> to start the process ("
 					+ this.configManager.getConfigData().runMode + ") ...");
 			if (!this.noLogging)
@@ -272,8 +311,8 @@ public class Installer {
 						this.patchRegistry = new PatchRegistry(this.configManager.getConfigData().registryTargets,
 								this);
 					this.patchRegistry.registerPatch(configManager.getConfigData().application,
-							configManager.getConfigData().patch, configManager.getConfigData().referenceId,configManager.getConfigData().extra,
-							configManager.getConfigData().version,
+							configManager.getConfigData().patch, configManager.getConfigData().referenceId,
+							configManager.getConfigData().extra, configManager.getConfigData().version,
 							configManager.getConfigData().author, configManager.getConfigFileName(),
 							configManagerConnectionPools.getConfigFileName(), releaseNotesContents,
 							configManagerConnectionPools.getConfigDataConnectionPool().targetSystem);
@@ -424,13 +463,23 @@ public class Installer {
 	 * @throws SQLException
 	 * @throws IOException
 	 */
-	private void processTree(List<FileNode> tree) throws SQLException, IOException {
+	private void processTree(List<PatchFileMapping> tree) throws SQLException, IOException {
 		log.debug("*** processTree");
 
-		for (FileNode fileNode : tree) {
-			log.debug("process file: " + fileNode.getFile().getAbsolutePath());
-			ScriptExecutor sqlcl = this.getScriptExecutor(fileNode.getFile().getAbsolutePath());
-			executeFile(fileNode.getFile(), sqlcl);
+		for (PatchFileMapping fileMapping : tree) {
+			log.debug("process file: " + fileMapping.destFile.getAbsolutePath());
+			ScriptExecutor sqlcl = null;
+			
+			if (fileMapping.srcFile!=null) {
+				// execute referenced file
+				// determine the connectionMapping based on the target file ... then execute the source file
+				sqlcl = this.getScriptExecutor(fileMapping.destFile.getAbsolutePath());
+				executeFile(fileMapping.srcFile, sqlcl);
+			} else {
+				// execute file in tree
+				sqlcl = this.getScriptExecutor(fileMapping.destFile.getAbsolutePath());
+				executeFile(fileMapping.destFile, sqlcl);
+			}
 		}
 	}
 
@@ -448,8 +497,7 @@ public class Installer {
 		BufferedOutputStream buf = new BufferedOutputStream(bout);
 		sqlcl.setOut(buf);
 
-		String baseDirectoryName = configManager.getPackageDirName();
-		String relativeFilename = file.getAbsolutePath().replace(baseDirectoryName, "");
+		String relativeFilename = configManager.getRelativeFilename(file.getAbsolutePath());
 
 		// enable all REST commands
 		CommandRegistry.addForAllStmtsListener(RESTCommand.class, StmtSubType.G_S_FORALLSTMTS_STMTSUBTYPE);
@@ -490,7 +538,7 @@ public class Installer {
 			SQLclUtil.resetErrStream();
 			if (!newErrString.isEmpty())
 				System.err.println(newErrString);
-			
+
 			String results = bout.toString("UTF8");
 			results = results.replaceAll(" force_print\n", "");
 			MsgLog.println(results);
@@ -528,11 +576,12 @@ public class Installer {
 			results = results.replaceAll(" force_print\n", "");
 
 			// suppress output when "name is already used by existing object
-			// suppress output when "ORA-01430: Angefügte Spalte bereits in Tabelle vorhanden"
+			// suppress output when "ORA-01430: Angefügte Spalte bereits in Tabelle
+			// vorhanden"
 			if (!results.contains("ORA-00955") && !results.contains("ORA-01430")) {
 				MsgLog.println(results);
 			}
-			
+
 		}
 	}
 

@@ -50,6 +50,11 @@ public class InstallerMain {
 	@Option(name = "--no-logging", usage = "disable writing a logfile")
 	private boolean noLogging = false;
 
+	@Option(name = "--source-files-filename", usage = "patch file name, e.g. SourceFilesReference.txt", metaVar = "<filename>", depends = {"--source-dir"})
+	private String patchFilesName;
+	
+	@Option(name = "--source-dir", usage = "path to the source directory, e.g. ../src/sql", metaVar = "<path>", depends = {"--source-files-filename"})
+	private String patchFilesSourceDir;
 
 	/**
 	 * Main entry point to the Installer
@@ -68,7 +73,7 @@ public class InstallerMain {
 
 		Installer installer = new Installer(installerMain.validateOnly, installerMain.configFileName,
 				installerMain.connectionPoolFile, installerMain.userIdentity, installerMain.mandatoryAttributes,
-				installerMain.noLogging);
+				installerMain.noLogging, installerMain.patchFilesName, installerMain.patchFilesSourceDir);
 		installer.run();
 
 		MsgLog.println("\n*** done.");

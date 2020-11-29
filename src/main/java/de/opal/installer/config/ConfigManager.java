@@ -261,6 +261,11 @@ public class ConfigManager {
 		ArrayList<ConfigEncodingMapping> encodingMappings;
 		String encoding = "";
 
+		// when looking for a match then we need to prefix with / or \ because the old
+		// regular expressions start with / or \ and not sql
+		if (filename.startsWith("sql"))
+			filename=File.separator+filename;
+		
 		log.debug("determine encoding for file: " + filename);
 
 		// first find matching dataSource
@@ -283,6 +288,17 @@ public class ConfigManager {
 		}
 
 		return encoding;
+	}
+	
+	public String getRelativeFilename(String filename) {
+		String relativeFilename=null;
+		
+		if (filename==null)
+			return null;
+		
+		relativeFilename = filename.replace(this.getPackageDirName()+File.separator, "");
+		
+		return relativeFilename;
 	}
 
 }

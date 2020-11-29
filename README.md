@@ -232,7 +232,7 @@ copy sw files from :C:\Projects\opal-tools-2.2.0-sqlcl-20.3.0\conf
 copy template directory from: C:\Projects\opal-tools-2.2.0-sqlcl-20.3.0\configure-templates\patch-template
                         to  : C:\Projects\project1\patch-template
 
-  process file 1.copy-patch-files.cmd
+  process file 1.copy-source-files.cmd
   process file 2.validate-patch-#ENV#.cmd
   process file 3.install-patch-#ENV#.cmd
   process file opal-installer.json
@@ -253,7 +253,7 @@ process bin directory
   process file export-schema-#SCHEMA#.cmd
   process file initialize-patch.cmd
   process file opal-export.cmd
-  process file opal-install-copy-patch-files.cmd
+  process file opal-install-copy-source-files.cmd
   process file opal-install-copy-template.cmd
   process file opal-install.cmd
   process file opal-validate-connections.cmd
@@ -374,7 +374,7 @@ The exporter comes with a specific setup that will work in many cases. If you ha
 The installer comes with a specific setup that will work in many cases. If you have other requirements, here is a description of the command line switches that you can use: 
 
 ```
- -h (--help)                                      : show this help page (Vorgabe: false)
+ -h (--help)                                      : show this help page (Vorgabe: true)
  --connection-pool-file <file>                    : connection pool file
                                                     e.g.: connections-dev.json
  --config-file <file>                             : configuration file
@@ -384,6 +384,8 @@ The installer comes with a specific setup that will work in many cases. If you h
  --mandatory-attributes <attr1> [<attr2>] ... [n] : list of attributes that must not be null,
                                                     e.g. patch author version
  --no-logging                                     : disable writing a logfile (Vorgabe: false)
+ --source-files-filename <filename>               : patch file name, e.g. SourceFilesReference.txt
+ --source-dir <path>                              : path to the source directory, e.g. ../src/sql
 ```
 
 # Usage
@@ -427,7 +429,7 @@ In the file ``ReleaseNotes.txt`` you can record all changes that are included in
 
 ## Copy files from the source directory to the patch directory
 
-The file ``1.copy-patch-files.cmd|sh`` is configured to copy files from the source directory ``sql`` to the target directory ``<patch name>/sql``. In the file ``PatchFiles.txt`` you only configure, which files you want to have copied. 
+The file ``1.copy-source-files.cmd|sh`` is configured to copy files from the source directory ``sql`` to the target directory ``<patch name>/sql``. In the file ``SourceFilesCopy.txt`` you only configure, which files you want to have copied. 
 
 E.g.: 
 <pre style="overflow-x: auto; white-space: pre-wrap; white-space: -moz-pre-wrap; white-space: -pre-wrap; white-space: -o-pre-wrap; word-wrap: break-word;">
@@ -457,7 +459,7 @@ Only tables (i.e. files) which match the wildcard ``xlib*.sql`` will be copied t
 
 The mappings have a predefined structure, so that the number of possible Oracle errors are minimized, e.g. we install the tables before the referential constraints, we install the package specifications before the package bodies and so forth. 
 
-If you use a different layout, then you can easily modify the file ``PatchFiles.txt`` in the patch template. The Java application will only create the directories when there are files to be copied. 
+If you use a different layout, then you can easily modify the file ``SourceFilesCopy.txt`` in the patch template. The Java application will only create the directories when there are files to be copied. 
 
 ## Put all files into the subdirectories of the patch directory
 
@@ -563,6 +565,7 @@ DET_PAT_ID                NUMBER
     They have the following attributes: 
     * ``application``: Name of the application
     * ``patch``: Name of the patch
+    * ``referenceId``: This is just a custom field to link this patch to other external tools you are using. It is a text string. 
     * ``version``: Version of the patch
 
     This is the base query that will be used to determine whether the condition is satisfied: 
