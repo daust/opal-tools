@@ -343,6 +343,8 @@ jri_test/packages => jri_test/100_package_bodies
 xlib*.pkb
 
 *) create script to alter a table
+mkdir sql/jri_test/040_tables
+
 vi sql/jri_test/040_tables/alter_table_dummy.sql
 
 drop table dummy;
@@ -356,15 +358,11 @@ alter table dummy(my_val varchar2(100));
 drop table opal2_installer_details;
 drop table opal2_installer_patches;
 
-delete from opal2_installer_details;
-delete from opal2_installer_patches;
-commit;
-
 *) install patch
 - add JIRA-123 to ReleaseNotes.txt
 - add registryTargets to the patch definition
 { connectionPoolName="jri_test", "tablePrefix": "OPAL2" }
-- run 3.install-patch-dev.cmd
+./3.install-patch-dev.sh
 
 *) check patch registry
 SELECT *
@@ -377,12 +375,10 @@ SELECT *
 
 *) check logfile
 
-*) change passwords in connection pool
-- set wrong password
-- validate connection pool
-- correct password
-- validate connection pool
- 
+-----------------------------------------------------------------------------
+-- Continue on WINDOWS
+-----------------------------------------------------------------------------
+
 *) actual project setup  
 
 cd %FILE%
