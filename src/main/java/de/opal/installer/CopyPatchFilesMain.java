@@ -40,10 +40,10 @@ public class CopyPatchFilesMain {
 	@Option(name = "-v", aliases = "--version", usage = "show version information", help = true)
 	private boolean showVersion;
 
-	@Option(name = "--source-path", usage = "path to the template directory structure", metaVar = "<path>", required = true)
+	@Option(name = "--source-path", usage = "path to the source directory, e.g. ../src/sql", metaVar = "<path>", required = true)
 	private String sourcePathName;
 
-	@Option(name = "--target-path", usage = "target path for the patch", metaVar = "<path>", required = true)
+	@Option(name = "--target-path", usage = "path to the target directory, e.g. ./sql", metaVar = "<path>", required = true)
 	private String targetPathName;
 
 	@Option(name = "--patch-file-name", usage = "target path for the patch", metaVar = "<path>", required = true)

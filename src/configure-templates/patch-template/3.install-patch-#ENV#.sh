@@ -14,5 +14,8 @@ SCRIPT_DIR=`dirname $0`
 
 opal-install.sh --config-file "${SCRIPT_DIR}/opal-installer.json" \
                 --connection-pool-file "${OPAL_TOOLS_USER_CONFIG_DIR}/connections-#ENV#.json" \
-                --mandatory-attributes application patch author version
+                --mandatory-attributes application patch author version \
+                --source-files-filename SourceFilesReference.txt \
+                --source-dir "${OPAL_TOOLS_SRC_SQL_DIR}"
+
                 

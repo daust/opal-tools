@@ -103,7 +103,6 @@ cd /tmp/project1/patches/2020/patch1
 
 *) opal-export
 
-java de.opal.exporter.ExporterMain [options...]
  -h (--help)                                                : show this help page (Vorgabe: false)
  -v (--version)                                             : show version information (Vorgabe: false)
  --url <jdbc url>                                           : database connection jdbc url,
@@ -159,8 +158,7 @@ java de.opal.exporter.ExporterMain [options...]
 
 *) opal-install
 
-java de.opal.installer.InstallerMain [options...]
- -h (--help)                                      : show this help page (Vorgabe: false)
+ -h (--help)                                      : show this help page (Vorgabe: true)
  --connection-pool-file <file>                    : connection pool file
                                                     e.g.: connections-dev.json
  --config-file <file>                             : configuration file
@@ -170,19 +168,19 @@ java de.opal.installer.InstallerMain [options...]
  --mandatory-attributes <attr1> [<attr2>] ... [n] : list of attributes that must not be null,
                                                     e.g. patch author version
  --no-logging                                     : disable writing a logfile (Vorgabe: false)
+ --source-files-filename <filename>               : patch file name, e.g. SourceFilesReference.txt
+ --source-dir <path>                              : path to the source directory, e.g. ../src/sql
 
-*) opal-install-copy-patch-files
+*) opal-install-copy-source-files
 
-java de.opal.installer.CopyPatchFiles [options...]
  -h (--help)              : show this help page (Vorgabe: false)
  -v (--version)           : show version information (Vorgabe: false)
- --source-path <path>     : path to the template directory structure
- --target-path <path>     : target path for the patch
+ --source-path <path>     : path to the source directory, e.g. ../src/sql
+ --target-path <path>     : path to the target directory, e.g. ./sql
  --patch-file-name <path> : target path for the patch
 
  *) opal-install-copy-template
 
- java de.opal.installer.CopyPatchTemplate [options...]
  -h (--help)          : show this help page (Vorgabe: false)
  -v (--version)       : show version information (Vorgabe: false)
  --source-path <path> : path to the template directory structure
@@ -190,10 +188,8 @@ java de.opal.installer.CopyPatchFiles [options...]
 
  *) opal-install-validate-connection
 
- java de.opal.utils.ValidateConnectionsMain [options...] <connection pool file1> [<connection pool file2>] [<connection pool file3>]
  -h (--help)    : show this help page (Vorgabe: false)
  -v (--version) : show version information (Vorgabe: false)
-
 
 -----------------------------------------------------------------------------
 -- installation scenarios
@@ -291,7 +287,157 @@ sql-exported\it4fm\package => ....
 sql-manual\it4fm\package => ....
 
 -----------------------------------------------------------------------------
--- Demo
+-- Demo Mac
+-----------------------------------------------------------------------------
+
+rm -rf /tmp/project1
+cd /Users/daust/Dropbox/50.Projects/github/opal-tools/build/install/opal-tools
+./setup.sh -s --project-root-dir /tmp/project1
+
+- schemas: jri_test
+- environments: dev
+- colors: green
+
+- connect with proxy user daust[jri_test]
+=> wrong password
+
+*) go to project
+cd /tmp/project1
+
+*) source environment
+. conf-user/setProjectEnvironment.sh
+
+*) validate connection pools
+validate-connections.sh
+
+*) correct connection pool
+vi /tmp/project1/conf-user/connections-dev.json
+validate-connections.sh
+
+*) export schema objects with prompt
+export-schema-jri_test-prompt-with-filter.sh
+
+*) export full schema
+export-schema-jri_test.sh
+
+"xlib*"
+opal2%% "*log*"
+
+*) initialize patch
+jira_123
+
+*) reference patch files
+vi SourceFilesReference.txt
+
+# Tables
+jri_test/tables => jri_test/040_tables
+*log*
+xlib*
+
+# Package Headers
+jri_test/packages => jri_test/090_packages
+xlib*.pks
+
+# Package Bodies
+jri_test/packages => jri_test/100_package_bodies
+xlib*.pkb
+
+*) create script to alter a table
+vi sql/jri_test/040_tables/alter_table_dummy.sql
+
+drop table dummy;
+create table dummy(id number);
+alter table dummy(my_val varchar2(100));
+
+*) validate patch
+./2.validate-patch-dev.sh
+
+*) remove patch registry if exists
+drop table opal2_installer_details;
+drop table opal2_installer_patches;
+
+delete from opal2_installer_details;
+delete from opal2_installer_patches;
+commit;
+
+*) install patch
+- add JIRA-123 to ReleaseNotes.txt
+- add registryTargets to the patch definition
+{ connectionPoolName="jri_test", "tablePrefix": "OPAL2" }
+- run 3.install-patch-dev.cmd
+
+*) check patch registry
+SELECT *
+  FROM opal2_installer_patches
+ ORDER BY pat_id DESC;
+    
+SELECT *
+  FROM opal2_installer_details
+ ORDER BY det_id DESC;    
+
+*) check logfile
+
+*) change passwords in connection pool
+- set wrong password
+- validate connection pool
+- correct password
+- validate connection pool
+ 
+*) actual project setup  
+
+cd %FILE%
+
+setup.cmd -s ^
+--project-root-dir "c:\Projects\project 1" ^
+--software-dir "%PROJECT_ROOT%\00.ProjectStandards\opal-tools" ^
+--template-dir "%PROJECT_ROOT%\00.ProjectStandards\Patch-Template" ^
+--local-config-dir "c:\Projects\conf-user" ^
+--environment-script "c:\Projects\conf-user\setProject1.cmd" ^
+--db-source-dir "%PROJECT_ROOT%\40.Implementation\Sources\sql" ^
+--patch-dir "%PROJECT_ROOT%\40.Implementation\Patches" ^
+--schemas jri_test test ^
+--environments dev test prod ^
+--environment-colors green yellow red ^
+--export-environment dev ^
+--file-encoding UTF-8
+
+*) move files from \bin directory into 40.Implementation ...
+
+*) initialize patch jri-123
+
+*) copy files
+
+*) validate test
+- add registryTargets to the patch definition
+{ connectionPoolName="jri_test", "tablePrefix": "OPAL2" }
+- run 3.install-patch-dev.cmd
+
+*) install dev
+*) install prod
+*) check 
+
+*) check patch registry
+SELECT *
+  FROM opal2_installer_patches
+ ORDER BY pat_id DESC;
+    
+SELECT *
+  FROM opal2_installer_details
+ ORDER BY det_id DESC;    
+ 
+*) use different directories for the installer
+- sql/010_jri_test
+- sql/020_test
+- sql/030_jri_test
+
+
+*) export apex application
+
+*) export ords module
+ 
+
+-----------------------------------------------------------------------------
+-- Demo Windows
 -----------------------------------------------------------------------------
 
 set FILE=opal-tools-2.2.0-sqlcl-20.3.0

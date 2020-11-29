@@ -12,6 +12,7 @@ import java.util.regex.Pattern;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import de.opal.installer.PatchFileMapping;
 import de.opal.installer.config.ConfigManager;
 import de.opal.utils.MsgLog;
 
@@ -48,9 +49,9 @@ public class Filesystem {
 	 * scanTree() - load tree into memory
 	 * 
 	 */
-	public List<FileNode> scanTree() {
+	public List<PatchFileMapping> scanTree() {
 
-		List<FileNode> fileList = new ArrayList<FileNode>();
+		List<PatchFileMapping> fileList = new ArrayList<PatchFileMapping>();
 
 		log.debug("\n*** Scan Tree: directory: " + baseDirName);
 		// MsgLog.println("\ntraversalType: " + traversalType.toString());
@@ -61,7 +62,7 @@ public class Filesystem {
 			// path.toString().endsWith(".sql"))
 			Files.walk(start).sorted().filter(path -> path.toFile().isFile()).forEach(path -> {
 				log.debug(path.toString());
-				fileList.add(new FileNode(path.toFile()));
+				fileList.add(new PatchFileMapping(null, path.toFile()));
 			});
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -78,10 +79,10 @@ public class Filesystem {
 	 * @return
 	 * @throws IOException
 	 */
-	public List<FileNode> filterTreeInorder(List<FileNode> srcFileList, String sqlFileRegEx, Logfile logfile,
-			ConfigManager configManager) throws IOException {
+	public List<PatchFileMapping> filterTreeInorder(List<PatchFileMapping> srcFileList, String sqlFileRegEx,
+			Logfile logfile, ConfigManager configManager) throws IOException {
 
-		List<FileNode> fileList = new ArrayList<FileNode>();
+		List<PatchFileMapping> fileList = new ArrayList<PatchFileMapping>();
 
 		log.debug("\n*** filterTreeInorder ");
 		log.debug("\nregex: " + sqlFileRegEx);
@@ -90,26 +91,46 @@ public class Filesystem {
 
 		Pattern p = Pattern.compile(sqlFileRegEx);
 
-		for (FileNode fileNode : srcFileList) {
-			String baseDirectoryName=configManager.getPackageDirName();
-			String relativeFilename = fileNode.getFile().getAbsolutePath()
-					.replace(baseDirectoryName, "");
+		for (PatchFileMapping fileMapping : srcFileList) {
+			String relativeFilename = configManager.getRelativeFilename(fileMapping.destFile.getAbsolutePath());
 
 			if (p.matcher(relativeFilename).find()) {
-				String overrideEncoding = configManager.getEncoding(relativeFilename);
-				if (overrideEncoding.isEmpty()) {
-					MsgLog.println("file: (system encoding) - " + relativeFilename);
-				} else {
-					MsgLog.println(
-							"file: (override encoding: " + overrideEncoding + ") - " + relativeFilename);
-				}
-
-				//MsgLog.println("file: " + fileNode.getFile().toString());
-				fileList.add(fileNode);
+				//String overrideEncoding = configManager.getEncoding(relativeFilename);
+				/*
+				 * if (overrideEncoding.isEmpty()) { MsgLog.println("file: (system encoding) - "
+				 * + relativeFilename); } else { MsgLog.println("file: (override encoding: " +
+				 * overrideEncoding + ") - " + relativeFilename); }
+				 */
+				// MsgLog.println("file: " + fileNode.getFile().toString());
+				fileList.add(fileMapping);
 			}
 		}
 
 		return fileList;
+	}
+
+	public void displayTree(List<PatchFileMapping> srcFileList, String sqlFileRegEx, ConfigManager configManager)
+			throws IOException {
+
+		log.debug("\n*** displayTree ");
+		log.debug("\nregex: " + sqlFileRegEx);
+
+		Pattern p = Pattern.compile(sqlFileRegEx);
+
+		for (PatchFileMapping fileMapping : srcFileList) {
+			String relativeFilename = configManager.getRelativeFilename(fileMapping.destFile.getAbsolutePath());
+
+			String referenceFileString="";
+			if (fileMapping.srcFile !=null)
+				referenceFileString = " (=> Ref: " + fileMapping.srcFile.getPath() + ")";
+			
+			String overrideEncoding = configManager.getEncoding(relativeFilename);
+			if (overrideEncoding.isEmpty()) {
+				MsgLog.println("file: (system encoding) - " + relativeFilename + referenceFileString);
+			} else {
+				MsgLog.println("file: (override encoding: " + overrideEncoding + ") - " + relativeFilename + referenceFileString);
+			}
+		}
 	}
 
 	/**
@@ -117,21 +138,22 @@ public class Filesystem {
 	 * 
 	 * @param srcFileList
 	 * @return
-	 * @throws IOException 
+	 * @throws IOException
 	 */
-	public List<FileNode> filterTreeStaticFiles(List<FileNode> srcFileList, ArrayList<String> staticFiles) throws IOException {
+	public List<PatchFileMapping> filterTreeStaticFiles(List<PatchFileMapping> srcFileList,
+			ArrayList<String> staticFiles) throws IOException {
 
-		List<FileNode> fileList = new ArrayList<FileNode>();
+		List<PatchFileMapping> fileList = new ArrayList<PatchFileMapping>();
 
 		log.debug("\n*** filterTreeStaticFiles ");
 		log.debug("\nstaticFiles: " + staticFiles.toString());
 
 		for (String staticFile : staticFiles) {
-			for (FileNode fileNode : srcFileList) {
+			for (PatchFileMapping fileMapping : srcFileList) {
 
-				if (fileNode.getFile().getName().equals(staticFile)) {
-					MsgLog.println("file: " + fileNode.getFile().toString());
-					fileList.add(fileNode);
+				if (fileMapping.destFile.getName().equals(staticFile)) {
+					MsgLog.println("file: " + fileMapping.destFile.toString());
+					fileList.add(fileMapping);
 				}
 			}
 
