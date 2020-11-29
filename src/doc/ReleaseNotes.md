@@ -12,7 +12,11 @@ You can see the full list of issues with details in the [milestones page](https:
   * see [milestones page](https://github.com/daust/opal-tools/milestone/7?closed=1)
 
 ## Changed behaviour
-  * *none*
+  * the file ``PatchFiles.txt`` is split into two files: 
+    - ``SourceFilesCopy.txt`` (picked up by 1.copy-source-files)
+    - ``SourceFilesReference.txt`` (picked up by 2.validate and 3.install)
+  * the script ``opal-tools/bin/opal-copy-patch-files.sh|cmd`` is renamed to ``opal-tools/bin/opal-copy-source-files.sh|cmd``
+  * the patch script ``1.copy-patch-files.sh|cmd`` is renamed to ``1.copy-source-files.sh|cmd``
 
 ## Deprecated features (still available but will go away eventually)
   * *none*
