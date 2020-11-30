@@ -22,6 +22,9 @@ You can see the full list of issues with details in the [milestones page](https:
     - ``--source-list-file``
     - ``--source-dir``
     - ``--target-dir``
+  * the file ``opal-tools/bin/initialize-patch.sh|cmd`` is modified, the command line switches have changed for the copy command: 
+    - ``--source-dir``
+    - ``--target-dir``
 
 ## Deprecated features (still available but will go away eventually)
   * *none*

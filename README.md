@@ -31,7 +31,7 @@ You can choose to work directly in the database, purely from the filesystem ... 
 
 ## The installer
 
-The installer uses SQLcl under the hood to actually run the SQL scripts. The core engine is very simple. It will execute SQL files which it finds in the filesystem. 
+The installer uses SQLcl under the hood to actually run the SQL scripts. The core engine is very simple. It will execute SQL files which it finds by iterating through the filesystem and listing all files that exist. 
 
 It uses regular expressions in order to figure out a mapping between a file system path and the matching connection pool. 
 
@@ -374,7 +374,7 @@ The exporter comes with a specific setup that will work in many cases. If you ha
 The installer comes with a specific setup that will work in many cases. If you have other requirements, here is a description of the command line switches that you can use: 
 
 ```
- -h (--help)                                      : show this help page (Vorgabe: true)
+ -h (--help)                                      : show this help page (Vorgabe: false)
  --connection-pool-file <file>                    : connection pool file
                                                     e.g.: connections-dev.json
  --config-file <file>                             : configuration file
@@ -384,7 +384,7 @@ The installer comes with a specific setup that will work in many cases. If you h
  --mandatory-attributes <attr1> [<attr2>] ... [n] : list of attributes that must not be null,
                                                     e.g. patch author version
  --no-logging                                     : disable writing a logfile (Vorgabe: false)
- --source-files-filename <filename>               : patch file name, e.g. SourceFilesReference.txt
+ --source-list-file <filename>                    : source file name, e.g. SourceFilesReference.txt
  --source-dir <path>                              : path to the source directory, e.g. ../src/sql
 ```
 
