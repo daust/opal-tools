@@ -158,7 +158,7 @@ cd /tmp/project1/patches/2020/patch1
 
 *) opal-install
 
- -h (--help)                                      : show this help page (Vorgabe: true)
+ -h (--help)                                      : show this help page (Vorgabe: false)
  --connection-pool-file <file>                    : connection pool file
                                                     e.g.: connections-dev.json
  --config-file <file>                             : configuration file
@@ -168,23 +168,23 @@ cd /tmp/project1/patches/2020/patch1
  --mandatory-attributes <attr1> [<attr2>] ... [n] : list of attributes that must not be null,
                                                     e.g. patch author version
  --no-logging                                     : disable writing a logfile (Vorgabe: false)
- --source-files-filename <filename>               : patch file name, e.g. SourceFilesReference.txt
+ --source-list-file <filename>                    : source file name, e.g. SourceFilesReference.txt
  --source-dir <path>                              : path to the source directory, e.g. ../src/sql
 
 *) opal-install-copy-source-files
 
- -h (--help)              : show this help page (Vorgabe: false)
- -v (--version)           : show version information (Vorgabe: false)
- --source-path <path>     : path to the source directory, e.g. ../src/sql
- --target-path <path>     : path to the target directory, e.g. ./sql
- --patch-file-name <path> : target path for the patch
+ -h (--help)               : show this help page (Vorgabe: false)
+ -v (--version)            : show version information (Vorgabe: false)
+ --source-dir <directory>  : source directory, e.g. ../src/sql
+ --source-list-file <file> : file that contains the sources to be copied, e.g. SourceFilesCopy.txt
+ --target-dir <directory>  : target directory, e.g. ./sql
 
  *) opal-install-copy-template
 
- -h (--help)          : show this help page (Vorgabe: false)
- -v (--version)       : show version information (Vorgabe: false)
- --source-path <path> : path to the template directory structure
- --target-path <path> : target path for the patch
+ -h (--help)              : show this help page (Vorgabe: false)
+ -v (--version)           : show version information (Vorgabe: false)
+ --source-dir <directory> : template directory
+ --target-dir <directory> : target directory for the patch
 
  *) opal-install-validate-connection
 
