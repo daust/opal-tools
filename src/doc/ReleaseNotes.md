@@ -3,13 +3,13 @@
 
 # Version 2.4.1 (release: 30.11.2020)
 
-You can see the full list of issues with details in the [milestones page](https://github.com/daust/opal-tools/milestone/7?closed=1). 
+You can see the full list of issues with details in the [milestones page](https://github.com/daust/opal-tools/milestone/8?closed=1). 
 
 ## New features
-  * see [milestones page](https://github.com/daust/opal-tools/milestone/7?closed=1)
+  * see [milestones page](https://github.com/daust/opal-tools/milestone/8?closed=1)
 
 ## Bug fixes
-  * see [milestones page](https://github.com/daust/opal-tools/milestone/7?closed=1)
+  * see [milestones page](https://github.com/daust/opal-tools/milestone/8?closed=1)
 
 ## Changed behaviour
   * the file ``PatchFiles.txt`` is split into two files: 
