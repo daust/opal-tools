@@ -19,8 +19,8 @@ import de.opal.installer.util.Msg;
 import de.opal.utils.OpalFileUtils;
 import de.opal.utils.VersionInfo;
 
-public class CopyPatchFilesMain {
-	public static final Logger log = LoggerFactory.getLogger(CopyPatchFilesMain.class.getName());
+public class CopySourceFilesMain {
+	public static final Logger log = LoggerFactory.getLogger(CopySourceFilesMain.class.getName());
 
 	private String currentSourcePathName = "";
 	private String currentTargetPathName = "";
@@ -40,23 +40,24 @@ public class CopyPatchFilesMain {
 	@Option(name = "-v", aliases = "--version", usage = "show version information", help = true)
 	private boolean showVersion;
 
-	@Option(name = "--source-path", usage = "path to the source directory, e.g. ../src/sql", metaVar = "<path>", required = true)
+	@Option(name = "--source-dir", usage = "source directory, e.g. ../src/sql", metaVar = "<directory>", required = true)
 	private String sourcePathName;
 
-	@Option(name = "--target-path", usage = "path to the target directory, e.g. ./sql", metaVar = "<path>", required = true)
+	@Option(name = "--source-list-file", usage = "file that contains the sources to be copied, e.g. SourceFilesCopy.txt", metaVar = "<file>", required = true)
+	private String sourceFilesName;
+
+	@Option(name = "--target-dir", usage = "target directory, e.g. ./sql", metaVar = "<directory>", required = true)
 	private String targetPathName;
 
-	@Option(name = "--patch-file-name", usage = "target path for the patch", metaVar = "<path>", required = true)
-	private String patchFilesName;
 
-	public CopyPatchFilesMain() {
+	public CopySourceFilesMain() {
 
 	}
 
 	public static void main(String[] args) throws SQLException, IOException {
 
 		log.info("*** start");
-		CopyPatchFilesMain main = new CopyPatchFilesMain();
+		CopySourceFilesMain main = new CopySourceFilesMain();
 		main.run(args);
 
 		log.info("*** end");
@@ -108,7 +109,7 @@ public class CopyPatchFilesMain {
 	}
 
 	private void showUsage(PrintStream out, CmdLineParser parser) {
-		out.println("\njava de.opal.installer.CopyPatchFiles [options...]");
+		out.println("\njava de.opal.installer.CopySourceFiles [options...]");
 
 		// print the list of available options
 		parser.printUsage(out);
@@ -117,7 +118,7 @@ public class CopyPatchFilesMain {
 
 		// print option sample. This is useful some time
 		out.println(
-				"  Example: java de.opal.installer.CopyPatchFiles" + parser.printExample(OptionHandlerFilter.PUBLIC));
+				"  Example: java de.opal.installer.CopySourceFiles" + parser.printExample(OptionHandlerFilter.PUBLIC));
 	}
 
 	public void run(String[] args) throws IOException {
@@ -134,10 +135,10 @@ public class CopyPatchFilesMain {
 		setRelativePaths(null, null);
 
 		Msg.println("copy files from:" + this.sourcePathName + "\n           to  :" + this.targetPathName + "\n");
-		Msg.println("process patch file listing in: " + this.patchFilesName + "\n");
+		Msg.println("process source file listing in: " + this.sourceFilesName + "\n");
 
 		// read file line by line
-		try (BufferedReader br = new BufferedReader(new FileReader(this.patchFilesName))) {
+		try (BufferedReader br = new BufferedReader(new FileReader(this.sourceFilesName))) {
 
 			String line;
 			while ((line = br.readLine()) != null) {

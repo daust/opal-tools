@@ -17,6 +17,6 @@ opal-install.sh --validate-only \
                 --connection-pool-file "${OPAL_TOOLS_USER_CONFIG_DIR}/connections-#ENV#.json" \
                 --mandatory-attributes application patch author version \
                 --no-logging \
-                --source-files-filename SourceFilesReference.txt \
+                --source-list-file SourceFilesReference.txt \
                 --source-dir "${OPAL_TOOLS_SRC_SQL_DIR}"
                 
