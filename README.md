@@ -461,6 +461,44 @@ The mappings have a predefined structure, so that the number of possible Oracle 
 
 If you use a different layout, then you can easily modify the file ``SourceFilesCopy.txt`` in the patch template. The Java application will only create the directories when there are files to be copied. 
 
+## Reference files from the source directory in your patch
+
+Sometimes you might prefer not to copy the files but only to *reference* the source files like packages, views, types, triggers, etc. from your source tree. 
+
+In that case you have to register all files that you want in the patch in the file ``SourceFilesReference.txt``. They will not be copied to the target patch directory ... but used in the sort order as if they were copied. Their virtual target path will be used to determine the order of the execution of the file. But the actual file will reside in the source tree. 
+
+E.g.: 
+<pre style="overflow-x: auto; white-space: pre-wrap; white-space: -moz-pre-wrap; white-space: -pre-wrap; white-space: -o-pre-wrap; word-wrap: break-word;">
+#----------------------------------------------------------
+# Schema: jri_test 
+#----------------------------------------------------------
+
+# Preinstall => jri_test/010_preinstall
+
+# Synonyms
+jri_test/synonyms => jri_test/010_preinstall
+
+# Sequences
+jri_test/sequences => jri_test/020_sequences
+
+# Types
+jri_test/types => jri_test/030_types
+
+# Tables
+jri_test/tables => jri_test/040_tables
+<b>xlib*.sql</b>
+
+...
+</pre>
+
+Only tables (i.e. files) which match the wildcard ``xlib*.sql`` will be referenced from the source tree and treated as if they would actually reside in the target directory ``<patch name>/sql/jri_test/040_tables``. 
+
+The mappings have a predefined structure, so that the number of possible Oracle errors are minimized, e.g. we install the tables before the referential constraints, we install the package specifications before the package bodies and so forth. 
+
+If you use a different layout, then you can easily modify the file ``SourceFilesReference.txt`` in the patch template. The Java application will only create the directories when there are files to be copied. 
+
+This file is picked up by the ``2.validate-<environment>.cmd|sh`` and ``3.install-<environment>.cmd|sh`` shell scripts. 
+
 ## Put all files into the subdirectories of the patch directory
 
 When you are using manually created files for a patch, e.g. to manipulate data or alter a table, you can put them into the filesytem manually. They will be executed in the typical sort order of the operating system. 
