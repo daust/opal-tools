@@ -30,8 +30,8 @@ public class ConfigData {
 	public ArrayList<String> staticFiles;
 	@Expose(serialize = true, deserialize = true)
 	public String sqlFileRegEx = "\\.(sql|pks|pkb)$";
-	@Expose(serialize = true, deserialize = true)
-	public String waitAfterEachStatement = "false";
+//	@Expose(serialize = true, deserialize = true)
+//	public String waitAfterEachStatement = "false";
 	@Expose(serialize = false, deserialize = true)
 	public String runMode = "EXECUTE"; // EXECUTE | VALIDATE_ONLY
 	@Expose(serialize = true, deserialize = true)
@@ -60,8 +60,8 @@ public class ConfigData {
 				+ (connectionMappings == null ? "" : connectionMappings.toString()) + "; sqlFileRegEx: "
 				+ (encodingMappings == null ? "" : encodingMappings.toString()) 
 				+ (sqlFileRegEx == null ? "" : sqlFileRegEx.toString()) + "; connectionPools: "
-				+ "; waitAfterEachStatement: "
-				+ (waitAfterEachStatement == null ? "" : waitAfterEachStatement.toString())
+//				+ "; waitAfterEachStatement: "
+//				+ (waitAfterEachStatement == null ? "" : waitAfterEachStatement.toString())
 				+ "; patchDependencies: "
 				+ (dependencies == null ? "" : dependencies.toString());
 	}

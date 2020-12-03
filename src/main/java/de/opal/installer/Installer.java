@@ -18,6 +18,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.kohsuke.args4j.Option;
 
 import de.opal.db.SQLclUtil;
 import de.opal.installer.config.ConfigConnectionMapping;
@@ -64,6 +65,9 @@ public class Installer {
 
 	private boolean noLogging;
 
+	private boolean isSilent = false;
+	private boolean isSilentExecution = false;
+
 //	public enum RunMode {
 //		  EXECUTE,
 //		  VALIDATE_ONLY
@@ -94,8 +98,8 @@ public class Installer {
 	}
 
 	public Installer(boolean validateOnly, String configFileName, String connectionPoolFileName, String userIdentity,
-			List<String> mandatoryAttributes, boolean noLogging, String patchFilesName, String patchFilesSourceDir)
-			throws IOException {
+			List<String> mandatoryAttributes, boolean noLogging, String patchFilesName, String patchFilesSourceDir,
+			boolean isSilent, boolean isSilentExecution) throws IOException {
 		this.validateOnly = validateOnly;
 		this.configFileName = configFileName;
 		this.connectionPoolFileName = connectionPoolFileName;
@@ -104,6 +108,8 @@ public class Installer {
 		this.noLogging = noLogging;
 		this.patchFilesName = patchFilesName;
 		this.patchFilesSourceDir = patchFilesSourceDir;
+		this.isSilent = isSilent;
+		this.isSilentExecution = isSilentExecution;
 
 		this.configManager = new ConfigManager(this.configFileName);
 
@@ -142,7 +148,7 @@ public class Installer {
 				.initialize(this.configManagerConnectionPools.getConfigDataConnectionPool().connectionPools);
 
 		this.patchFilesTargetDir = this.configManager.getRelativeFilename(configManager.getSqlDir().getAbsolutePath());
-				
+
 	}
 
 	// empty constructor
@@ -251,11 +257,15 @@ public class Installer {
 						"*** checking patch dependencies skipped, either no registryTargets defined or no dependencies defined ");
 			}
 
-			Utils.waitForEnter("Please press <enter> to list the files to be installed ...");
+			if (this.isSilent)
+				MsgLog.consolePrintln(
+						"File listing of the files to be installed (without connecting a database) ...");
+			else
+				Utils.waitForEnter(
+						"Please press <enter> to list the files to be installed (without connecting a database) ...");
 
 			// scan all files in tree and store in TreeFull
 			fsTreeFull = fs.scanTree();
-
 
 			// different traversal strategies, generate ordered list of files to process
 			if (configManager.getTraversalType() == ConfigManager.TraversalType.STATIC_FILES) {
@@ -263,7 +273,7 @@ public class Installer {
 			} else {
 				fsTree = fs.filterTreeInorder(fsTreeFull, configManager.getConfigData().sqlFileRegEx, logfile,
 						configManager);
-				
+
 				// scan files from PatchFiles.txt and merge with list
 				if (this.patchFilesName != null) {
 					patchFilesTxtWrapper = new PatchFilesTxtWrapper(this.patchFilesName, this.patchFilesSourceDir,
@@ -271,17 +281,23 @@ public class Installer {
 					fsTreePatchFiles = patchFilesTxtWrapper.getFileList();
 					if (fsTreePatchFiles != null)
 						log.debug(fsTreePatchFiles.toString());
-					
-					//Collections.sort(fsTree);
-					//Collections.sort(fsTreePatchFiles);
-					//fsTree = ListUtils.mergeWithIterator(fsTree, fsTreePatchFiles);
+
+					// Collections.sort(fsTree);
+					// Collections.sort(fsTreePatchFiles);
+					// fsTree = ListUtils.mergeWithIterator(fsTree, fsTreePatchFiles);
 					fsTree.addAll(fsTreePatchFiles);
 					Collections.sort(fsTree);
 				}
 			}
 			fs.displayTree(fsTree, configManager.getConfigData().sqlFileRegEx, configManager);
-			Utils.waitForEnter("\nPlease press <enter> to start the process ("
-					+ this.configManager.getConfigData().runMode + ") ...");
+
+			if (this.isSilent)
+				MsgLog.println("\nStart the process (" + this.configManager.getConfigData().runMode
+						+ ") (will connect to the database) ...");
+			else
+				Utils.waitForEnter("\nPlease press <enter> to start the process ("
+						+ this.configManager.getConfigData().runMode + ") (will connect to the database) ...");
+
 			if (!this.noLogging)
 				MsgLog.logfilePrintln("");
 
@@ -411,7 +427,7 @@ public class Installer {
 		// first find matching dataSource
 		connectionMappings = this.configManager.getConfigData().connectionMappings;
 		for (ConfigConnectionMapping configConnectionMapping : connectionMappings) {
-			Pattern p = Pattern.compile(configConnectionMapping.matchRegEx);
+			Pattern p = Pattern.compile(configConnectionMapping.matchRegEx, Pattern.CASE_INSENSITIVE);
 
 			log.debug("test mapping: " + configConnectionMapping.connectionPoolName + " with "
 					+ configConnectionMapping.matchRegEx);
@@ -469,10 +485,11 @@ public class Installer {
 		for (PatchFileMapping fileMapping : tree) {
 			log.debug("process file: " + fileMapping.destFile.getAbsolutePath());
 			ScriptExecutor sqlcl = null;
-			
-			if (fileMapping.srcFile!=null) {
+
+			if (fileMapping.srcFile != null) {
 				// execute referenced file
-				// determine the connectionMapping based on the target file ... then execute the source file
+				// determine the connectionMapping based on the target file ... then execute the
+				// source file
 				sqlcl = this.getScriptExecutor(fileMapping.destFile.getAbsolutePath());
 				executeFile(fileMapping.srcFile, sqlcl);
 			} else {
@@ -544,10 +561,16 @@ public class Installer {
 			MsgLog.println(results);
 		}
 
-		if (this.configManager.getConfigData().waitAfterEachStatement.equals("true")
-				&& this.configManager.getConfigData().runMode.equals("EXECUTE")) {
+		if (!this.isSilent && !this.validateOnly && !this.isSilentExecution) {
 			Utils.waitForEnter("Please press <enter> to continue ...");
-		}
+		} else
+			MsgLog.consolePrintln("");
+
+		/*
+		 * if (this.configManager.getConfigData().waitAfterEachStatement.equals("true")
+		 * && this.configManager.getConfigData().runMode.equals("EXECUTE")) {
+		 * Utils.waitForEnter("Please press <enter> to continue ..."); }
+		 */
 	}
 
 	/**

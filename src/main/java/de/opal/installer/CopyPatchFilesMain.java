@@ -40,14 +40,15 @@ public class CopyPatchFilesMain {
 	@Option(name = "-v", aliases = "--version", usage = "show version information", help = true)
 	private boolean showVersion;
 
-	@Option(name = "--source-path", usage = "path to the source directory, e.g. ../src/sql", metaVar = "<path>", required = true)
+	@Option(name = "--source-dir", usage = "source directory, e.g. ../src/sql", metaVar = "<directory>", required = true)
 	private String sourcePathName;
 
-	@Option(name = "--target-path", usage = "path to the target directory, e.g. ./sql", metaVar = "<path>", required = true)
+	@Option(name = "--source-list-file", usage = "file that contains the sources to be copied, e.g. SourceFilesCopy.txt", metaVar = "<file>", required = true)
+	private String patchFilesName;
+
+	@Option(name = "--target-dir", usage = "target directory, e.g. ./sql", metaVar = "<directory>", required = true)
 	private String targetPathName;
 
-	@Option(name = "--patch-file-name", usage = "target path for the patch", metaVar = "<path>", required = true)
-	private String patchFilesName;
 
 	public CopyPatchFilesMain() {
 

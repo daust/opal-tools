@@ -29,17 +29,16 @@ public class CopyPatchTemplateMain {
 	 * - https://github.com/kohsuke/args4j
 	 * - https://args4j.kohsuke.org/args4j/apidocs 
 	 */
-
 	@Option(name = "-h", aliases = "--help", usage = "show this help page", help = true)
 	private boolean showHelp;
 
 	@Option(name = "-v", aliases = "--version", usage = "show version information", help = true)
 	private boolean showVersion;
 
-	@Option(name = "--source-path", usage = "path to the template directory structure", metaVar = "<path>", required=true)
+	@Option(name = "--source-dir", usage = "template directory", metaVar = "<directory>", required=true)
 	private String sourcePathName;
 
-	@Option(name = "--target-path", usage = "target path for the patch", metaVar = "<path>", required=true)
+	@Option(name = "--target-dir", usage = "target directory for the patch", metaVar = "<directory>", required=true)
 	private String targetPathName;
 
 	public CopyPatchTemplateMain() {

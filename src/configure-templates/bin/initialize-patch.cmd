@@ -6,7 +6,8 @@ set PATCH_DIRECTORY=%OPAL_TOOLS_PATCH_DIR%\%YEAR%\%DATE_STRING%-%PATCH_NAME%
 
 @REM calling the initialization and copying the the template file structure to the target 
 @REM patch directory
-@call opal-install-copy-template.cmd --source-path "%OPAL_TOOLS_PATCH_TEMPLATE_DIR%" --target-path "%PATCH_DIRECTORY%"
+@call opal-install-copy-template.cmd --source-dir "%OPAL_TOOLS_PATCH_TEMPLATE_DIR%" ^
+                                     --target-dir "%PATCH_DIRECTORY%"
 
 start explorer "%PATCH_DIRECTORY%"
 cd /d "%PATCH_DIRECTORY%"

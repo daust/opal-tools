@@ -50,11 +50,18 @@ public class InstallerMain {
 	@Option(name = "--no-logging", usage = "disable writing a logfile")
 	private boolean noLogging = false;
 
-	@Option(name = "--source-files-filename", usage = "patch file name, e.g. SourceFilesReference.txt", metaVar = "<filename>", depends = {"--source-dir"})
+	@Option(name = "--source-list-file", usage = "patch file name, e.g. SourceFilesReference.txt", metaVar = "<filename>", depends = {"--source-dir"})
 	private String patchFilesName;
 	
-	@Option(name = "--source-dir", usage = "path to the source directory, e.g. ../src/sql", metaVar = "<path>", depends = {"--source-files-filename"})
+	@Option(name = "--source-dir", usage = "path to the source directory, e.g. ../src/sql", metaVar = "<path>", depends = {"--source-list-file"})
 	private String patchFilesSourceDir;
+	
+	@Option(name = "--silent", usage = "disable all prompts, non-interactive mode")
+	private boolean isSilent = false;
+
+	@Option(name = "--silent-execution", usage = "prompt after header information, execute all scripts without prompt.")
+	private boolean isSilentExecution = false;
+
 
 	/**
 	 * Main entry point to the Installer
@@ -73,7 +80,7 @@ public class InstallerMain {
 
 		Installer installer = new Installer(installerMain.validateOnly, installerMain.configFileName,
 				installerMain.connectionPoolFile, installerMain.userIdentity, installerMain.mandatoryAttributes,
-				installerMain.noLogging, installerMain.patchFilesName, installerMain.patchFilesSourceDir);
+				installerMain.noLogging, installerMain.patchFilesName, installerMain.patchFilesSourceDir, installerMain.isSilent, installerMain.isSilentExecution);
 		installer.run();
 
 		MsgLog.println("\n*** done.");

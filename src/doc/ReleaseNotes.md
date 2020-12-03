@@ -1,6 +1,62 @@
 [//]: # (Infos about this file)
 [//]: # (Markdown Syntax: https://guides.github.com/features/mastering-markdown/)
 
+# Version 2.5.0 (release: 03.12.2020)
+
+You can see the full list of issues with details in the [milestones page](https://github.com/daust/opal-tools/milestone/9?closed=1). 
+
+## New features
+  * see [milestones page](https://github.com/daust/opal-tools/milestone/9?closed=1)
+
+## Bug fixes
+  * see [milestones page](https://github.com/daust/opal-tools/milestone/9?closed=1)
+
+## Changed behaviour
+  * *none*
+
+## Deprecated features (still available but will go away eventually)
+  * *none*
+
+## Obsoleted features (no longer available)
+  * *none*
+
+## Known issues
+  * Please check the current list of open issues: https://github.com/daust/opal-tools/issues . 
+
+# Version 2.4.1 (release: 30.11.2020)
+
+You can see the full list of issues with details in the [milestones page](https://github.com/daust/opal-tools/milestone/8?closed=1). 
+
+## New features
+  * see [milestones page](https://github.com/daust/opal-tools/milestone/8?closed=1)
+
+## Bug fixes
+  * see [milestones page](https://github.com/daust/opal-tools/milestone/8?closed=1)
+
+## Changed behaviour
+  * the file ``PatchFiles.txt`` is split into two files: 
+    - ``SourceFilesCopy.txt`` (picked up by 1.copy-source-files)
+    - ``SourceFilesReference.txt`` (picked up by 2.validate and 3.install)
+  * the script ``opal-tools/bin/opal-copy-patch-files.sh|cmd`` is renamed to ``opal-tools/bin/opal-copy-source-files.sh|cmd``
+  * the patch script ``1.copy-patch-files.sh|cmd`` is renamed to ``1.copy-source-files.sh|cmd``
+  * the class ``CopyPatchFilesMain`` was renamed to ``CopySourceFilesMain`` and is updated in ``opal-tools/bin/opal-copy-source-files.sh|cmd``
+  * the patch ``scripts 1.copy, 2.validate, 3.install`` have all been modified, because the command line switches have been renamed: 
+    - ``--source-list-file``
+    - ``--source-dir``
+    - ``--target-dir``
+  * the file ``opal-tools/bin/initialize-patch.sh|cmd`` is modified, the command line switches have changed for the copy command: 
+    - ``--source-dir``
+    - ``--target-dir``
+
+## Deprecated features (still available but will go away eventually)
+  * *none*
+
+## Obsoleted features (no longer available)
+  * *none*
+
+## Known issues
+  * Please check the current list of open issues: https://github.com/daust/opal-tools/issues . 
+
 # Version 2.4.0 (release: 29.11.2020)
 
 You can see the full list of issues with details in the [milestones page](https://github.com/daust/opal-tools/milestone/7?closed=1). 

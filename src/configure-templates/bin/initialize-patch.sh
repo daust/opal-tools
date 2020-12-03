@@ -7,7 +7,8 @@ export PATCH_DIRECTORY=${OPAL_TOOLS_PATCH_DIR}/${YEAR}/${DATE_STRING}-${PATCH_NA
 
 # calling the initialization and copying the the template file structure to the target 
 # patch directory
-opal-install-copy-template.sh --source-path "${OPAL_TOOLS_PATCH_TEMPLATE_DIR}" --target-path "${PATCH_DIRECTORY}"
+opal-install-copy-template.sh --source-dir "${OPAL_TOOLS_PATCH_TEMPLATE_DIR}" \
+                              --target-dir "${PATCH_DIRECTORY}"
 
 echo cd "${PATCH_DIRECTORY}"
 
