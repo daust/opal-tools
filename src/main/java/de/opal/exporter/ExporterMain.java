@@ -146,7 +146,7 @@ public class ExporterMain {
 	@Option(name = "--config-file", usage = "configuration file\ne.g.: connections-dev.json", metaVar = "<file>")
 	private String configFileName;
 
-	@Option(name = "--parallel-degree", usage = "the database statements are executed in parallel, e.g. 10", metaVar = "<degree>")
+	@Option(name = "--parallel-degree", usage = "the database statements are executed in parallel, e.g. 10", metaVar = "<parallel degree>")
 	private int parallelThreads = 1;
 
 	/**

@@ -34,7 +34,7 @@ You can choose to work directly in the database, purely from the filesystem ... 
 
 ## The installer
 
-The installer uses SQLcl under the hood to actually run the SQL scripts. The core engine is very simple. It will execute SQL files which it finds in the filesystem. 
+The installer uses SQLcl under the hood to actually run the SQL scripts. The core engine is very simple. It will execute SQL files which it finds by iterating through the filesystem and listing all files that exist. 
 
 It uses regular expressions in order to figure out a mapping between a file system path and the matching connection pool. 
 
@@ -377,7 +377,7 @@ The exporter comes with a specific setup that will work in many cases. If you ha
 The installer comes with a specific setup that will work in many cases. If you have other requirements, here is a description of the command line switches that you can use: 
 
 ```
- -h (--help)                                      : show this help page (Vorgabe: true)
+ -h (--help)                                      : show this help page (Vorgabe: false)
  --connection-pool-file <file>                    : connection pool file
                                                     e.g.: connections-dev.json
  --config-file <file>                             : configuration file
@@ -387,7 +387,7 @@ The installer comes with a specific setup that will work in many cases. If you h
  --mandatory-attributes <attr1> [<attr2>] ... [n] : list of attributes that must not be null,
                                                     e.g. patch author version
  --no-logging                                     : disable writing a logfile (Vorgabe: false)
- --source-files-filename <filename>               : patch file name, e.g. SourceFilesReference.txt
+ --source-list-file <filename>                    : source file name, e.g. SourceFilesReference.txt
  --source-dir <path>                              : path to the source directory, e.g. ../src/sql
  --silent                                         : disable all prompts, non-interactive mode (Vorgabe: false)
  --silent-execution                               : prompt after header information, execute all scripts without prompt.
@@ -465,6 +465,44 @@ Only tables (i.e. files) which match the wildcard ``xlib*.sql`` will be copied t
 The mappings have a predefined structure, so that the number of possible Oracle errors are minimized, e.g. we install the tables before the referential constraints, we install the package specifications before the package bodies and so forth. 
 
 If you use a different layout, then you can easily modify the file ``SourceFilesCopy.txt`` in the patch template. The Java application will only create the directories when there are files to be copied. 
+
+## Reference files from the source directory in your patch
+
+Sometimes you might prefer not to copy the files but only to *reference* the source files like packages, views, types, triggers, etc. from your source tree. 
+
+In that case you have to register all files that you want in the patch in the file ``SourceFilesReference.txt``. They will not be copied to the target patch directory ... but used in the sort order as if they were copied. Their virtual target path will be used to determine the order of the execution of the file. But the actual file will reside in the source tree. 
+
+E.g.: 
+<pre style="overflow-x: auto; white-space: pre-wrap; white-space: -moz-pre-wrap; white-space: -pre-wrap; white-space: -o-pre-wrap; word-wrap: break-word;">
+#----------------------------------------------------------
+# Schema: jri_test 
+#----------------------------------------------------------
+
+# Preinstall => jri_test/010_preinstall
+
+# Synonyms
+jri_test/synonyms => jri_test/010_preinstall
+
+# Sequences
+jri_test/sequences => jri_test/020_sequences
+
+# Types
+jri_test/types => jri_test/030_types
+
+# Tables
+jri_test/tables => jri_test/040_tables
+<b>xlib*.sql</b>
+
+...
+</pre>
+
+Only tables (i.e. files) which match the wildcard ``xlib*.sql`` will be referenced from the source tree and treated as if they would actually reside in the target directory ``<patch name>/sql/jri_test/040_tables``. 
+
+The mappings have a predefined structure, so that the number of possible Oracle errors are minimized, e.g. we install the tables before the referential constraints, we install the package specifications before the package bodies and so forth. 
+
+If you use a different layout, then you can easily modify the file ``SourceFilesReference.txt`` in the patch template. The Java application will only create the directories when there are files to be copied. 
+
+This file is picked up by the ``2.validate-<environment>.cmd|sh`` and ``3.install-<environment>.cmd|sh`` shell scripts. 
 
 ## Put all files into the subdirectories of the patch directory
 
