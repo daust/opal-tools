@@ -29,7 +29,6 @@ public class CopyPatchTemplateMain {
 	 * - https://github.com/kohsuke/args4j
 	 * - https://args4j.kohsuke.org/args4j/apidocs 
 	 */
-
 	@Option(name = "-h", aliases = "--help", usage = "show this help page", help = true)
 	private boolean showHelp;
 

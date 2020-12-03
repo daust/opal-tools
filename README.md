@@ -7,11 +7,14 @@
 * [Usage](#usage)
 * [Configuration](#configuration)
 * [Special use cases](#special-use-cases)
+* [Licenses](#licenses)
 * [Troubleshooting](#troubleshooting)
 
 # What are the OPAL Tools?
 
-This is a set of small and flexible Java applications together with generated batch scripts. Using them you can simplify and speed up your development and deployment of Oracle SQL, PL/SQL, Oracle APEX and Oracle ORDS applications significantly. 
+This is a set of tools to export Oracle database objects into the file system and also to install patches into target systems (test/production). Both tools are highly flexible and driven by command-line switches. The software is written in Java and leverages SQLcl and DBMS_METADATA. The real magic happens through the generated batch scripts that leverage these command-line tools. It works nicely with Git / Subversion and supports working from the file system / from the DB or a mix of both. 
+
+Using them you can simplify and speed up your development and deployment of Oracle SQL, PL/SQL, Oracle APEX and Oracle ORDS applications significantly. 
 
 Because almost every developer prefers a different approach, these tools are very adaptable by design. 
 
@@ -386,6 +389,8 @@ The installer comes with a specific setup that will work in many cases. If you h
  --no-logging                                     : disable writing a logfile (Vorgabe: false)
  --source-list-file <filename>                    : source file name, e.g. SourceFilesReference.txt
  --source-dir <path>                              : path to the source directory, e.g. ../src/sql
+ --silent                                         : disable all prompts, non-interactive mode (Vorgabe: false)
+ --silent-execution                               : prompt after header information, execute all scripts without prompt.
 ```
 
 # Usage
@@ -733,6 +738,15 @@ DET_PAT_ID                NUMBER
 
 https://docs.oracle.com/cd/B19306_01/appdev.102/b14258/d_metada.htm#BGBHHHBG
 https://ittutorial.org/dbms_metadata-get_ddl-get-ddl-create-script-of-any-object-in-oracle/
+
+# Licenses
+
+The software of this project uses the "BSD 3-Clause" license, [see here for details](https://github.com/daust/opal-tools/blob/master/LICENSE). 
+
+Nevertheless, we are embedding software from Oracle: Oracle JDBC drivers and Oracle [SQLcl](https://www.oracle.com/de/database/technologies/appdev/sqlcl.html). 
+
+In order to use the Oracle software, you have adhere to the [license agreement by Oracle](https://www.oracle.com/downloads/licenses/oracle-free-license.html). 
+A local copy of this license agreement [can be found here](src/doc/Oracle-free-license.md). 
 
 # Troubleshooting
 

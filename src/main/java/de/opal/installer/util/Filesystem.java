@@ -89,7 +89,7 @@ public class Filesystem {
 
 		// MsgLog.print("*** List of files to be installed:\n\n");
 
-		Pattern p = Pattern.compile(sqlFileRegEx);
+		Pattern p = Pattern.compile(sqlFileRegEx, Pattern.CASE_INSENSITIVE);
 
 		for (PatchFileMapping fileMapping : srcFileList) {
 			String relativeFilename = configManager.getRelativeFilename(fileMapping.destFile.getAbsolutePath());
@@ -115,7 +115,7 @@ public class Filesystem {
 		log.debug("\n*** displayTree ");
 		log.debug("\nregex: " + sqlFileRegEx);
 
-		Pattern p = Pattern.compile(sqlFileRegEx);
+		Pattern p = Pattern.compile(sqlFileRegEx, Pattern.CASE_INSENSITIVE);
 
 		for (PatchFileMapping fileMapping : srcFileList) {
 			String relativeFilename = configManager.getRelativeFilename(fileMapping.destFile.getAbsolutePath());

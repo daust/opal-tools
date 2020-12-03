@@ -55,6 +55,13 @@ public class InstallerMain {
 	
 	@Option(name = "--source-dir", usage = "path to the source directory, e.g. ../src/sql", metaVar = "<path>", depends = {"--source-list-file"})
 	private String patchFilesSourceDir;
+	
+	@Option(name = "--silent", usage = "disable all prompts, non-interactive mode")
+	private boolean isSilent = false;
+
+	@Option(name = "--silent-execution", usage = "prompt after header information, execute all scripts without prompt.")
+	private boolean isSilentExecution = false;
+
 
 	/**
 	 * Main entry point to the Installer
@@ -73,7 +80,7 @@ public class InstallerMain {
 
 		Installer installer = new Installer(installerMain.validateOnly, installerMain.configFileName,
 				installerMain.connectionPoolFile, installerMain.userIdentity, installerMain.mandatoryAttributes,
-				installerMain.noLogging, installerMain.patchFilesName, installerMain.patchFilesSourceDir);
+				installerMain.noLogging, installerMain.patchFilesName, installerMain.patchFilesSourceDir, installerMain.isSilent, installerMain.isSilentExecution);
 		installer.run();
 
 		MsgLog.println("\n*** done.");

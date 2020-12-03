@@ -276,7 +276,7 @@ public class ConfigManager {
 			return "";
 		}
 		for (ConfigEncodingMapping configEncodingMapping : encodingMappings) {
-			Pattern p = Pattern.compile(configEncodingMapping.matchRegEx);
+			Pattern p = Pattern.compile(configEncodingMapping.matchRegEx, Pattern.CASE_INSENSITIVE);
 
 			log.debug("test mapping: " + configEncodingMapping.encoding + " with " + configEncodingMapping.matchRegEx);
 			if (p.matcher(filename).find()) {
