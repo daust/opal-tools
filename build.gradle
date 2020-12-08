@@ -17,7 +17,7 @@ import org.gradle.internal.os.OperatingSystem
 //-----------------------------------------------------------------------------
 
   project.description       = "OPAL Tools - more details here: https://github.com/daust/opal-tools"
-  project.version           = '2.5.0'
+  project.version           = '2.6.0'
   
   sourceCompatibility       = 1.8
   targetCompatibility       = 1.8
@@ -30,7 +30,6 @@ import org.gradle.internal.os.OperatingSystem
   def sqlclVersion  ='20.3.0'
   // sqlclZipFile: file location to downloaded zip file, 
   // e.g. /Users/daust/Downloads/sqlcl-20.2.0.174.1557.zip
-  // it MUST be downloaded manually because of the license agreement
   // this is only required when using task "opalRegisterSQLclLibraries"
   def sqlclZipFile  ='/Users/daust/Downloads/sqlcl-20.3.0.274.1916.zip'  
   
