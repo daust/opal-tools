@@ -21,8 +21,9 @@ gradle.properties
 /build/
 /bin/
 
-/gradle/
-gradlew*
+# include gradle into the build for other developers
+#/gradle/
+#gradlew*
 
 # Ignore Gradle GUI config
 gradle-app.setting
