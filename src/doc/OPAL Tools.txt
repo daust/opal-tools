@@ -1,0 +1,127 @@
+-----------------------------------------------------------------------------
+-- demo - preparation
+-----------------------------------------------------------------------------
+
+*) Schema: SYS
+
+begin
+  for cur in (select * from all_users where username like 'SCHEMA%') loop
+    execute immediate 'drop user '||cur.username ||' cascade';
+  end loop;
+end;
+/
+
+create user schema1_dev identified by oracle1;
+grant resource, connect to schema1_dev;
+create user schema1_test identified by oracle1;
+grant resource, connect to schema1_test;
+create user schema1_prod identified by oracle1;
+grant resource, connect to schema1_prod;
+
+create user schema2_dev identified by oracle1;
+grant resource, connect to schema2_dev;
+create user schema2_test identified by oracle1;
+grant resource, connect to schema2_test;
+create user schema2_prod identified by oracle1;
+grant resource, connect to schema2_prod;
+
+*) initialize patch
+
+C:\app\opal-tools-initialize-environment
+
+*) Schema JRI_TEST
+
+drop table opal_installer_details;
+drop table opal_installer_patches;
+
+SELECT *
+  FROM opal_installer_patches
+ ORDER BY pat_id DESC;
+    
+SELECT *
+  FROM opal_installer_details
+ ORDER BY det_pat_id desc, det_id;     
+
+*) change opal-export.conf, damit jri_test in schema1 die skripte exportiert: 
+--filename-templates default:schema1/#object_type_plural#/#object_name#.sql package:schema1/packages/#object_name#.pks "package body:schema1/packages/#object_name#.pkb"
+
+*) define registry targets in patch-template
+  "registryTargets": [{ connectionPoolName="jri_test", "tablePrefix": "OPAL" }],
+
+  ,
+    {
+      "name": "jri_test",
+      "user": "jri_test",
+      "password": "oracle1",
+      "connectString": "127.0.0.1:1521:xe"
+    }
+
+*) pre-create the second patch: different order => 
+- 010_jri
+- 020
+- 030
+
+// install without mandatory columns => patch template
+
+-----------------------------------------------------------------------------
+-- first demo
+-----------------------------------------------------------------------------
+
+*) first create patch to implement jira-1
+
+*) locate change in source/sql/packages/file: C:\Projects\basic\src\sql\schema1\packages
+
+make change there
+register in SourceFilesCopy.txt
+
+create file sql/schema1/040_tables
+
+alter table dummy add( column1 varchar2(50));
+
+*) 1.copy patch files
+*) 3.install on test
+*) 3.install on production
+
+THAT'S IT
+
+*) check logfile
+
+*) check logtable
+
+drop table opal_installer_details;
+drop table opal_installer_patches;
+
+SELECT *
+  FROM opal_installer_patches
+ ORDER BY pat_id DESC;
+    
+SELECT *
+  FROM opal_installer_details
+ ORDER BY det_pat_id desc, det_id;     
+
+-----------------------------------------------------------------------------
+-- second demo
+-----------------------------------------------------------------------------
+
+*) create patch
+
+*) make change in the database
+- change package
+- change apex application
+
+*) export package
+*) export apex application
+
+*) 1.copy patch file
+*) 2.validate
+    - optional step
+    - validate connection pool
+
+*) 3.install
+
+-----------------------------------------------------------------------------
+-- third demo
+-----------------------------------------------------------------------------
+
+cd /d C:\Projects\opal-tools-2.5.0-sqlcl-20.3.0
+setup -s --project-root-dir c:\projects\sample
