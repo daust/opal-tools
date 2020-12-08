@@ -43,7 +43,7 @@ public class CopySourceFilesMain {
 	@Option(name = "--source-dir", usage = "source directory, e.g. ../src/sql", metaVar = "<directory>", required = true)
 	private String sourcePathName;
 
-	@Option(name = "--source-list-file", usage = "file that contains the sources to be copied, e.g. SourceFilesCopy.txt", metaVar = "<file>", required = true)
+	@Option(name = "--source-list-file", usage = "file that contains the sources to be copied, e.g. SourceFilesCopy.conf", metaVar = "<file>", required = true)
 	private String sourceFilesName;
 
 	@Option(name = "--target-dir", usage = "target directory, e.g. ./sql", metaVar = "<directory>", required = true)

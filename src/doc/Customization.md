@@ -6,8 +6,8 @@
   * [Connection Pool Files](#connection-pool-files)
   * [opal-installer.json](#opal-installer-json)
   * [ReleaseNotes.txt](#releasenotes.txt)
-  * [SourceFilesCopy.txt](#sourcefilescopy.txt)
-  * [SourceFilesReference.txt](#sourcefilesreference.txt)
+  * [SourceFilesCopy.conf](#sourcefilescopy.conf)
+  * [SourceFilesReference.conf](#SourceFilesReference.conf)
 * [Special Use Cases](#special-use-cases)
 
 # Setup
@@ -187,7 +187,7 @@ The installer comes with a specific setup that will work in many cases. If you h
  --mandatory-attributes <attr1> [<attr2>] ... [n] : list of attributes that must not be null,
                                                     e.g. patch author version
  --no-logging                                     : disable writing a logfile (Vorgabe: false)
- --source-list-file <filename>                    : source file name, e.g. SourceFilesReference.txt
+ --source-list-file <filename>                    : source file name, e.g. SourceFilesReference.conf
  --source-dir <path>                              : path to the source directory, e.g. ../src/sql
  --silent                                         : disable all prompts, non-interactive mode (Vorgabe: false)
  --silent-execution                               : prompt after header information, execute all scripts without prompt.
@@ -414,9 +414,9 @@ DET_PAT_ID                NUMBER
 
 In the file ``ReleaseNotes.txt`` you can record all changes that are included in this patch. This file is special. If it is found in this directory, it will automatically be uploaded into the patch registry table with the patch. 
 
-## <a name="sourcefilescopy.txt">``SourceFilesCopy.txt``</a>
+## <a name="sourcefilescopy.conf">``SourceFilesCopy.conf``</a>
 
-The file ``1.copy-source-files.cmd|sh`` is configured to copy files from the source directory ``sql`` to the target directory ``<patch name>/sql``. In the file ``SourceFilesCopy.txt`` you only configure, which files you want to have copied. 
+The file ``1.copy-source-files.cmd|sh`` is configured to copy files from the source directory ``sql`` to the target directory ``<patch name>/sql``. In the file ``SourceFilesCopy.conf`` you only configure, which files you want to have copied. 
 
 E.g.: 
 <pre style="overflow-x: auto; white-space: pre-wrap; white-space: -moz-pre-wrap; white-space: -pre-wrap; white-space: -o-pre-wrap; word-wrap: break-word;">
@@ -446,13 +446,13 @@ Only tables (i.e. files) which match the wildcard ``xlib*.sql`` will be copied t
 
 The mappings have a predefined structure, so that the number of possible Oracle errors are minimized, e.g. we install the tables before the referential constraints, we install the package specifications before the package bodies and so forth. 
 
-If you use a different layout, then you can easily modify the file ``SourceFilesCopy.txt`` in the patch template. The Java application will only create the directories when there are files to be copied. 
+If you use a different layout, then you can easily modify the file ``SourceFilesCopy.conf`` in the patch template. The Java application will only create the directories when there are files to be copied. 
 
-## <a name="sourcefilesreference.txt">``SourceFilesReference.txt``</a>
+## <a name="SourceFilesReference.conf">``SourceFilesReference.conf``</a>
 
 Sometimes you might prefer not to copy the files but only to *reference* the source files like packages, views, types, triggers, etc. from your source tree. 
 
-In that case you have to register all files that you want in the patch in the file ``SourceFilesReference.txt``. They will not be copied to the target patch directory ... but used in the sort order as if they were copied. Their virtual target path will be used to determine the order of the execution of the file. But the actual file will reside in the source tree. 
+In that case you have to register all files that you want in the patch in the file ``SourceFilesReference.conf``. They will not be copied to the target patch directory ... but used in the sort order as if they were copied. Their virtual target path will be used to determine the order of the execution of the file. But the actual file will reside in the source tree. 
 
 E.g.: 
 <pre style="overflow-x: auto; white-space: pre-wrap; white-space: -moz-pre-wrap; white-space: -pre-wrap; white-space: -o-pre-wrap; word-wrap: break-word;">
@@ -482,7 +482,7 @@ Only tables (i.e. files) which match the wildcard ``xlib*.sql`` will be referenc
 
 The mappings have a predefined structure, so that the number of possible Oracle errors are minimized, e.g. we install the tables before the referential constraints, we install the package specifications before the package bodies and so forth. 
 
-If you use a different layout, then you can easily modify the file ``SourceFilesReference.txt`` in the patch template. The Java application will only create the directories when there are files to be copied. 
+If you use a different layout, then you can easily modify the file ``SourceFilesReference.conf`` in the patch template. The Java application will only create the directories when there are files to be copied. 
 
 This file is picked up by the ``2.validate-<environment>.cmd|sh`` and ``3.install-<environment>.cmd|sh`` shell scripts. 
 

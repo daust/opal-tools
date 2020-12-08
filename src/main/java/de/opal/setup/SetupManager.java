@@ -422,9 +422,9 @@ public class SetupManager {
 							Charset.defaultCharset());
 				}
 				// write the patchFile.txt
-				FileUtils.writeStringToFile(new File(tmpTargetDir + File.separator + "SourceFilesCopy.txt"),
+				FileUtils.writeStringToFile(new File(tmpTargetDir + File.separator + "SourceFilesCopy.conf"),
 						patchFileHeader + "\n" + patchFileContent, Charset.defaultCharset());
-				FileUtils.writeStringToFile(new File(tmpTargetDir + File.separator + "SourceFilesReference.txt"),
+				FileUtils.writeStringToFile(new File(tmpTargetDir + File.separator + "SourceFilesReference.conf"),
 						patchFileHeader + "\n" + patchFileContent, Charset.defaultCharset());
 			}
 		}

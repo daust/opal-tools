@@ -49,7 +49,7 @@ You can freely create a subdirectory structure under ``sql/<schema name>`` and p
 
 ## Copy files from the source directory to the patch directory
 
-The file ``1.copy-source-files.cmd`` is configured to copy files from the source directory ``sql`` to the target directory ``<patch name>/sql``. In the file ``SourceFilesCopy.txt`` you only configure, which files you want to have copied, e.g.: 
+The file ``1.copy-source-files.cmd`` is configured to copy files from the source directory ``sql`` to the target directory ``<patch name>/sql``. In the file ``SourceFilesCopy.conf`` you only configure, which files you want to have copied, e.g.: 
 <pre style="overflow-x: auto; white-space: pre-wrap; white-space: -moz-pre-wrap; white-space: -pre-wrap; white-space: -o-pre-wrap; word-wrap: break-word;">
 # Tables
 jri_test/tables => jri_test/040_tables
@@ -68,7 +68,7 @@ You can export database objects into the filesystem using the scripts ``export-s
 
 ![patch directory](src/doc/resources/opal-tools-export.png)
 
-This will spool the files into the SQL source tree based on their object type. Then you can also copy them from there to the patch directory using ``1.copy-source-files.cmd`` and ``SourceFilesCopy.txt``.
+This will spool the files into the SQL source tree based on their object type. Then you can also copy them from there to the patch directory using ``1.copy-source-files.cmd`` and ``SourceFilesCopy.conf``.
 
 ![patch directory](src/doc/resources/opal-tools-export-directory-structure.png)
 
