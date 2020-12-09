@@ -1,13 +1,18 @@
-
 * [Setup](#setup)
-* [opal-export](#opal-export)
+* [About Shell Scripting](#about-shell-scripting)
+* [About File Encodings](#about-file-encodings)
 * [opal-install](#opal-install)
+  * [Command Line](#command-line)
+  * [Database Log Tables](#database-log-tables)
+* [opal-export](#opal-export)
+  * [Command Line](#command-line-1)
+  * [Shared Command Line Switches](#shared-command-line-switches)
 * [Configuration Files](#configuration-files)
   * [Connection Pool Files](#connection-pool-files)
-  * [opal-installer.json](#opal-installer-json)
-  * [ReleaseNotes.txt](#releasenotes.txt)
-  * [SourceFilesCopy.txt](#sourcefilescopy.txt)
-  * [SourceFilesReference.txt](#sourcefilesreference.txt)
+  * [opal-installer.json](#opal-installerjson)
+  * [ReleaseNotes.txt](#releasenotestxt)
+  * [SourceFilesCopy.conf](#sourcefilescopyconf)
+  * [SourceFilesReference.conf](#sourcefilesreferenceconf)
 * [Special Use Cases](#special-use-cases)
 
 # Setup
@@ -103,16 +108,172 @@ setup.cmd --project-root-dir c:\Projects\project1
 
 ## Running the setup on MacOS / Linux: 
 ```
-setup.sh --project-root-dir <project root directory>
+./setup.sh --project-root-dir <project root directory>
 e.g.
-setup.sh --project-root-dir /u01/project1
+.7setup.sh --project-root-dir /u01/project1
 ```
 
 All environment variables are set up in the "**Local script to initialize the user environment**", e.g.: ``c:\opal-installer-local\setProjectEnvironment-project1.cmd``. 
 
+# About Shell Scripting
+
+The setup will pre-generate a number of shell scripts. Those shell scripts will leverage the command line options of the different tools, e.g.: 
+```
+cd "%OPAL_TOOLS_SRC_SQL_DIR%"
+
+@call opal-export.cmd --config-file "%OPAL_TOOLS_HOME_DIR%\conf\opal-export.conf" ^
+                      --output-dir "%OPAL_TOOLS_SRC_SQL_DIR%" ^
+                      --pre-scripts "%OPAL_TOOLS_HOME_DIR%\export-scripts\opal-export-pre-script.sql" ^
+                      --connection-pool-name #SCHEMA# ^
+                      --connection-pool-file "%OPAL_TOOLS_USER_CONFIG_DIR%\connections-#ENV#.json"
+```
+
+We are using multi-line command lines. If you make changes, please be aware to use the proper line ending in shell scripts like ``\`` for bash and ``^`` for Windows as the last character on the line.
+
+We also leverage all environment variables that are set up in the script ``user-conf/setProjectEnvironment.[sh|cmd]``, so that you don't have to hardcode any paths. 
+
+# About File Encodings
+
+It is important to be aware of different file encodings. Different operating systems will encode files differently by default, e.g. a German Windows system will use ``Cp1252`` by default whereas a Linux or MacOS system will typically use ``UTF-8``. 
+
+When using special characters like German umlauts that can quickly become a problem. So, please make sure to define carefully what your default setting will be, you can set it during install. This will affect the parameter ``-Dfile.encoding=`` we will pass on the command line to the Java tools (you can see that in the ``setProjectEnvironment.[sh|cmd]`` script). 
+
+Also, please make sure your SQL editors like Visual Studio Code, Notepad++, SQL Developer, Toad, etc. are configured by default to produce files in the encoding you want to use. 
+
+If you have a team of developers using different operating systems, ``UTF-8`` seems to be the best choice. 
+
+Your choice during setup will also generate the right mapping into the file [opal-installer.json](#opal-installerjson) in your patch-template directory (sample for Linux/MacOS): 
+```
+  "encodingMappings": [
+    {
+      "encoding": "UTF-8",
+      "matchRegEx": "/sql/.*apex.*/.*f*sql",
+      "description": "encoding for APEX files is always UTF8"
+    },
+    {
+      "encoding": "Cp1252",
+      "matchRegEx": "/sql/.*",
+      "description": "all other files will get this explicit mapping"
+    }
+  ],
+```
+APEX files are always exported as UTF-8 by SQLcl or the APEXExport class utility, no matter what you define in ``-Dfile.encoding``. 
+
+# opal-install
+
+## Command Line
+
+The installer comes with a specific setup that will work in many cases. If you have other requirements, here is a description of the command line switches that you can use: 
+
+```
+ -h (--help)                                      : show this help page (Vorgabe: false)
+ --connection-pool-file <file>                    : connection pool file
+                                                    e.g.: connections-dev.json
+ --config-file <file>                             : configuration file
+                                                    e.g.: opal-installer.json
+ --validate-only                                  : don't execute patch, just validate the files and connection pools (Vorgabe:
+                                                    false)
+ --mandatory-attributes <attr1> [<attr2>] ... [n] : list of attributes that must not be null,
+                                                    e.g. patch author version
+ --no-logging                                     : disable writing a logfile (Vorgabe: false)
+ --source-list-file <filename>                    : source file name, e.g. SourceFilesReference.conf
+ --source-dir <path>                              : path to the source directory, e.g. ../src/sql
+ --silent                                         : disable all prompts, non-interactive mode (Vorgabe: false)
+ --silent-execution                               : prompt after header information, execute all scripts without prompt.
+```
+
+## Database Log Tables
+
+Logfiles are always generated automatically but the automatic logging into database tables is turned off initially. 
+
+You can turn it on by configuring the parameter ``registryTargets`` in the configuration file [opal-installer.conf](#opal-installerjson). 
+
+The simplest way is to define a connection pool to install the tables for the log registry. You pick a definition from your ``connections-<environment>.json`` file: 
+
+```
+  "registryTargets": [
+      {
+          "connectionPoolName": "schema1",
+          "tablePrefix": "OPAL"
+      }
+  ],
+```
+
+This table will then be installed into **each** target environment that you install into. 
+
+You can define multiple registryTargets, e.g.: 
+```
+  "registryTargets": [
+      {
+          "connectionPoolName": "schema1",
+          "tablePrefix": "OPAL"
+      },
+      {
+          "connectionPoolName": "global-registry",
+          "tablePrefix": "OPAL"
+      }
+  ],
+```
+
+We are using it in this way so that we record each patch in the target schema and in our development environment **as well**. 
+
+Therefore, we need an entry like this **in each** connection pool definition file pointing back to our development environment:
+```
+    {
+      "name": "global-registry",
+      "user": "schema1",
+      "password": "pwd",
+      "connectString": "127.0.0.1:1521:xe"
+    }
+```
+
+You can query the tables:
+```
+SELECT *
+  FROM opal_installer_patches
+ ORDER BY pat_id DESC;
+    
+SELECT *
+  FROM opal_installer_details
+ ORDER BY det_id DESC;  
+```
+
+The tables are defined as follows: 
+```
+OPAL_INSTALLER_PATCHES
+
+Name                   Null?    Typ                 
+---------------------- -------- ------------------- 
+PAT_ID                 NOT NULL NUMBER              
+PAT_APPLICATION                 VARCHAR2(100 CHAR)  
+PAT_NAME                        VARCHAR2(100 CHAR)  
+PAT_REFERENCE_ID                VARCHAR2(100 CHAR)  
+PAT_VERSION                     VARCHAR2(100 CHAR)  
+PAT_AUTHOR                      VARCHAR2(100 CHAR)  
+PAT_TARGET_SYSTEM               VARCHAR2(50 CHAR)   
+PAT_EXTRA                       VARCHAR2(4000 CHAR)
+PAT_STARTED_ON                  DATE                
+PAT_ENDED_ON                    DATE                
+PAT_DESCRIPTION                 VARCHAR2(4000 CHAR) 
+PAT_CONFIG_FILENAME             VARCHAR2(4000 CHAR) 
+PAT_CONN_POOL_FILENAME          VARCHAR2(4000 CHAR) 
+```
+
+```
+OPAL_INSTALLER_DETAILS
+
+Name             Null?    Typ                 
+---------------- -------- ------------------- 
+DET_ID           NOT NULL NUMBER              
+DET_FILENAME              VARCHAR2(4000 CHAR) 
+DET_INSTALLED_ON          DATE                
+DET_PAT_ID                NUMBER              
+```
 
 
 # opal-export
+
+## Command Line
 
 The exporter comes with a specific setup that will work in many cases. If you have other requirements, here is a description of the command line switches that you can use: 
 
@@ -171,27 +332,33 @@ The exporter comes with a specific setup that will work in many cases. If you ha
                                                               1)
 ```
 
+## Shared Command Line Switches
 
-# opal-install
-
-The installer comes with a specific setup that will work in many cases. If you have other requirements, here is a description of the command line switches that you can use: 
-
+In addition to the command line switches in the shell scripts, opal-export can also centralize a number of configuration settings. By default, the shell scripts include command line switches from the file ``opal-tools/conf/opal-export.conf``: 
 ```
- -h (--help)                                      : show this help page (Vorgabe: false)
- --connection-pool-file <file>                    : connection pool file
-                                                    e.g.: connections-dev.json
- --config-file <file>                             : configuration file
-                                                    e.g.: opal-installer.json
- --validate-only                                  : don't execute patch, just validate the files and connection pools (Vorgabe:
-                                                    false)
- --mandatory-attributes <attr1> [<attr2>] ... [n] : list of attributes that must not be null,
-                                                    e.g. patch author version
- --no-logging                                     : disable writing a logfile (Vorgabe: false)
- --source-list-file <filename>                    : source file name, e.g. SourceFilesReference.txt
- --source-dir <path>                              : path to the source directory, e.g. ../src/sql
- --silent                                         : disable all prompts, non-interactive mode (Vorgabe: false)
- --silent-execution                               : prompt after header information, execute all scripts without prompt.
+#
+# - this file can contain parts of the command line for simplification
+# - the code will replace all environment variables when they are 
+#   specified ${env:name of the environment variable}, e.g. ${env:OPAL_TOOLS_HOME_DIR}
+#   / will be replaced with \ on Windows automatically, but you can use \ as well
+#
+--dependent-objects table:comment,index,object_grant view:comment,object_grant,trigger "materialized view:comment,index,materialized_view_log,object_grant"
+--skip-errors
+--excludes SYS_YOID% SYS_PLSQL% AQ$%
+--exclude-types LOB "TABLE_PARTITION" "INDEX PARTITION" "JAVA CLASS" JAVA "JAVA RESOURCE" INDEX
+--filename-templates default:#schema#/#object_type_plural#/#object_name#.sql package:#schema#/packages/#object_name#.pks "package body:#schema#/packages/#object_name#.pkb"
+--export-template-dir "${env:OPAL_TOOLS_HOME_DIR}/export-templates"
+--parallel-degree 4
 ```
+
+You have to be a bit careful about the syntax, it is **not** a shell script itself. Only a true shell script can deal with environment variables like ``$VAR`` or ``%VAR%``.
+
+Therefore, we have two differences here: 
+* each option is separated by a newline, you don't have to use the typical line ending in shell scripts like ``\`` for bash and ``^`` for Windows. 
+* Use ``${env:VAR}`` to reference the environment variable ``VAR``. The syntax is the same on Windows **and** Linux/Mac.
+
+
+
 
 # Configuration Files
 
@@ -217,7 +384,7 @@ You can set a new clear text password. The ``1:`` indicates that this password i
 
 When you start the script ``opal-tools/bin/validate-connections`` (on Windows you can just double-click it), the connection pools are all verified and the passwords encrypted. 
 
-## <a name="opal-installer-json">``opal-installer.json``</a>
+## ``opal-installer.json``
 
 * ``application``: Name of the application, e.g. the project name
 * ``patch``: Name of the patch. Accepts the placeholder ``#ENV_OPAL_TOOLS_USER_IDENTITY#`` for automatically replacing it with the current directory.
@@ -235,7 +402,6 @@ When you start the script ``opal-tools/bin/validate-connections`` (on Windows yo
     * ``connectionPoolName``: Name of the connection pool to execute the current script
     * ``matchRegEx``: Regular expression to map the file path (e.g. ``/sql/<schema>/120_data/runme.sql``) to a specific connection pool.
 * ``sqlFileRegEx``: Regular expression to indicate which files should be executed and which not. For example, we want to ignore files *.txt, *.doc or others. By default the suffixes .sql, .pks, .pkb, .trg are executed. 
-* ``waitAfterEachStatement``: This boolean expression will halt the execution after each statement. This is very helpful to make sure, each script is run successfully. 
 * ``registryTargets``: List of target database connections in which to register the patch tables (#PREFIX#_INSTALLER_PATCHES and #PREFIX_INSTALLER_DETAILS). In those tables the installer will register each execution of a patch. In most cases you will choose a connection pool from the current environment to put the registry tables there. But it also makes sense to have an additional connection pool to store each execution of ANY environment in that table, e.g. the development environment. Then you can have a consolidated view of all patches on all environments. 
     The registry targets have the following attributes: 
     * ``connectionPoolName``: Name of the connection pool to use for creating the tables. 
@@ -263,48 +429,6 @@ When you start the script ``opal-tools/bin/validate-connections`` (on Windows yo
             and pat_ended_on is not null
     ```
 
-You can query the tables using the following queries:
-```
-SELECT *
-  FROM opal_installer_patches
- ORDER BY pat_id DESC;
-    
-SELECT *
-  FROM opal_installer_details
- ORDER BY det_id DESC;  
-```
-
-The tables are defined as follows: 
-```
-OPAL_INSTALLER_PATCHES
-
-Name                   Null?    Typ                 
----------------------- -------- ------------------- 
-PAT_ID                 NOT NULL NUMBER              
-PAT_APPLICATION                 VARCHAR2(100 CHAR)  
-PAT_NAME                        VARCHAR2(100 CHAR)  
-PAT_REFERENCE_ID                VARCHAR2(100 CHAR)  
-PAT_VERSION                     VARCHAR2(100 CHAR)  
-PAT_AUTHOR                      VARCHAR2(100 CHAR)  
-PAT_TARGET_SYSTEM               VARCHAR2(50 CHAR)   
-PAT_EXTRA                       VARCHAR2(4000 CHAR)
-PAT_STARTED_ON                  DATE                
-PAT_ENDED_ON                    DATE                
-PAT_DESCRIPTION                 VARCHAR2(4000 CHAR) 
-PAT_CONFIG_FILENAME             VARCHAR2(4000 CHAR) 
-PAT_CONN_POOL_FILENAME          VARCHAR2(4000 CHAR) 
-```
-
-```
-OPAL_INSTALLER_DETAILS
-
-Name             Null?    Typ                 
----------------- -------- ------------------- 
-DET_ID           NOT NULL NUMBER              
-DET_FILENAME              VARCHAR2(4000 CHAR) 
-DET_INSTALLED_ON          DATE                
-DET_PAT_ID                NUMBER              
-```
 
 ### Windows example
 
@@ -323,7 +447,6 @@ DET_PAT_ID                NUMBER
     }
   ],
   "sqlFileRegEx": "\\.(sql|pks|pkb|trg)$",
-  "waitAfterEachStatement": "true",
   "registryTargets": [
       {
           "connectionPoolName": "jri_test",
@@ -375,7 +498,6 @@ DET_PAT_ID                NUMBER
     }
   ],
   "sqlFileRegEx": "\\.(sql|pks|pkb|trg)$",
-  "waitAfterEachStatement": "true",
   "registryTargets": [
       {
           "connectionPoolName": "jri_test",
@@ -410,13 +532,13 @@ DET_PAT_ID                NUMBER
 }
 ```
 
-## <a name="releasenotes.txt">``ReleaseNotes.txt``</a>
+## ``ReleaseNotes.txt``
 
-In the file ``ReleaseNotes.txt`` you can record all changes that are included in this patch. This file is special. If it is found in this directory, it will automatically be uploaded into the patch registry table with the patch. 
+In the file ``ReleaseNotes.txt`` you can record all changes that are included in this patch. This file is special. If it is found in this directory, it will automatically be uploaded into the patch registry table into the column ``PAT_DESCRIPTION`` with the patch. 
 
-## <a name="sourcefilescopy.txt">``SourceFilesCopy.txt``</a>
+## ``SourceFilesCopy.conf``
 
-The file ``1.copy-source-files.cmd|sh`` is configured to copy files from the source directory ``sql`` to the target directory ``<patch name>/sql``. In the file ``SourceFilesCopy.txt`` you only configure, which files you want to have copied. 
+The file ``1.copy-source-files.cmd|sh`` is configured to copy files from the source directory ``sql`` to the target directory ``<patch name>/sql``. In the file ``SourceFilesCopy.conf`` you only configure, which files you want to have copied. 
 
 E.g.: 
 <pre style="overflow-x: auto; white-space: pre-wrap; white-space: -moz-pre-wrap; white-space: -pre-wrap; white-space: -o-pre-wrap; word-wrap: break-word;">
@@ -446,13 +568,13 @@ Only tables (i.e. files) which match the wildcard ``xlib*.sql`` will be copied t
 
 The mappings have a predefined structure, so that the number of possible Oracle errors are minimized, e.g. we install the tables before the referential constraints, we install the package specifications before the package bodies and so forth. 
 
-If you use a different layout, then you can easily modify the file ``SourceFilesCopy.txt`` in the patch template. The Java application will only create the directories when there are files to be copied. 
+If you use a different layout, then you can easily modify the file ``SourceFilesCopy.conf`` in the patch template. The Java application will only create the directories when there are files to be copied. 
 
-## <a name="sourcefilesreference.txt">``SourceFilesReference.txt``</a>
+## ``SourceFilesReference.conf``
 
 Sometimes you might prefer not to copy the files but only to *reference* the source files like packages, views, types, triggers, etc. from your source tree. 
 
-In that case you have to register all files that you want in the patch in the file ``SourceFilesReference.txt``. They will not be copied to the target patch directory ... but used in the sort order as if they were copied. Their virtual target path will be used to determine the order of the execution of the file. But the actual file will reside in the source tree. 
+In that case you have to register all files that you want in the patch in the file ``SourceFilesReference.conf``. They will not be copied to the target patch directory ... but used in the sort order as if they were copied. Their virtual target path will be used to determine the order of the execution of the file. But the actual file will reside in the source tree. 
 
 E.g.: 
 <pre style="overflow-x: auto; white-space: pre-wrap; white-space: -moz-pre-wrap; white-space: -pre-wrap; white-space: -o-pre-wrap; word-wrap: break-word;">
@@ -482,7 +604,7 @@ Only tables (i.e. files) which match the wildcard ``xlib*.sql`` will be referenc
 
 The mappings have a predefined structure, so that the number of possible Oracle errors are minimized, e.g. we install the tables before the referential constraints, we install the package specifications before the package bodies and so forth. 
 
-If you use a different layout, then you can easily modify the file ``SourceFilesReference.txt`` in the patch template. The Java application will only create the directories when there are files to be copied. 
+If you use a different layout, then you can easily modify the file ``SourceFilesReference.conf`` in the patch template. The Java application will only create the directories when there are files to be copied. 
 
 This file is picked up by the ``2.validate-<environment>.cmd|sh`` and ``3.install-<environment>.cmd|sh`` shell scripts. 
 

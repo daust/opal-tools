@@ -1,10 +1,30 @@
+* [What are the OPAL Tools?](#what-are-the-opal-tools)
+* [Download and Setup](#download-and-setup)
+* [Quickstart opal-install](#quickstart-opal-install)
+* [Quickstart opal-export](#quickstart-opal-export)
+* [Advanced Customization](#advanced-customization)
+* [Troubleshooting](#troubleshooting)
+* [Licenses](#licenses)
+
 # What are the OPAL Tools?
 
-This is a set of tools to export Oracle database objects into the file system and also to install patches into target systems (test/production). Both tools are highly flexible and driven by command-line switches. The software is written in Java and leverages SQLcl and DBMS_METADATA. The real magic happens through the generated batch scripts that leverage these command-line tools. It works nicely with Git / Subversion and supports working from the file system / from the DB or a mix of both. 
+### The Problem
 
-* opal-export
+Do you have an approach to move your Oracle code changes (PL/SQL, APEX, ORDS) from your development environment to test and production? Or are you unhappy with your existing one, get errors during installation, miss changes that were not deployed, don't know when you deployed the changes into which environment? 
 
-The exporter uses SQLcl together with DBMS_METADATA to export Oracle database objects, APEX applications, ORDS REST modules and everything as files into the filesystem. 
+### Benefits
+
+* Automate your typically manual process of running sql scripts in the desired order
+* Don't manually code your release - configure it
+* Comes with sound and proven default settings (used in actual client projects since Oct/2019)
+* Automatic log generation in logfiles and database tables
+* Highly adaptable through configuration files and command line switches, you are *not stuck* with our way of doing things
+* Getting started is easy, shell scripts are pregenerated during setup, only need to be customized
+* No separate tools / installation required, Oracle SQLcl libraries are embedded in the download. This way exporting Oracle APEX and Oracle ORDS applications is possible without additional software, e.g. the ``APEXExport.class``.
+
+### How does it work?
+
+The software is written in Java and leverages Oracle SQLcl and ``DBMS_METADATA``. Actuall, it embeds the libraries of SQLcl so that no additional software is required (only Java8+). The real magic happens through the generated batch scripts that leverage these command-line tools. It works nicely with Git / Subversion and supports working from the file system, from the DB or a mix of both. 
 
 * opal-install
 
@@ -13,19 +33,27 @@ The installer uses SQLcl under the hood to actually run the SQL scripts. The cor
 It uses regular expressions in order to figure out a mapping between a file system path and the matching connection pool. 
 It can be configured in multiple ways so that there is no requirement for a specific layout of the filesystem. 
 
+* opal-export
+
+The exporter uses SQLcl together with ``DBMS_METADATA`` to export Oracle database objects, APEX applications, ORDS REST modules and everything as files into the filesystem. 
+
+This enables you to support different workflows: 
+* use it only once at the beginning to create a baseline of files, then only make all future changes through those files under version control. 
+* make changes in the database and spool it into the filesystem for deployment continously
+
 ### OS support
 
 It should work for most operating systems, it was tested on Windows, MacOS and Linux. 
 
-# Quickstart
+# Download and Setup
 
 The binary files can be downloaded here: [https://github.com/daust/opal-installer/releases](https://github.com/daust/opal-installer/releases). This is the easiest way to use the opal-tools. The SQLcl libraries are already included in the binary distribution. 
 
 You can also ``git clone`` this repository. In order to create the binary release yourself, please follow the instructions for [developers](src/doc/developers.md).
 
-## Setup
-
 Once downloaded and unzipped you run the command ``setup.sh`` or ``setup.cmd``. This will copy and customize the appropriate files. 
+
+# Quickstart opal-install
 
 ## Initialize a new patch
 
@@ -49,7 +77,7 @@ You can freely create a subdirectory structure under ``sql/<schema name>`` and p
 
 ## Copy files from the source directory to the patch directory
 
-The file ``1.copy-source-files.cmd`` is configured to copy files from the source directory ``sql`` to the target directory ``<patch name>/sql``. In the file ``SourceFilesCopy.txt`` you only configure, which files you want to have copied, e.g.: 
+The file ``1.copy-source-files.cmd`` is configured to copy files from the source directory ``sql`` to the target directory ``<patch name>/sql``. In the file ``SourceFilesCopy.conf`` you only configure, which files you want to have copied, e.g.: 
 <pre style="overflow-x: auto; white-space: pre-wrap; white-space: -moz-pre-wrap; white-space: -pre-wrap; white-space: -o-pre-wrap; word-wrap: break-word;">
 # Tables
 jri_test/tables => jri_test/040_tables
@@ -62,19 +90,47 @@ Only tables (i.e. files) which match the wildcard ``xlib*.sql`` will be copied t
 
 By starting the script ``3.install-<environment>.cmd|sh`` (on Windows you can just double-click it), the patch will be installed in the target environment. 
 
+# Quickstart opal-export
+
 ## Export database objects to the filesystem
 
-You can export database objects into the filesystem using the scripts ``export-schema-<schema name>.cmd`` and ``export-schema-<schema name>-prompt-with-filter.cmd``
+You can export database objects into the filesystem using the scripts ``export-schema-<schema name>.cmd`` and ``export-schema-<schema name>-prompt-with-filter.cmd``.
 
 ![patch directory](src/doc/resources/opal-tools-export.png)
 
-This will spool the files into the SQL source tree based on their object type. Then you can also copy them from there to the patch directory using ``1.copy-source-files.cmd`` and ``SourceFilesCopy.txt``.
+This will spool the files into the SQL source tree based on their object type. Then you can also copy them from there to the patch directory using ``1.copy-source-files.cmd`` and ``SourceFilesCopy.conf``.
 
 ![patch directory](src/doc/resources/opal-tools-export-directory-structure.png)
+
+## Export Oracle APEX and Oracle ORDS applications to the filesystem
+
+You can export Oracle APEX and Oracle ORDS applications into the filesystem using the scripts ``opal-tools/bin/export-apex-<schema name>.cmd``.
+
+By default, it will call the script ``opal-tools/export-scripts/opal-export-post-script.sql``. There are examples for APEX and ORDS that you can use (it uses SQLcl functionality): 
+```
+-- Sample APEX export
+apex export -applicationid 344
+apex export -applicationid 201
+
+-- Sample ORDS export
+spool my_rest_modules_export.sql
+rest export
+prompt /
+spool off
+```
 
 # Advanced Customization
 
 The solution can be customized to suit your needs. You can find more information [here](src/doc/Customization.md).
+
+Here is an overview of SQLcl commands that you can use: https://docs.oracle.com/en/database/oracle/sql-developer-command-line/20.3/sqcug/working-sqlcl.html. 
+
+When running a standalone SQLcl client you can get more help, especially on the APEX and ORDS commands: 
+```
+help apex
+apex export
+help rest
+```
 
 # Troubleshooting
 

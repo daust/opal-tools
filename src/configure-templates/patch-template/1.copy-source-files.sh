@@ -6,4 +6,4 @@ SCRIPT_DIR=`dirname $0`
 #color 0E
 opal-install-copy-source-files.sh --source-dir "$OPAL_TOOLS_SRC_SQL_DIR" \
                                   --target-dir "${SCRIPT_DIR}/sql" \
-                                  --source-list-file "${SCRIPT_DIR}/SourceFilesCopy.txt"
+                                  --source-list-file "${SCRIPT_DIR}/SourceFilesCopy.conf"

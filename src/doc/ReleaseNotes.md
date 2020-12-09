@@ -35,8 +35,8 @@ You can see the full list of issues with details in the [milestones page](https:
 
 ## Changed behaviour
   * the file ``PatchFiles.txt`` is split into two files: 
-    - ``SourceFilesCopy.txt`` (picked up by 1.copy-source-files)
-    - ``SourceFilesReference.txt`` (picked up by 2.validate and 3.install)
+    - ``SourceFilesCopy.conf`` (picked up by 1.copy-source-files)
+    - ``SourceFilesReference.conf`` (picked up by 2.validate and 3.install)
   * the script ``opal-tools/bin/opal-copy-patch-files.sh|cmd`` is renamed to ``opal-tools/bin/opal-copy-source-files.sh|cmd``
   * the patch script ``1.copy-patch-files.sh|cmd`` is renamed to ``1.copy-source-files.sh|cmd``
   * the class ``CopyPatchFilesMain`` was renamed to ``CopySourceFilesMain`` and is updated in ``opal-tools/bin/opal-copy-source-files.sh|cmd``
@@ -69,8 +69,8 @@ You can see the full list of issues with details in the [milestones page](https:
 
 ## Changed behaviour
   * the file ``PatchFiles.txt`` is split into two files: 
-    - ``SourceFilesCopy.txt`` (picked up by 1.copy-source-files)
-    - ``SourceFilesReference.txt`` (picked up by 2.validate and 3.install)
+    - ``SourceFilesCopy.conf`` (picked up by 1.copy-source-files)
+    - ``SourceFilesReference.conf`` (picked up by 2.validate and 3.install)
   * the script ``opal-tools/bin/opal-copy-patch-files.sh|cmd`` is renamed to ``opal-tools/bin/opal-copy-source-files.sh|cmd``
   * the patch script ``1.copy-patch-files.sh|cmd`` is renamed to ``1.copy-source-files.sh|cmd``
 

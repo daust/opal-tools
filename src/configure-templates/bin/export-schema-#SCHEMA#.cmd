@@ -11,7 +11,6 @@ cd "%OPAL_TOOLS_SRC_SQL_DIR%"
 @call opal-export.cmd --config-file "%OPAL_TOOLS_HOME_DIR%\conf\opal-export.conf" ^
                       --output-dir "%OPAL_TOOLS_SRC_SQL_DIR%" ^
                       --pre-scripts "%OPAL_TOOLS_HOME_DIR%\export-scripts\opal-export-pre-script.sql" ^
-                      --post-scripts "%OPAL_TOOLS_HOME_DIR%\export-scripts\opal-export-post-script.sql" ^
                       --connection-pool-name #SCHEMA# ^
                       --connection-pool-file "%OPAL_TOOLS_USER_CONFIG_DIR%\connections-#ENV#.json"
 

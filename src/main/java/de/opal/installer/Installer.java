@@ -317,7 +317,7 @@ public class Installer {
 							+ "ReleaseNotes.txt";
 					File releaseNotesFile = new File(releaseNotesFilename);
 					String releaseNotesContents = "";
-					if (releaseNotesFile != null) {
+					if (releaseNotesFile.exists()) {
 						releaseNotesContents = FileUtils.readFileToString(releaseNotesFile);
 						log.debug("ReleaseNotes.txt : \n");
 					}

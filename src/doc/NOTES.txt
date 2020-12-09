@@ -180,7 +180,7 @@ He believes that it has the potential to increase the efficiency of SQL / PL/SQL
  --mandatory-attributes <attr1> [<attr2>] ... [n] : list of attributes that must not be null,
                                                     e.g. patch author version
  --no-logging                                     : disable writing a logfile (Vorgabe: false)
- --source-list-file <filename>                    : source file name, e.g. SourceFilesReference.txt
+ --source-list-file <filename>                    : source file name, e.g. SourceFilesReference.conf
  --source-dir <path>                              : path to the source directory, e.g. ../src/sql
  --silent                                         : disable all prompts, non-interactive mode (Vorgabe: false)
  --silent-execution                               : prompt after header information, execute all scripts without prompt.
@@ -191,7 +191,7 @@ He believes that it has the potential to increase the efficiency of SQL / PL/SQL
  -h (--help)               : show this help page (Vorgabe: false)
  -v (--version)            : show version information (Vorgabe: false)
  --source-dir <directory>  : source directory, e.g. ../src/sql
- --source-list-file <file> : file that contains the sources to be copied, e.g. SourceFilesCopy.txt
+ --source-list-file <file> : file that contains the sources to be copied, e.g. SourceFilesCopy.conf
  --target-dir <directory>  : target directory, e.g. ./sql
 
  *) opal-install-copy-template
@@ -369,7 +369,7 @@ opal2%% "*log*"
 jira_123
 
 *) copy patch files
-vi SourceFilesCopy.txt
+vi SourceFilesCopy.conf
 
 # Tables
 jri_test/tables => jri_test/040_tables

@@ -72,7 +72,7 @@ SELECT *
 *) locate change in source/sql/packages/file: C:\Projects\basic\src\sql\schema1\packages
 
 make change there
-register in SourceFilesCopy.txt
+register in SourceFilesCopy.conf
 
 create file sql/schema1/040_tables
 

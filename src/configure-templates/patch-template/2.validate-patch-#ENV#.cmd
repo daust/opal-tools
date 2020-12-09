@@ -17,7 +17,7 @@ SET CURRDIR=%~dp0
                        --connection-pool-file "%OPAL_TOOLS_USER_CONFIG_DIR%\connections-#ENV#.json" ^
                        --mandatory-attributes application patch author version ^
                        --no-logging ^
-                       --source-list-file SourceFilesReference.txt ^
+                       --source-list-file SourceFilesReference.conf ^
                        --source-dir "%OPAL_TOOLS_SRC_SQL_DIR%" 
 
 cmd /k

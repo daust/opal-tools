@@ -50,7 +50,7 @@ public class InstallerMain {
 	@Option(name = "--no-logging", usage = "disable writing a logfile")
 	private boolean noLogging = false;
 
-	@Option(name = "--source-list-file", usage = "source file name, e.g. SourceFilesReference.txt", metaVar = "<filename>", depends = {"--source-dir"})
+	@Option(name = "--source-list-file", usage = "source file name, e.g. SourceFilesReference.conf", metaVar = "<filename>", depends = {"--source-dir"})
 	private String patchFilesName;
 	
 	@Option(name = "--source-dir", usage = "path to the source directory, e.g. ../src/sql", metaVar = "<path>", depends = {"--source-list-file"})
