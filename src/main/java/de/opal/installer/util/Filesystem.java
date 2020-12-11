@@ -79,17 +79,17 @@ public class Filesystem {
 	 * @return
 	 * @throws IOException
 	 */
-	public List<PatchFileMapping> filterTreeInorder(List<PatchFileMapping> srcFileList, String sqlFileRegEx,
+	public List<PatchFileMapping> filterTreeInorder(List<PatchFileMapping> srcFileList, String sqlFileRegex,
 			Logfile logfile, ConfigManager configManager) throws IOException {
 
 		List<PatchFileMapping> fileList = new ArrayList<PatchFileMapping>();
 
 		log.debug("\n*** filterTreeInorder ");
-		log.debug("\nregex: " + sqlFileRegEx);
+		log.debug("\nregex: " + sqlFileRegex);
 
 		// MsgLog.print("*** List of files to be installed:\n\n");
 
-		Pattern p = Pattern.compile(sqlFileRegEx, Pattern.CASE_INSENSITIVE);
+		Pattern p = Pattern.compile(sqlFileRegex, Pattern.CASE_INSENSITIVE);
 
 		for (PatchFileMapping fileMapping : srcFileList) {
 			String relativeFilename = configManager.getRelativeFilename(fileMapping.destFile.getAbsolutePath());
@@ -109,13 +109,13 @@ public class Filesystem {
 		return fileList;
 	}
 
-	public void displayTree(List<PatchFileMapping> srcFileList, String sqlFileRegEx, ConfigManager configManager)
+	public void displayTree(List<PatchFileMapping> srcFileList, String sqlFileRegex, ConfigManager configManager)
 			throws IOException {
 
 		log.debug("\n*** displayTree ");
-		log.debug("\nregex: " + sqlFileRegEx);
+		log.debug("\nregex: " + sqlFileRegex);
 
-		Pattern p = Pattern.compile(sqlFileRegEx, Pattern.CASE_INSENSITIVE);
+		Pattern p = Pattern.compile(sqlFileRegex, Pattern.CASE_INSENSITIVE);
 
 		for (PatchFileMapping fileMapping : srcFileList) {
 			String relativeFilename = configManager.getRelativeFilename(fileMapping.destFile.getAbsolutePath());

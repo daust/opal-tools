@@ -1,4 +1,5 @@
 * [What are the OPAL Tools?](#what-are-the-opal-tools)
+* [Youtube Demo Video](#youtube-demo-video)
 * [Download and Setup](#download-and-setup)
 * [Quickstart opal-install](#quickstart-opal-install)
 * [Quickstart opal-export](#quickstart-opal-export)
@@ -10,14 +11,14 @@
 
 ### The Problem
 
-Do you have an approach to move your Oracle code changes (PL/SQL, APEX, ORDS) from your development environment to test and production? Or are you unhappy with your existing one, get errors during installation, miss changes that were not deployed, don't know when you deployed the changes into which environment? 
+Do you have an approach to move your Oracle code changes (PL/SQL, APEX, ORDS) from your development environment to test and production? Or are you unhappy with your existing one, get errors during installation, miss changes that were not deployed or don't know when you deployed the changes into which environment? 
 
 ### Benefits
 
 * Automate your typically manual process of running sql scripts in the desired order
 * Don't manually code your release - configure it
-* Comes with sound and proven default settings (used in actual client projects since Oct/2019)
 * Automatic log generation in logfiles and database tables
+* Comes with sound and proven default settings (used in actual client projects since Oct/2019)
 * Highly adaptable through configuration files and command line switches, you are *not stuck* with our way of doing things
 * Getting started is easy, shell scripts are pregenerated during setup, only need to be customized
 * No separate tools / installation required, Oracle SQLcl libraries are embedded in the download. This way exporting Oracle APEX and Oracle ORDS applications is possible without additional software, e.g. the ``APEXExport.class``.
@@ -45,11 +46,15 @@ This enables you to support different workflows:
 
 It should work for most operating systems, it was tested on Windows, MacOS and Linux. 
 
+# Youtube Demo Video
+
+In this video you can see a short description and a longer demo on how to actually use the project, understand the possible workflows and how to set it up: https://youtu.be/gdudGocohpk.
+
 # Download and Setup
 
 The binary files can be downloaded here: [https://github.com/daust/opal-installer/releases](https://github.com/daust/opal-installer/releases). This is the easiest way to use the opal-tools. The SQLcl libraries are already included in the binary distribution. 
 
-You can also ``git clone`` this repository. In order to create the binary release yourself, please follow the instructions for [developers](src/doc/developers.md).
+You can also ``git clone`` this repository. In order to create the binary release yourself, please follow the instructions for [developers](src/doc/Developers.md).
 
 Once downloaded and unzipped you run the command ``setup.sh`` or ``setup.cmd``. This will copy and customize the appropriate files. 
 

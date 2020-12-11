@@ -271,7 +271,7 @@ public class Installer {
 			if (configManager.getTraversalType() == ConfigManager.TraversalType.STATIC_FILES) {
 				fsTree = fs.filterTreeStaticFiles(fsTreeFull, configManager.getConfigData().staticFiles);
 			} else {
-				fsTree = fs.filterTreeInorder(fsTreeFull, configManager.getConfigData().sqlFileRegEx, logfile,
+				fsTree = fs.filterTreeInorder(fsTreeFull, configManager.getConfigData().sqlFileRegex, logfile,
 						configManager);
 
 				// scan files from PatchFiles.txt and merge with list
@@ -289,7 +289,7 @@ public class Installer {
 					Collections.sort(fsTree);
 				}
 			}
-			fs.displayTree(fsTree, configManager.getConfigData().sqlFileRegEx, configManager);
+			fs.displayTree(fsTree, configManager.getConfigData().sqlFileRegex, configManager);
 
 			if (this.isSilent)
 				MsgLog.println("\nStart the process (" + this.configManager.getConfigData().runMode
@@ -427,17 +427,17 @@ public class Installer {
 		// first find matching dataSource
 		connectionMappings = this.configManager.getConfigData().connectionMappings;
 		for (ConfigConnectionMapping configConnectionMapping : connectionMappings) {
-			Pattern p = Pattern.compile(configConnectionMapping.matchRegEx, Pattern.CASE_INSENSITIVE);
+			Pattern p = Pattern.compile(configConnectionMapping.fileRegex, Pattern.CASE_INSENSITIVE);
 
 			log.debug("test mapping: " + configConnectionMapping.connectionPoolName + " with "
-					+ configConnectionMapping.matchRegEx);
+					+ configConnectionMapping.fileRegex);
 			if (p.matcher(filename).find()) {
 				dsName = configConnectionMapping.connectionPoolName;
 				log.debug("process file " + filename + " with dataSource: " + dsName);
 
 				break;
 			} else {
-				log.debug("  no match with regex: " + configConnectionMapping.matchRegEx);
+				log.debug("  no match with regex: " + configConnectionMapping.fileRegex);
 			}
 		}
 		if (dsName.isEmpty()) {
@@ -546,6 +546,10 @@ public class Installer {
 			} else {
 				fileContents = FileUtils.readFileToString(file, overrideEncoding);
 			}
+			
+			// replace text contents based on regular expression if configured
+			fileContents = configManager.doTextReplacements(relativeFilename, fileContents);
+			
 			SQLclUtil.redirectErrStreamToString();
 			sqlcl.setStmt(fileContents);
 			sqlcl.run();
@@ -559,6 +563,19 @@ public class Installer {
 			String results = bout.toString("UTF8");
 			results = results.replaceAll(" force_print\n", "");
 			MsgLog.println(results);
+		} else {
+			// validate only
+			String fileContents = "";
+
+			if (overrideEncoding.isEmpty()) {
+				fileContents = FileUtils.readFileToString(file, System.getProperty("file.encoding"));
+			} else {
+				fileContents = FileUtils.readFileToString(file, overrideEncoding);
+			}
+			
+			// replace text contents based on regular expression if configured
+			fileContents = configManager.doTextReplacements(relativeFilename, fileContents);
+
 		}
 
 		if (!this.isSilent && !this.validateOnly && !this.isSilentExecution) {

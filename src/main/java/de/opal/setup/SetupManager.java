@@ -99,7 +99,7 @@ public class SetupManager {
 	@Option(name = "--patch-dir", usage = "Patch directory (patches, has subdirectories e.g. year/patch_name)\ne.g. ${PROJECT_ROOT}/patches or %PROJECT_ROOT%\\patches", metaVar = "<directory>")
 	private String patchDirectory;
 
-	@Option(name = "--schemas", handler = WellBehavedStringArrayOptionHandler.class, usage = "List of database schemas (blank-separated, e.g. hr scott)\ne.g. schema1 schema2", metaVar = "<schema1> [<schema2>] [<schema3>] ...")
+	@Option(name = "--schemas", handler = WellBehavedStringArrayOptionHandler.class, usage = "List of database schemas (blank-separated, e.g. schema1 schema2)\ne.g. schema1 schema2", metaVar = "<schema1> [<schema2>] [<schema3>] ...")
 	private List<String> schemaListArr = new ArrayList<String>();
 
 	@Option(name = "--environments", handler = WellBehavedStringArrayOptionHandler.class, usage = "List of environments (blank-separated, e.g. dev test prod)\ne.g. dev test prod", metaVar = "<env1> [<env2>] [<env3>]...")
@@ -767,8 +767,8 @@ public class SetupManager {
 			Msg.println("Patch directory: " + patchDirectory);
 
 		if (schemaListString == null)
-			schemaListString = promptForInput(kbd, "List of database schemas (blank-separated, e.g. hr scott)",
-					"hr scott");
+			schemaListString = promptForInput(kbd, "List of database schemas (blank-separated, e.g. schema1 schema2)",
+					"schema1 schema2");
 		else
 			Msg.println("List of database schemas: " + schemaListString);
 

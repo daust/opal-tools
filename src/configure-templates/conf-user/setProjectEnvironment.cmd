@@ -6,6 +6,7 @@
 @REM --------------------------------------------------------------------------
 set PROJECT_ROOT=#PROJECT_ROOT#
 set OPAL_TOOLS_USER_IDENTITY=#OPAL_TOOLS_USER_IDENTITY#
+set OPAL_TOOLS_USER_CONFIG_DIR=#OPAL_TOOLS_USER_CONFIG_DIR#
 
 @REM --- change if needed ---
 @REM set ORACLE_HOME=c:\Progs\Oracle\Client\12.1\Home
@@ -21,7 +22,6 @@ set OPAL_TOOLS_JAVA_ARGS=-Dlog4j.configurationFile="%OPAL_TOOLS_HOME_DIR%\conf\l
 @REM DEBUG: for debugging, use these log file settings
 @REM set OPAL_TOOLS_JAVA_ARGS=-Dlog4j.configurationFile="%OPAL_TOOLS_HOME_DIR%\conf\log4j2-debug.xml" -Djava.util.logging.config.file="%OPAL_TOOLS_HOME_DIR%\conf\log4j-debug.properties" -Dfile.encoding=#FILE.ENCODING#
 
-set OPAL_TOOLS_USER_CONFIG_DIR=#OPAL_TOOLS_USER_CONFIG_DIR#
 set OPAL_TOOLS_SRC_SQL_DIR=#OPAL_TOOLS_SRC_SQL_DIR#
 set OPAL_TOOLS_PATCH_TEMPLATE_DIR=#OPAL_TOOLS_PATCH_TEMPLATE_DIR#
 set OPAL_TOOLS_PATCH_DIR=#OPAL_TOOLS_PATCH_DIR#

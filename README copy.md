@@ -80,7 +80,7 @@ The setup command comes with command line options, the minimum parameter is ``--
                                                      e.g. ${PROJECT_ROOT}/src/sql or %PROJECT_ROOT%\src\sql
  --patch-dir <directory>                           : Patch directory (patches, has subdirectories e.g. year/patch_name)
                                                      e.g. ${PROJECT_ROOT}/patches or %PROJECT_ROOT%\patches
- --schemas schema1 [schema2] [schema3] ...         : List of database schemas (blank-separated, e.g. hr scott)
+ --schemas schema1 [schema2] [schema3] ...         : List of database schemas (blank-separated, e.g. schema1 schema2)
                                                      e.g. schema1 schema2
  --environments env1 [env2] [env3]...              : List of environments (blank-separated, e.g. dev test prod)
                                                      e.g. dev test prod
@@ -117,7 +117,7 @@ The prompts are (defaults are shown in brackets [] and accepted by just pressing
     - in this directory you will store the sources for the project
 * ``Patch directory (patches, has subdirectories e.g. year/patch_name) [${PROJECT_ROOT}/patches]``:
     - in this directory we will generate the new patch directories. The default layout is ``patches\<year>\<year-month-day>-<patch name>``, it can be changed in the file ``bin\initializePatch.cmd``
-* ``List of database schemas (blank-separated, e.g. hr scott) [hr scott]``:
+* ``List of database schemas (blank-separated, e.g. schema1 schema2) [schema1 schema2]``:
     - how many different schemas do we want to install into? 
     - This comma separated list will be used to generate the connection pool files. 
 * ``List of environments (blank-separated, e.g. dev test prod) [dev test prod]``:
@@ -182,7 +182,7 @@ Local configuration directory (connection pools, user dependent config) [c:\Proj
 Local script to initialize the user environment for this project [c:\conf-user\setProjectEnvironment.cmd]: <b>c:\conf-user\setProject1.cmd</b>
 Database source directory (sql, has subdirectories e.g. sql/oracle_schema/tables, sql/oracle_schema/packages, etc.) [%PROJECT_ROOT%\sql]:
 Patch directory (patches, has subdirectories e.g. year/patch_name) [%PROJECT_ROOT%\patches]:
-List of database schemas (blank-separated, e.g. hr scott) [hr scott]: <b>jri_test</b>
+List of database schemas (blank-separated, e.g. schema1 schema2) [schema1 schema2]: <b>jri_test</b>
 List of environments (blank-separated, e.g. dev test prod) [dev test prod]: <b>dev test</b>
 List of shell colors for the environments (blank-separated, e.g. green yellow red) [green yellow red]: <b>green yellow</b>
 Which is your developement environment? This is used for the export:  [dev]:
@@ -595,8 +595,8 @@ DET_PAT_ID                NUMBER
   ```
 * ``connectionMappings``: List of mappings with attributes: 
     * ``connectionPoolName``: Name of the connection pool to execute the current script
-    * ``matchRegEx``: Regular expression to map the file path (e.g. ``/sql/<schema>/120_data/runme.sql``) to a specific connection pool.
-* ``sqlFileRegEx``: Regular expression to indicate which files should be executed and which not. For example, we want to ignore files *.txt, *.doc or others. By default the suffixes .sql, .pks, .pkb, .trg are executed. 
+    * ``fileRegex``: Regular expression to map the file path (e.g. ``sql/<schema>/120_data/runme.sql``) to a specific connection pool.
+* ``sqlFileRegex``: Regular expression to indicate which files should be executed and which not. For example, we want to ignore files *.txt, *.doc or others. By default the suffixes .sql, .pks, .pkb, .trg are executed. 
 * ``waitAfterEachStatement``: This boolean expression will halt the execution after each statement. This is very helpful to make sure, each script is run successfully. 
 * ``registryTargets``: List of target database connections in which to register the patch tables (#PREFIX#_INSTALLER_PATCHES and #PREFIX_INSTALLER_DETAILS). In those tables the installer will register each execution of a patch. In most cases you will choose a connection pool from the current environment to put the registry tables there. But it also makes sense to have an additional connection pool to store each execution of ANY environment in that table, e.g. the development environment. Then you can have a consolidated view of all patches on all environments. 
     The registry targets have the following attributes: 
@@ -604,7 +604,7 @@ DET_PAT_ID                NUMBER
     * ``tablePrefix``: Prefix of the two generated tables so that they will fit into your local naming scheme of database objects, e.g. "OPAL". In this case the installer will generate the table OPAL_INSTALLER_PATCHES and OPAL_INSTALLER_DETAILS. 
 * ``encodingMappings``: List of mappings with attributes: 
     * ``encoding``: File encoding, e.g. UTF-8 or Cp1252
-    * ``matchRegEx``: Regular expression to map the file path (e.g. ``/sql/<schema>/120_data/runme.sql``) to a specific encoding.
+    * ``fileRegex``: Regular expression to map the file path (e.g. ``sql/<schema>/120_data/runme.sql``) to a specific encoding.
     * ``description``: Description
 * ``dependencies``: List of required patches. Before the patch can be installed, the required patches will be checked against the registry tables. If the patches don't exist on the target system, the patch cannot be installed. 
     They have the following attributes: 
@@ -638,10 +638,10 @@ DET_PAT_ID                NUMBER
   "connectionMappings": [
     {
       "connectionPoolName": "jri_test",
-      "matchRegEx": "\\\\sql\\\\.*jri_test.*"
+      "fileRegex": "\\\\sql\\\\.*jri_test.*"
     }
   ],
-  "sqlFileRegEx": "\\.(sql|pks|pkb|trg)$",
+  "sqlFileRegex": "\\.(sql|pks|pkb|trg)$",
   "waitAfterEachStatement": "true",
   "registryTargets": [
       {
@@ -652,12 +652,12 @@ DET_PAT_ID                NUMBER
   "encodingMappings": [
     {
       "encoding": "UTF-8",
-      "matchRegEx": "\\\\sql\\\\.*apex.*\\\\.*f*sql",
+      "fileRegex": "\\\\sql\\\\.*apex.*\\\\.*f*sql",
       "description": "encoding for APEX files is always UTF8"
     },
     {
       "encoding": "Cp1252",
-      "matchRegEx": "\\\\sql\\\\.*",
+      "fileRegex": "\\\\sql\\\\.*",
       "description": "all other files will get this explicit mapping"
     }
   ],
@@ -690,10 +690,10 @@ DET_PAT_ID                NUMBER
   "connectionMappings": [
     {
       "connectionPoolName": "jri_test",
-      "matchRegEx": "/sql/.*jri_test.*"
+      "fileRegex": "/sql/.*jri_test.*"
     }
   ],
-  "sqlFileRegEx": "\\.(sql|pks|pkb|trg)$",
+  "sqlFileRegex": "\\.(sql|pks|pkb|trg)$",
   "waitAfterEachStatement": "true",
   "registryTargets": [
       {
@@ -704,12 +704,12 @@ DET_PAT_ID                NUMBER
   "encodingMappings": [
     {
       "encoding": "UTF-8",
-      "matchRegEx": "/sql/.*apex.*/.*f*sql",
+      "fileRegex": "/sql/.*apex.*/.*f*sql",
       "description": "encoding for APEX files is always UTF8"
     },
     {
       "encoding": "Cp1252",
-      "matchRegEx": "/sql/.*",
+      "fileRegex": "/sql/.*",
       "description": "all other files will get this explicit mapping"
     }
   ],

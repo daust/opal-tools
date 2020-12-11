@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.logging.log4j.LogManager;
@@ -77,8 +78,38 @@ public class ConfigManager {
 		this.configData.packageDir = replacePlaceholders(this.configData.packageDir);
 		this.configData.patch = replacePlaceholders(this.configData.patch);
 		this.configData.sqlDir = replacePlaceholders(this.configData.sqlDir);
-		this.configData.sqlFileRegEx = replacePlaceholders(this.configData.sqlFileRegEx);
+		this.configData.sqlFileRegex = replacePlaceholders(this.configData.sqlFileRegex);
 		this.configData.version = replacePlaceholders(this.configData.version);
+	}
+
+	public String doTextReplacements(String filename, String fileContents) {
+		ArrayList<TextReplacement> textReplacements = null;
+		String str = fileContents;
+
+		// first find matching dataSource
+		textReplacements = this.getConfigData().textReplacements;
+
+		if (textReplacements != null) {
+			for (TextReplacement textReplacement : textReplacements) {
+				Pattern p = Pattern.compile(textReplacement.fileRegEx, Pattern.CASE_INSENSITIVE);
+
+				log.debug("test regex: " + textReplacement.fileRegEx + " with " + textReplacement.expressions);
+				if (p.matcher(filename).find()) {
+					log.debug("process file " + filename + " with: " + textReplacement.expressions);
+
+					// replace texts
+					for (TextReplacementExpression expression : textReplacement.expressions) {
+						Pattern ep = Pattern.compile(expression.regEx, Pattern.CASE_INSENSITIVE);
+						Matcher m = ep.matcher(str);
+						str = m.replaceAll(expression.value);
+					}
+
+					break;
+				}
+			}
+		}
+
+		return str;
 	}
 
 	/**
@@ -263,9 +294,9 @@ public class ConfigManager {
 
 		// when looking for a match then we need to prefix with / or \ because the old
 		// regular expressions start with / or \ and not sql
-		if (filename.startsWith("sql"))
-			filename=File.separator+filename;
-		
+//		if (filename.startsWith("sql"))
+//			filename = File.separator + filename;
+
 		log.debug("determine encoding for file: " + filename);
 
 		// first find matching dataSource
@@ -276,9 +307,9 @@ public class ConfigManager {
 			return "";
 		}
 		for (ConfigEncodingMapping configEncodingMapping : encodingMappings) {
-			Pattern p = Pattern.compile(configEncodingMapping.matchRegEx, Pattern.CASE_INSENSITIVE);
+			Pattern p = Pattern.compile(configEncodingMapping.fileRegex, Pattern.CASE_INSENSITIVE);
 
-			log.debug("test mapping: " + configEncodingMapping.encoding + " with " + configEncodingMapping.matchRegEx);
+			log.debug("test mapping: " + configEncodingMapping.encoding + " with " + configEncodingMapping.fileRegex);
 			if (p.matcher(filename).find()) {
 				encoding = configEncodingMapping.encoding;
 				log.debug("process file " + filename + " with encoding: " + encoding);
@@ -289,15 +320,15 @@ public class ConfigManager {
 
 		return encoding;
 	}
-	
+
 	public String getRelativeFilename(String filename) {
-		String relativeFilename=null;
-		
-		if (filename==null)
+		String relativeFilename = null;
+
+		if (filename == null)
 			return null;
-		
-		relativeFilename = filename.replace(this.getPackageDirName()+File.separator, "");
-		
+
+		relativeFilename = filename.replace(this.getPackageDirName() + File.separator, "");
+
 		return relativeFilename;
 	}
 

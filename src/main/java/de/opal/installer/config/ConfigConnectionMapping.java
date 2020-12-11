@@ -4,10 +4,10 @@ import com.google.gson.annotations.Expose;
 
 public class ConfigConnectionMapping {
 	
-	public ConfigConnectionMapping(String connectionPoolName, String matchRegEx, String description) {
+	public ConfigConnectionMapping(String connectionPoolName, String fileRegex, String description) {
 		super();
 		this.connectionPoolName = connectionPoolName;
-		this.matchRegEx = matchRegEx;
+		this.fileRegex = fileRegex;
 		this.description=description;
 	}
 
@@ -16,14 +16,14 @@ public class ConfigConnectionMapping {
 	@Expose(serialize = true, deserialize = true)
 	public String connectionPoolName;
 	@Expose(serialize = true, deserialize = true)
-	public String matchRegEx;
+	public String fileRegex;
 	@Expose(serialize = true, deserialize = true)
 	public String description;
 
 	
 	@Override
 	public String toString() {
-		return "name: " + connectionPoolName + "; matchRegEx: " + matchRegEx+ "; description: " + description ;
+		return "name: " + connectionPoolName + "; fileRegex: " + fileRegex+ "; description: " + description ;
 	}
 	
 	

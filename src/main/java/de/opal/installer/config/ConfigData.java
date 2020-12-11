@@ -29,9 +29,7 @@ public class ConfigData {
 	@Expose(serialize = false, deserialize = true)
 	public ArrayList<String> staticFiles;
 	@Expose(serialize = true, deserialize = true)
-	public String sqlFileRegEx = "\\.(sql|pks|pkb)$";
-//	@Expose(serialize = true, deserialize = true)
-//	public String waitAfterEachStatement = "false";
+	public String sqlFileRegex = "\\.(sql|pks|pkb)$";
 	@Expose(serialize = false, deserialize = true)
 	public String runMode = "EXECUTE"; // EXECUTE | VALIDATE_ONLY
 	@Expose(serialize = true, deserialize = true)
@@ -40,6 +38,8 @@ public class ConfigData {
 	public ArrayList<ConfigEncodingMapping> encodingMappings;
 	@Expose(serialize = true, deserialize = true)
 	public ArrayList<PatchDependency> dependencies;
+	@Expose(serialize = true, deserialize = true)
+	public ArrayList<TextReplacement> textReplacements;
 
 	// settings only read but not written back
 	// upon writing back ... we could introduce absolute paths
@@ -57,9 +57,9 @@ public class ConfigData {
 		return "Application: " + application + "; Patch: " + patch+ "; referenceId: " + referenceId + "; Author: " + author + "; Version: " + version + "; extra: " + extra+ "; sqlDir: " + sqlDir
 				+ "; traversalType: " + traversalType + "; staticFiles: "
 				+ (staticFiles == null ? "" : staticFiles.toString()) + "; connections: "
-				+ (connectionMappings == null ? "" : connectionMappings.toString()) + "; sqlFileRegEx: "
+				+ (connectionMappings == null ? "" : connectionMappings.toString()) + "; sqlFileRegex: "
 				+ (encodingMappings == null ? "" : encodingMappings.toString()) 
-				+ (sqlFileRegEx == null ? "" : sqlFileRegEx.toString()) + "; connectionPools: "
+				+ (sqlFileRegex == null ? "" : sqlFileRegex.toString()) + "; connectionPools: "
 //				+ "; waitAfterEachStatement: "
 //				+ (waitAfterEachStatement == null ? "" : waitAfterEachStatement.toString())
 				+ "; patchDependencies: "

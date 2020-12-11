@@ -8,7 +8,7 @@
     "packageDir": ".",
     "sqlDir": "sql",
     "connectionMappings": [],
-    "sqlFileRegEx": "\\.(sql|pks|pkb|trg)$",
+    "sqlFileRegex": "\\.(sql|pks|pkb|trg)$",
     "waitAfterEachStatement": "true",
     "registryTargets": [],
     "dependencies": [],
