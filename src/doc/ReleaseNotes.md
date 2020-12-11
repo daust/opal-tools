@@ -1,6 +1,34 @@
 [//]: # (Infos about this file)
 [//]: # (Markdown Syntax: https://guides.github.com/features/mastering-markdown/)
 
+# Version 2.6.0 (release: 11.12.2020)
+
+You can see the full list of issues with details in the [milestones page](https://github.com/daust/opal-tools/milestone/10?closed=1). 
+
+## New features
+  * see [milestones page](https://github.com/daust/opal-tools/milestone/10?closed=1)
+  * changed names in documentation and the default in the setup routine, so that it matches the video and instructions:
+    - ``scott hr`` => ``schema1 schema2``
+
+## Bug fixes
+  * see [milestones page](https://github.com/daust/opal-tools/milestone/10?closed=1)
+
+## Changed behaviour
+  * OPTIONAL: The naming of ``SourceFilesCopy.txt`` and ``SourceFilesReference.txt`` to ``SourceFilesCopy.conf`` and ``SourceFilesReference.conf``. These files are called from the shell scripts and passed as parameters. Your existing patches will continue to work. New releases will generate different patch-templates that will use these different filenames in the filesystem and call them automatically in the shell scripts. 
+  * MANDATORY: In order to streamline the naming of properties, the following attributes have changed in the ``opal-installer.json`` file (else these properties will no longer be read):
+    - ``matchRegEx => fileRegex``
+    - ``sqlFileRegEx => sqlFileRegex``
+    ![initialize script](resources/v2.6.0-change-opal-installer.json.png)
+
+## Deprecated features (still available but will go away eventually)
+  * *none*
+
+## Obsoleted features (no longer available)
+  * *none*
+
+## Known issues
+  * Please check the current list of open issues: https://github.com/daust/opal-tools/issues . 
+
 # Version 2.5.0 (release: 03.12.2020)
 
 You can see the full list of issues with details in the [milestones page](https://github.com/daust/opal-tools/milestone/9?closed=1). 

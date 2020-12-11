@@ -7,21 +7,21 @@ public class ConfigEncodingMapping {
 	@Expose(serialize = true, deserialize = true)
 	public String encoding;
 	@Expose(serialize = true, deserialize = true)
-	public String matchRegEx;
+	public String fileRegex;
 	@Expose(serialize = true, deserialize = true)
 	public String description;
 	
-	public ConfigEncodingMapping(String encoding, String matchRegEx, String description) {
+	public ConfigEncodingMapping(String encoding, String fileRegex, String description) {
 		super();
 		this.encoding = encoding;
-		this.matchRegEx = matchRegEx;
+		this.fileRegex = fileRegex;
 		this.description=description;
 	}
 
 
 	@Override
 	public String toString() {
-		return "name: " + encoding + "; matchRegEx: " + matchRegEx + "; description: " + description;
+		return "name: " + encoding + "; fileRegex: " + fileRegex + "; description: " + description;
 	}
 	
 	

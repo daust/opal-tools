@@ -51,21 +51,21 @@ He believes that it has the potential to increase the efficiency of SQL / PL/SQL
     "connectionMappings": [
       {
         "connectionPoolName": "jri_test",
-        "matchRegEx": "/sql/.*jri_test.*"
+        "fileRegex": "/sql/.*jri_test.*"
       }
     ],
-    "sqlFileRegEx": "\\.(sql|pks|pkb|trg)$",
+    "sqlFileRegex": "\\.(sql|pks|pkb|trg)$",
     "waitAfterEachStatement": "true",
     "registryTargets": [{"connectionPoolName":"jri_test", "tablePrefix":"OPAL2"}],
     "encodingMappings": [
       {
         "encoding": "UTF-8",
-        "matchRegEx": "/sql/.*apex.*/.*f*sql",
+        "fileRegex": "/sql/.*apex.*/.*f*sql",
         "description": "encoding for APEX files is always UTF8"
       },
       {
         "encoding": "UTF-8",
-        "matchRegEx": "/sql/.*",
+        "fileRegex": "/sql/.*",
         "description": "all other files will get this explicit mapping"
       }
     ],

@@ -45,7 +45,7 @@ The setup command comes with command line options, the minimum parameter is ``--
                                                      e.g. ${PROJECT_ROOT}/src/sql or %PROJECT_ROOT%\src\sql
  --patch-dir <directory>                           : Patch directory (patches, has subdirectories e.g. year/patch_name)
                                                      e.g. ${PROJECT_ROOT}/patches or %PROJECT_ROOT%\patches
- --schemas schema1 [schema2] [schema3] ...         : List of database schemas (blank-separated, e.g. hr scott)
+ --schemas schema1 [schema2] [schema3] ...         : List of database schemas (blank-separated, e.g. schema1 schema2)
                                                      e.g. schema1 schema2
  --environments env1 [env2] [env3]...              : List of environments (blank-separated, e.g. dev test prod)
                                                      e.g. dev test prod
@@ -82,7 +82,7 @@ The prompts are (defaults are shown in brackets [] and accepted by just pressing
     - in this directory you will store the sources for the project
 * ``Patch directory (patches, has subdirectories e.g. year/patch_name) [${PROJECT_ROOT}/patches]``:
     - in this directory we will generate the new patch directories. The default layout is ``patches\<year>\<year-month-day>-<patch name>``, it can be changed in the file ``bin\initializePatch.cmd``
-* ``List of database schemas (blank-separated, e.g. hr scott) [hr scott]``:
+* ``List of database schemas (blank-separated, e.g. schema1 schema2) [schema1 schema2]``:
     - how many different schemas do we want to install into? 
     - This comma separated list will be used to generate the connection pool files. 
 * ``List of environments (blank-separated, e.g. dev test prod) [dev test prod]``:
@@ -147,12 +147,12 @@ Your choice during setup will also generate the right mapping into the file [opa
   "encodingMappings": [
     {
       "encoding": "UTF-8",
-      "matchRegEx": "/sql/.*apex.*/.*f*sql",
+      "fileRegex": "/sql/.*apex.*/.*f*sql",
       "description": "encoding for APEX files is always UTF8"
     },
     {
       "encoding": "Cp1252",
-      "matchRegEx": "/sql/.*",
+      "fileRegex": "/sql/.*",
       "description": "all other files will get this explicit mapping"
     }
   ],
@@ -366,7 +366,6 @@ Therefore, we have two differences here:
 
 The connection pool files are stored in the local user configuration folder. They are named ``connections-<environment>.json``. 
 
-In there you can change the connection information for each database connection: 
 ```
 {
   "targetSystem": "test",
@@ -377,12 +376,32 @@ In there you can change the connection information for each database connection:
       "password": "1:HcfzafJLBbo4b4sZiYDTrg==",
       "connectString": "127.0.0.1:1521:xe"
     }
-  ]
+  ] 
 }
 ```
-You can set a new clear text password. The ``1:`` indicates that this password is already encrypted. 
 
-When you start the script ``opal-tools/bin/validate-connections`` (on Windows you can just double-click it), the connection pools are all verified and the passwords encrypted. 
+### ``"user"``
+Consider a few use cases with regards to users: 
+* ``"user": "schema1"``: connect as Oracle user ``schema1``
+* ``"user": "daust[schema1]"``: connect as Oracle proxy user ``daust`` and switch to user ``schema1`` upon login
+* ``"user": "sys as sysdba"``: connect as Oracle user ``SYS`` with role ``SYSDBA``
+
+### ``"password"``
+This is the password for the Oracle user as specified under ``"user"``. The password is encrypted and can be replaced in this file with a clear text password. The ``1:`` indicates that this password is already encrypted. When you use the connection pool for the next time, all unencrypted passwords will be encrypted automatically. 
+
+When you start the script ``opal-tools/bin/validate-connections`` (on Windows you can just double-click it), the connection pools are all verified and the passwords are encrypted. 
+
+### ``"connectString"``
+
+Here are some links for specifying Oracle connect strings:
+* [Oracle 19c JDBC urls](https://docs.oracle.com/en/database/oracle/oracle-database/19/jjdbc/data-sources-and-URLs.html#GUID-6F729E4D-064B-4FD9-AE92-1BD44B8BE5EF)
+* [Oracle Cloud connect strings](https://medium.com/@FranckPachot/easy-oracle-cloud-wallet-location-in-the-jdbc-connection-string-c782d2011252)
+
+Consider a few general use cases for connect strings: 
+* Local database on port 1521 and SID orcl: ``"connectString": "127.0.0.1:1521:xe"``
+* Local database on port 1521 and service name ``myService``: ``"connectString": "127.0.0.1:1521/myService"``
+* Cloud database connect with tns names connect string ``db201909172340_high`` and the Oracle wallet in directory ``/oracle/wallet``: ``"connectString": "jdbc:oracle:thin:@db201909172340_high?TNS_ADMIN=/oracle/wallet"``
+
 
 ## ``opal-installer.json``
 
@@ -400,15 +419,15 @@ When you start the script ``opal-tools/bin/validate-connections`` (on Windows yo
   ```
 * ``connectionMappings``: List of mappings with attributes: 
     * ``connectionPoolName``: Name of the connection pool to execute the current script
-    * ``matchRegEx``: Regular expression to map the file path (e.g. ``/sql/<schema>/120_data/runme.sql``) to a specific connection pool.
-* ``sqlFileRegEx``: Regular expression to indicate which files should be executed and which not. For example, we want to ignore files *.txt, *.doc or others. By default the suffixes .sql, .pks, .pkb, .trg are executed. 
+    * ``fileRegex``: Regular expression to map the file path (e.g. ``sql/<schema>/120_data/runme.sql``) to a specific connection pool.
+* ``sqlFileRegex``: Regular expression to indicate which files should be executed and which not. For example, we want to ignore files *.txt, *.doc or others. By default the suffixes .sql, .pks, .pkb, .trg are executed. 
 * ``registryTargets``: List of target database connections in which to register the patch tables (#PREFIX#_INSTALLER_PATCHES and #PREFIX_INSTALLER_DETAILS). In those tables the installer will register each execution of a patch. In most cases you will choose a connection pool from the current environment to put the registry tables there. But it also makes sense to have an additional connection pool to store each execution of ANY environment in that table, e.g. the development environment. Then you can have a consolidated view of all patches on all environments. 
     The registry targets have the following attributes: 
     * ``connectionPoolName``: Name of the connection pool to use for creating the tables. 
     * ``tablePrefix``: Prefix of the two generated tables so that they will fit into your local naming scheme of database objects, e.g. "OPAL". In this case the installer will generate the table OPAL_INSTALLER_PATCHES and OPAL_INSTALLER_DETAILS. 
 * ``encodingMappings``: List of mappings with attributes: 
     * ``encoding``: File encoding, e.g. UTF-8 or Cp1252
-    * ``matchRegEx``: Regular expression to map the file path (e.g. ``/sql/<schema>/120_data/runme.sql``) to a specific encoding.
+    * ``fileRegex``: Regular expression to map the file path (e.g. ``sql/<schema>/120_data/runme.sql``) to a specific encoding.
     * ``description``: Description
 * ``dependencies``: List of required patches. Before the patch can be installed, the required patches will be checked against the registry tables. If the patches don't exist on the target system, the patch cannot be installed. 
     They have the following attributes: 
@@ -443,10 +462,10 @@ When you start the script ``opal-tools/bin/validate-connections`` (on Windows yo
   "connectionMappings": [
     {
       "connectionPoolName": "jri_test",
-      "matchRegEx": "\\\\sql\\\\.*jri_test.*"
+      "fileRegex": sql\\\\.*jri_test.*"
     }
   ],
-  "sqlFileRegEx": "\\.(sql|pks|pkb|trg)$",
+  "sqlFileRegex": "\\.(sql|pks|pkb|trg)$",
   "registryTargets": [
       {
           "connectionPoolName": "jri_test",
@@ -456,12 +475,12 @@ When you start the script ``opal-tools/bin/validate-connections`` (on Windows yo
   "encodingMappings": [
     {
       "encoding": "UTF-8",
-      "matchRegEx": "\\\\sql\\\\.*apex.*\\\\.*f*sql",
+      "fileRegex": "\\\\sql\\\\.*apex.*\\\\.*f*sql",
       "description": "encoding for APEX files is always UTF8"
     },
     {
       "encoding": "Cp1252",
-      "matchRegEx": "\\\\sql\\\\.*",
+      "fileRegex": "\\\\sql\\\\.*",
       "description": "all other files will get this explicit mapping"
     }
   ],
@@ -494,10 +513,10 @@ When you start the script ``opal-tools/bin/validate-connections`` (on Windows yo
   "connectionMappings": [
     {
       "connectionPoolName": "jri_test",
-      "matchRegEx": "/sql/.*jri_test.*"
+      "fileRegex": "/sql/.*jri_test.*"
     }
   ],
-  "sqlFileRegEx": "\\.(sql|pks|pkb|trg)$",
+  "sqlFileRegex": "\\.(sql|pks|pkb|trg)$",
   "registryTargets": [
       {
           "connectionPoolName": "jri_test",
@@ -507,12 +526,12 @@ When you start the script ``opal-tools/bin/validate-connections`` (on Windows yo
   "encodingMappings": [
     {
       "encoding": "UTF-8",
-      "matchRegEx": "/sql/.*apex.*/.*f*sql",
+      "fileRegex": "/sql/.*apex.*/.*f*sql",
       "description": "encoding for APEX files is always UTF8"
     },
     {
       "encoding": "Cp1252",
-      "matchRegEx": "/sql/.*",
+      "fileRegex": "/sql/.*",
       "description": "all other files will get this explicit mapping"
     }
   ],
