@@ -85,11 +85,11 @@ You can freely create a subdirectory structure under ``sql/<schema name>`` and p
 The file ``1.copy-source-files.cmd`` is configured to copy files from the source directory ``sql`` to the target directory ``<patch name>/sql``. In the file ``SourceFilesCopy.conf`` you only configure, which files you want to have copied, e.g.: 
 <pre style="overflow-x: auto; white-space: pre-wrap; white-space: -moz-pre-wrap; white-space: -pre-wrap; white-space: -o-pre-wrap; word-wrap: break-word;">
 # Tables
-jri_test/tables => jri_test/040_tables
+schema1/tables => schema1/040_tables
 <b>xlib*.sql</b>
 </pre>
 
-Only tables (i.e. files) which match the wildcard ``xlib*.sql`` will be copied to the target directory ``<patch name>/sql/jri_test/040_tables``. 
+Only tables (i.e. files) which match the wildcard ``xlib*.sql`` will be copied to the target directory ``<patch name>/sql/schema1/040_tables``. 
 
 ## Execute the patch
 
@@ -127,6 +127,10 @@ spool off
 # Advanced Customization
 
 The solution can be customized to suit your needs. You can find more information [here](src/doc/Customization.md).
+
+It is best to start with the patch template. Modify the shell scripts you find there. Remove the ones that you don't need, add elements to the ``sql`` folder structure that you would need in all patches. Also, look at the command line switches in the shell scripts and adapt them to suit your needs.
+
+In the beginning, the logging in the database tables is disabled. Check the documentation on [how to activate it](src/doc/Customization.md#database-log-tables). 
 
 Here is an overview of SQLcl commands that you can use: https://docs.oracle.com/en/database/oracle/sql-developer-command-line/20.3/sqcug/working-sqlcl.html. 
 
