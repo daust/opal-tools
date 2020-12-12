@@ -1,6 +1,7 @@
 * [Setup](#setup)
 * [About Shell Scripting](#about-shell-scripting)
 * [About File Encodings](#about-file-encodings)
+* [About Java Regular Expressions](#about-java-regular-expressions)
 * [opal-install](#opal-install)
   * [Command Line](#command-line)
   * [Database Log Tables](#database-log-tables)
@@ -110,7 +111,7 @@ setup.cmd --project-root-dir c:\Projects\project1
 ```
 ./setup.sh --project-root-dir <project root directory>
 e.g.
-.7setup.sh --project-root-dir /u01/project1
+./setup.sh --project-root-dir /u01/project1
 ```
 
 All environment variables are set up in the "**Local script to initialize the user environment**", e.g.: ``c:\opal-installer-local\setProjectEnvironment-project1.cmd``. 
@@ -158,6 +159,16 @@ Your choice during setup will also generate the right mapping into the file [opa
   ],
 ```
 APEX files are always exported as UTF-8 by SQLcl or the APEXExport class utility, no matter what you define in ``-Dfile.encoding``. 
+
+# About Java Regular Expressions
+
+We are using Java Regular expressions in a number of places in the ``opal-installer.json`` file. The syntax can be found here: https://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html .
+
+Special characters need to be escaped. And they need to be escaped again when reading the regular expression from a file in a string. 
+
+Thus, when matching a file system path on Windows, e.g. ``\sql\`` the proper regular expression is ``\\\\sql\\\\`` because the ``\`` needs to be escaped **twice**:
+* ``\sql\`` => ``\\sql\\`` for escaping the (regular expression) special character ``\``
+* ``\\sql\\`` => ``\\\\sql\\\\`` for escaping the (Java) special character ``\`` in a Java String. 
 
 # opal-install
 

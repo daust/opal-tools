@@ -1,4 +1,59 @@
 -----------------------------------------------------------------------------
+-- new stuff
+-----------------------------------------------------------------------------
+,p_flow_version=>'&PRODUCT_NAME. 20.2.0.00.20'
+set define off
+set timing on
+set pagesize 50000
+set sqlblanklines on
+version=#VERSION#
+set role all; 
+
+
+{
+  "application": "",
+  "patch": "#PARENT_FOLDER_NAME#",
+  "author": "#ENV_OPAL_TOOLS_USER_IDENTITY#",
+  "referenceId": "",
+  "version": "1.0.1",
+  "extra": "",
+  "connectionMappings": [
+    {
+      "connectionPoolName": "jri_test",
+      "fileRegex": "/sql/.*jri_test.*"
+    }
+  ],
+  "sqlFileRegex": "\\.(sql|pks|pkb|trg)$",
+  "registryTargets": [],
+  "encodingMappings": [
+    {
+      "encoding": "UTF-8",
+      "fileRegex": "/sql/.*apex.*/.*f*sql",
+      "description": "encoding for APEX files is always UTF8"
+    },
+    {
+      "encoding": "UTF-8",
+      "fileRegex": "/sql/.*",
+      "description": "all other files will get this explicit mapping"
+    }
+  ],
+  "dependencies": [],
+  "textReplacements": [
+    {
+      "fileRegex": ".*",
+      "expressions": [
+        {"regex": "(,p_flow_version=>')(.*?)(')", "value": "$11.0.0$3"},
+        {"regEx": "(,p_flow_version=>')(.*?)(')", "value": ", p_flow_version='2.0.0'"},
+        {"regEx": "#VERSION#", "value": "1.0.2"},
+        {"regEx": "role", "value": "${version}"}        
+      ]
+    }
+  ]
+}
+
+
+
+-----------------------------------------------------------------------------
 -- Local tests
 -----------------------------------------------------------------------------
 
