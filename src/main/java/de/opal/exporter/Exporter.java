@@ -158,9 +158,9 @@ public class Exporter {
 			if (includeBuilder.length() != 0)
 				includeBuilder.append(" or ");
 			if (schemas.size() == 1) {
-				includeBuilder.append("object_name like '" + flt + "'" + escapeClause);
+				includeBuilder.append("upper(object_name) like '" + flt + "'" + escapeClause);
 			} else {
-				includeBuilder.append("owner||'.'||object_name like '" + flt + "'" + escapeClause);
+				includeBuilder.append("upper(owner||'.'||object_name) like '" + flt + "'" + escapeClause);
 			}
 
 		}
@@ -180,9 +180,9 @@ public class Exporter {
 				excludeBuilder.append(" and ");
 			}
 			if (schemas.size() == 1) {
-				excludeBuilder.append("object_name not like '" + flt + "'" + escapeClause);
+				excludeBuilder.append("upper(object_name) not like '" + flt + "'" + escapeClause);
 			} else {
-				excludeBuilder.append("owner||'.'||object_name not like '" + flt + "'" + escapeClause);
+				excludeBuilder.append("upper(owner||'.'||object_name) not like '" + flt + "'" + escapeClause);
 			}
 		}
 

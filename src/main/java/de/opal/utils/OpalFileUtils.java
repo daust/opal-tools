@@ -32,6 +32,11 @@ public class OpalFileUtils {
 		// else use as directory filter: TrueFileFilter.INSTANCE
 		Collection<File> files = FileUtils.listFiles(srcDirFile, filter, null);
 		
+		// raise exception when the files were not found!
+		if (files.isEmpty()) {
+			throw new RuntimeException("File(s) \"" + filterString + "\" could not be found in directory \"" + srcDir + "\"." );
+		}
+		
 		for (File file : files) {
 			Msg.println("  - "+ file.getName());
 			FileUtils.copyFileToDirectory(file, targetDirFile);
