@@ -14,8 +14,6 @@ import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.opal.installer.util.Msg;
-
 public class PatchFilesTxtWrapper {
 
 	public static final Logger log = LoggerFactory.getLogger(PatchFilesTxtWrapper.class.getName());
@@ -113,13 +111,19 @@ public class PatchFilesTxtWrapper {
 	public static List<PatchFileMapping> getFileListFromLine(String srcDir, String targetDir, String filterString) throws IOException {
 		List<PatchFileMapping> fileList=new ArrayList<PatchFileMapping>();
 		File srcDirFile = new File(srcDir);
-		File targetDirFile = new File(targetDir);
+		//File targetDirFile = new File(targetDir);
 		
 		IOFileFilter filter = new WildcardFileFilter(filterString);
 
 		// exclude all files from subdirectories
 		// else use as directory filter: TrueFileFilter.INSTANCE
 		Collection<File> files = FileUtils.listFiles(srcDirFile, filter, null);
+		
+		// raise exception when the files were not found!
+		if (files.isEmpty()) {
+			throw new RuntimeException("File(s) \"" + filterString + "\" could not be found in directory \"" + srcDir + "\"." );
+		}
+
 		
 		for (File file : files) {
 			log.debug("  - "+ file.getName());
