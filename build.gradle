@@ -17,7 +17,7 @@ import org.gradle.internal.os.OperatingSystem
 //-----------------------------------------------------------------------------
 
   project.description       = "OPAL Tools - more details here: https://github.com/daust/opal-tools"
-  project.version           = '2.7.0'
+  project.version           = '2.7.1'
   
   sourceCompatibility       = 1.8
   targetCompatibility       = 1.8
@@ -71,7 +71,6 @@ dependencies {
 
     // https://mvnrepository.com/artifact/commons-io/commons-io
     // compile group: 'commons-io', name: 'commons-io', version: '2.8.0'
-
 
     // https://mvnrepository.com/artifact/com.googlecode.json-simple/json-simple
     compile group: 'com.googlecode.json-simple', name: 'json-simple', version: '+'
