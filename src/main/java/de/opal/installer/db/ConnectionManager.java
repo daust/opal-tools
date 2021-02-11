@@ -1,5 +1,6 @@
 package de.opal.installer.db;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -30,7 +31,7 @@ public class ConnectionManager {
 
 	private static ConnectionManager _instance;
 	private HashMap<String, ConfigConnectionPool> dataSourceDefs = new HashMap<String, ConfigConnectionPool>();
-	
+
 	private HashMap<String, OracleConnectionPoolDataSource> dataSources = new HashMap<String, OracleConnectionPoolDataSource>();
 	private static Logger logger = LogManager.getLogger(ConnectionManager.class.getName());
 
@@ -53,7 +54,7 @@ public class ConnectionManager {
 		// initialize Connection Manager
 
 	}
-	
+
 	public void initialize(ArrayList<ConfigConnectionPool> connectionPools) {
 		// store definitions in hashmap
 		for (ConfigConnectionPool configConnectionPool : connectionPools) {
@@ -93,8 +94,8 @@ public class ConnectionManager {
 				prop.setProperty("MinLimit", "1");
 				prop.setProperty("MaxLimit", "1");
 
-			    ocpds = new OracleConnectionPoolDataSource();
-			    
+				ocpds = new OracleConnectionPoolDataSource();
+
 				ocpds.setURL(ConnectionUtility.transformJDBCConnectString(configConnectionPool.connectString));
 				ocpds.setUser(configConnectionPool.user);
 				ocpds.setPassword(configConnectionPool.password);
@@ -114,10 +115,9 @@ public class ConnectionManager {
 		} catch (SQLException e) {
 			Utils.throwRuntimeException("Could not connect via JDBC: " + e.getMessage());
 		}
-		
+
 		return conn;
 	}
-	
 
 	/**
 	 * retrieves a connection from the pool or creates a new one
@@ -133,50 +133,60 @@ public class ConnectionManager {
 
 		logger.debug("get connection for  new connection pool for:" + dsName);
 		ocpds = this.dataSources.get(dsName);
-		
-		if (ocpds==null) {
+
+		if (ocpds == null) {
 			// connection does not yet exist, create a new one
 			// first determine connection pool definition for data source
 			ConfigConnectionPool configConnectionPool = this.dataSourceDefs.get(dsName);
-			
+
 			if (configConnectionPool == null)
-				throw new RuntimeException("Connection for data source \"" + dsName + "\" could not be found in connection pool file.");
-			
-			//ConfigConnectionPool configConnectionPool
-			conn = openConnection( configConnectionPool );
-		}else {
-			// connection exists 
+				throw new RuntimeException(
+						"Connection for data source \"" + dsName + "\" could not be found in connection pool file.");
+
+			// ConfigConnectionPool configConnectionPool
+			conn = openConnection(configConnectionPool);
+		} else {
+			// connection exists
 			pc = ocpds.getPooledConnection();
 			conn = pc.getConnection();
 		}
 
 		return conn;
 	}
-	
+
 	public void closeConnection(String dsName) throws SQLException {
 		// close this one connection
-		Connection conn = getConnection( dsName );
+		Connection conn = getConnection(dsName);
 		conn.close();
-		conn=null;
+		conn = null;
 	}
+
 	public void closeConnection(Connection conn) throws SQLException {
 		// close this one connection
 		conn.close();
-		conn=null;
+		conn = null;
 	}
 
-	public void closeAllConnections() {
+	public void closeAllConnections() throws IOException {
 		// close all current connections
-		this.dataSources.forEach((k,v)->{
-			try {
-				DBUtils.closeQuietly(v.getConnection());
-				
-			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+
+		this.dataSources.forEach((k, v) -> {
+			if (v != null) {
+				try {
+					// OracleConnectionPoolDataSource ocpds = v;
+					PooledConnection pc = v.getPooledConnection();
+					Connection conn = pc.getConnection();
+
+					if (conn != null)
+						DBUtils.closeQuietly(conn);
+
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+
 			}
 		});
-		
 	}
 
 	// ----------------------------------------------------
