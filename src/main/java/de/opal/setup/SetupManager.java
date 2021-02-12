@@ -486,14 +486,14 @@ public class SetupManager {
 		// add encoding mapping
 		ConfigEncodingMapping map = null;
 		if (osIsWindows()) {
-			map = new ConfigEncodingMapping(utf8_default, "\\\\sql\\\\.*apex.*\\\\.*f*sql",
+			map = new ConfigEncodingMapping(utf8_default, "\\\\sql\\\\.*apex.*\\\\.*f.*sql",
 					"encoding for APEX files is always UTF8");
 			confMgrInst.getConfigData().encodingMappings.add(map);
 			map = new ConfigEncodingMapping(this.fileEncoding, "\\\\sql\\\\.*",
 					"all other files will get this explicit mapping");
 			confMgrInst.getConfigData().encodingMappings.add(map);
 		} else {
-			map = new ConfigEncodingMapping(utf8_default, "/sql/.*apex.*/.*f*sql",
+			map = new ConfigEncodingMapping(utf8_default, "/sql/.*apex.*/.*f.*sql",
 					"encoding for APEX files is always UTF8");
 			confMgrInst.getConfigData().encodingMappings.add(map);
 			map = new ConfigEncodingMapping(this.fileEncoding, "/sql/.*",

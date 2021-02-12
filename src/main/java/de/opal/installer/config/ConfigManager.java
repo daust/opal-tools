@@ -294,8 +294,9 @@ public class ConfigManager {
 
 		// when looking for a match then we need to prefix with / or \ because the old
 		// regular expressions start with / or \ and not sql
-//		if (filename.startsWith("sql"))
-//			filename = File.separator + filename;
+		/* TODO:  make this VERSION dependent starting with version 2.7.1 */
+		if (filename.startsWith("sql"))
+			filename = File.separator + filename;
 
 		log.debug("determine encoding for file: " + filename);
 

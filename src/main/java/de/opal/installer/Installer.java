@@ -415,7 +415,7 @@ public class Installer {
 	 * @return
 	 * @throws SQLException
 	 */
-	private ScriptExecutor getScriptExecutor(String filename) throws SQLException {
+	private ScriptExecutor getScriptExecutorForFile(String filename) throws SQLException {
 		Connection conn;
 		ScriptExecutor sqlcl;
 		ScriptRunnerContext ctx;
@@ -490,11 +490,11 @@ public class Installer {
 				// execute referenced file
 				// determine the connectionMapping based on the target file ... then execute the
 				// source file
-				sqlcl = this.getScriptExecutor(fileMapping.destFile.getAbsolutePath());
+				sqlcl = this.getScriptExecutorForFile(fileMapping.destFile.getAbsolutePath());
 				executeFile(fileMapping.srcFile, sqlcl);
 			} else {
 				// execute file in tree
-				sqlcl = this.getScriptExecutor(fileMapping.destFile.getAbsolutePath());
+				sqlcl = this.getScriptExecutorForFile(fileMapping.destFile.getAbsolutePath());
 				executeFile(fileMapping.destFile, sqlcl);
 			}
 		}

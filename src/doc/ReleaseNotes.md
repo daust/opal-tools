@@ -1,6 +1,33 @@
 [//]: # (Infos about this file)
 [//]: # (Markdown Syntax: https://guides.github.com/features/mastering-markdown/)
 
+# Version 2.7.2 (release: 12.02.2021)
+
+You can see the full list of issues with details in the [milestones page](https://github.com/daust/opal-tools/milestone/13?closed=1). 
+
+## New features
+  * see [milestones page](https://github.com/daust/opal-tools/milestone/13?closed=1)
+
+## Bug fixes
+  * see [milestones page](https://github.com/daust/opal-tools/milestone/13?closed=1)
+
+## Changed behaviour
+  * *none*
+
+## Upgrade instructions
+  In order to upgrade from version 2.6.0 to 2.7.2 you only need to replace the /lib directory:
+  * Delete *all* files from /lib directory
+  * Copy *all* files from the /lib directory of the distribution
+
+## Deprecated features (still available but will go away eventually)
+  * *none*
+
+## Obsoleted features (no longer available)
+  * *none*
+
+## Known issues
+  * Please check the current list of open issues: https://github.com/daust/opal-tools/issues . 
+
 # Version 2.7.1 (release: 11.02.2021)
 
 You can see the full list of issues with details in the [milestones page](https://github.com/daust/opal-tools/milestone/12?closed=1). 
