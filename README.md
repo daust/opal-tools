@@ -1,5 +1,5 @@
 * [What are the OPAL Tools?](#what-are-the-opal-tools)
-* [Youtube Demo Videos](#youtube-demo-video)
+* [Youtube Demo Videos](#youtube-demo-videos)
 * [Download and Setup](#download-and-setup)
 * [Quickstart opal-install](#quickstart-opal-install)
 * [Quickstart opal-export](#quickstart-opal-export)
