@@ -46,9 +46,10 @@ This enables you to support different workflows:
 
 It should work for most operating systems, it was tested on Windows, MacOS and Linux. 
 
-# Youtube Demo Video
+# Youtube Demo Videos
 
-In this video you can see a short description and a longer demo on how to actually use the project, understand the possible workflows and how to set it up: https://youtu.be/gdudGocohpk.
+* In this video you can see a short description and a longer demo on how to actually use the project, understand the possible workflows and how to set it up: https://youtu.be/gdudGocohpk.
+* Here is a fun interview with Jürgen Schuster for the **APEX World for Dummies series**: https://www.youtube.com/watch?v=YkVbXfF5hZI&list=PL3S33P01ea06WdgNtuFvGd-f8PvP54-g0&index=1
 
 # Download and Setup
 
