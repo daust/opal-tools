@@ -111,11 +111,13 @@ public class ExporterMain {
 			"--output-dir" })
 	private boolean skipExport = false;
 
-	@Option(name = "--pre-scripts", usage = "script (sqlplus/sqlcl) that is running to initialize the session, similar to the login.sql file for sqlplus, e.g. ./login.sql or ./init.sql", metaVar = "<script> [<script2>] ...")
-	private List<File> preScripts = new ArrayList<File>();
+	@Option(name = "--pre-scripts", handler = WellBehavedStringArrayOptionHandler.class, usage = "script (sqlplus/sqlcl) that is running to initialize the session, similar to the login.sql file for sqlplus, e.g. ./login.sql or ./init.sql", metaVar = "<script> [<script2>] ...")
+	private List<String> preScripts = new ArrayList<String>();
+	private List<File> preScriptsFiles = new ArrayList<File>();
 
-	@Option(name = "--post-scripts", usage = "script (sqlplus/sqlcl) that is running in the end to export custom objects, e.g. ./apex.sql", metaVar = "<script> [<script2>] ...")
-	private List<File> postScripts = new ArrayList<File>();
+	@Option(name = "--post-scripts", handler = WellBehavedStringArrayOptionHandler.class, usage = "script (sqlplus/sqlcl) that is running in the end to export custom objects, e.g. ./apex.sql", metaVar = "<script> [<script2>] ...")
+	private List<String> postScripts = new ArrayList<String>();
+	private List<File> postScriptsFiles = new ArrayList<File>();
 
 	@Option(name = "--silent", usage = "turns off prompts")
 	private boolean isSilent = false;
@@ -190,7 +192,7 @@ public class ExporterMain {
 				 */
 				dbExporter.filenameReplaceBlanks, dbExporter.workingDirectorySQLcl, dbExporter.skipExport,
 				dbExporter.filenameTemplatesMap, dbExporter.exportTemplateDir, dbExporter.parallelThreads);
-		exporter.export(dbExporter.preScripts, dbExporter.postScripts, dbExporter.includeFilters,
+		exporter.export(dbExporter.preScriptsFiles, dbExporter.postScriptsFiles, dbExporter.includeFilters,
 				dbExporter.excludeFilters, dbExporter.schemas, dbExporter.includeTypes, dbExporter.excludeTypes);
 
 		Msg.println("\n*** done.\n");
@@ -477,6 +479,14 @@ public class ExporterMain {
 		// be escaped and ^^ is passed to the software ... don't understand why. 
 		//if (this.escapeCharacter!=null)
 		//	this.escapeCharacter.replace("^^", "^");
+		
+		// convert filenames to actual File(s)
+		for (String s : preScripts) {
+			this.preScriptsFiles.add(new File(s));
+		}
+		for (String s : postScripts) {
+			this.postScriptsFiles.add(new File(s));
+		}
 	}
 
 	private void showHeaderInfo() {
