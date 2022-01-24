@@ -40,6 +40,8 @@ public class ConfigData {
 	public ArrayList<PatchDependency> dependencies;
 	@Expose(serialize = true, deserialize = true)
 	public ArrayList<TextReplacement> textReplacements;
+	@Expose(serialize = false, deserialize = true)
+	public ArrayList<EncodingNLSMapping> encodingNLSMappings;
 
 	// settings only read but not written back
 	// upon writing back ... we could introduce absolute paths
@@ -59,9 +61,8 @@ public class ConfigData {
 				+ (staticFiles == null ? "" : staticFiles.toString()) + "; connections: "
 				+ (connectionMappings == null ? "" : connectionMappings.toString()) + "; sqlFileRegex: "
 				+ (encodingMappings == null ? "" : encodingMappings.toString()) 
+				+ (encodingNLSMappings == null ? "" : encodingNLSMappings.toString()) 
 				+ (sqlFileRegex == null ? "" : sqlFileRegex.toString()) + "; connectionPools: "
-//				+ "; waitAfterEachStatement: "
-//				+ (waitAfterEachStatement == null ? "" : waitAfterEachStatement.toString())
 				+ "; patchDependencies: "
 				+ (dependencies == null ? "" : dependencies.toString());
 	}

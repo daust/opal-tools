@@ -6,19 +6,17 @@ import java.io.UnsupportedEncodingException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.List;
+import java.util.Map;
 
-import de.opal.db.SQLclUtil;
 import oracle.dbtools.db.ResultSetFormatter;
-import oracle.dbtools.raptor.newscriptrunner.CommandRegistry;
-import oracle.dbtools.raptor.newscriptrunner.SQLCommand.StmtSubType;
+import oracle.dbtools.raptor.datatypes.DataValue;
 import oracle.dbtools.raptor.newscriptrunner.ScriptExecutor;
 import oracle.dbtools.raptor.newscriptrunner.ScriptRunnerContext;
-import oracle.dbtools.raptor.scriptrunner.commands.rest.RESTCommand;
 
-public class SQLclTest {
+public class SQLclRunScript {
 
 	public static void main(String[] args) throws SQLException, UnsupportedEncodingException {
-		CommandRegistry.addForAllStmtsListener(RESTCommand.class, StmtSubType.G_S_FORALLSTMTS_STMTSUBTYPE);
 		Connection conn = DriverManager.getConnection("jdbc:oracle:thin:@//vm1:1521/XE", "ordstest", "oracle1");
 		conn.setAutoCommit(false);
 
@@ -34,8 +32,6 @@ public class SQLclTest {
 		sqlcl.setScriptRunnerContext(ctx);
 		ctx.setBaseConnection(conn);
 
-		SQLclUtil.setWorkingDirectory("/private/tmp/project1/sql", sqlcl);
-
 		// Capture the results without this it goes to STDOUT
 		ByteArrayOutputStream bout = new ByteArrayOutputStream();
 		BufferedOutputStream buf = new BufferedOutputStream(bout);
@@ -43,7 +39,19 @@ public class SQLclTest {
 
 		// # run a whole file
 		// adjust the path as it needs to be absolute
-		sqlcl.setStmt("@/private/tmp/project1/sql/ords-export2.sql");
+		sqlcl.setStmt("@/tmp/sqlcl/test.sql");
+
+		// enable prompting for variables
+		System.out.println("SubstitutionOn=" + ctx.getSubstitutionOn());
+		ctx.setSubstitutionOn(true);
+		System.out.println("SubstitutionOn=" + ctx.getSubstitutionOn());
+
+		Map<String, List<DataValue>> myBatchVarMap = ctx.getBatchVarMap();
+		Map<String, String> myMap = ctx.getMap();
+		Map<String, String> mySubVarTypeMap = ctx.getSubVarTypeMap();
+		
+		ctx.getMap().put("LABEL", "Dietmar");
+		
 		sqlcl.run();
 
 		String results = bout.toString("UTF8");

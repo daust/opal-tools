@@ -4,7 +4,6 @@ import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
@@ -18,19 +17,15 @@ import java.util.regex.Pattern;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.kohsuke.args4j.Option;
 
 import de.opal.db.SQLclUtil;
 import de.opal.installer.config.ConfigConnectionMapping;
-import de.opal.installer.config.ConfigData;
 import de.opal.installer.config.ConfigManager;
 import de.opal.installer.config.ConfigManagerConnectionPool;
 import de.opal.installer.db.ConnectionManager;
 import de.opal.installer.util.Filesystem;
-import de.opal.installer.util.Logfile;
-import de.opal.installer.util.Msg;
 import de.opal.installer.util.Utils;
-import de.opal.utils.ListUtils;
+import de.opal.installer.zip.ZipInstaller;
 import de.opal.utils.MsgLog;
 import de.opal.utils.VersionInfo;
 import oracle.dbtools.db.ResultSetFormatter;
@@ -51,7 +46,6 @@ public class Installer {
 	private String connectionPoolFileName;
 
 	private HashMap<String, ScriptExecutor> sqlcls = new HashMap<String, ScriptExecutor>();
-	private Logfile logfile;
 
 	private PatchRegistry patchRegistry;
 
@@ -72,30 +66,6 @@ public class Installer {
 //		  EXECUTE,
 //		  VALIDATE_ONLY
 //		}
-
-	private void validateMandatoryAttributes() {
-		ConfigData data = this.configManager.getConfigData();
-		Class<?> configDataclass = data.getClass();
-
-		for (String attr : mandatoryAttributes) {
-			try {
-				Field field = configDataclass.getDeclaredField(attr);
-
-				String strValue = (String) field.get(data);
-
-				if (strValue == null || strValue.isEmpty()) {
-					throw new RuntimeException(
-							"Attribute \"" + attr + "\" in file " + this.configFileName + " cannot be empty.");
-				}
-
-			} catch (Exception e) {
-				// TODO: handle exception
-				System.err.println(e.getLocalizedMessage());
-				System.exit(1);
-			}
-		}
-
-	}
 
 	public Installer(boolean validateOnly, String configFileName, String connectionPoolFileName, String userIdentity,
 			List<String> mandatoryAttributes, boolean noLogging, String patchFilesName, String patchFilesSourceDir,
@@ -118,7 +88,7 @@ public class Installer {
 		this.configManager.replacePlaceholders();
 
 		// validate the mandatory attributes in the config file
-		validateMandatoryAttributes();
+		this.configManager.validateMandatoryAttributes(this.mandatoryAttributes);
 
 		// after the config parameters have been initialized and read from the config
 		// file,
@@ -148,6 +118,15 @@ public class Installer {
 				.initialize(this.configManagerConnectionPools.getConfigDataConnectionPool().connectionPools);
 
 		this.patchFilesTargetDir = this.configManager.getRelativeFilename(configManager.getSqlDir().getAbsolutePath());
+		
+		String logFileDir = this.configManager.getPackageDir().getAbsolutePath() + File.separator + "logs";
+		String logfileName = generateLogFileName(logFileDir, this.configManager.getConfigData().runMode,
+				this.configManagerConnectionPools.getConfigDataConnectionPool().targetSystem);
+
+		if (!this.noLogging) {
+			MsgLog.createLogDirectory(logFileDir);
+			MsgLog.createLogfile(logfileName);
+		}
 
 	}
 
@@ -192,15 +171,6 @@ public class Installer {
 		List<PatchFileMapping> fsTree, fsTreeFull;
 		List<PatchFileMapping> fsTreePatchFiles;
 		PatchFilesTxtWrapper patchFilesTxtWrapper = null;
-
-		String logFileDir = this.configManager.getPackageDir().getAbsolutePath() + File.separator + "logs";
-		String logfileName = generateLogFileName(logFileDir, this.configManager.getConfigData().runMode,
-				this.configManagerConnectionPools.getConfigDataConnectionPool().targetSystem);
-
-		if (!this.noLogging) {
-			MsgLog.createLogDirectory(logFileDir);
-			MsgLog.createLogfile(logfileName);
-		}
 
 		// run application
 		log.debug("run()");
@@ -258,8 +228,7 @@ public class Installer {
 			}
 
 			if (this.isSilent)
-				MsgLog.consolePrintln(
-						"File listing of the files to be installed (without connecting a database) ...");
+				MsgLog.consolePrintln("File listing of the files to be installed (without connecting a database) ...");
 			else
 				Utils.waitForEnter(
 						"Please press <enter> to list the files to be installed (without connecting a database) ...");
@@ -271,7 +240,7 @@ public class Installer {
 			if (configManager.getTraversalType() == ConfigManager.TraversalType.STATIC_FILES) {
 				fsTree = fs.filterTreeStaticFiles(fsTreeFull, configManager.getConfigData().staticFiles);
 			} else {
-				fsTree = fs.filterTreeInorder(fsTreeFull, configManager.getConfigData().sqlFileRegex, logfile,
+				fsTree = fs.filterTreeInorder(fsTreeFull, configManager.getConfigData().sqlFileRegex, 
 						configManager);
 
 				// scan files from PatchFiles.txt and merge with list
@@ -282,9 +251,6 @@ public class Installer {
 					if (fsTreePatchFiles != null)
 						log.debug(fsTreePatchFiles.toString());
 
-					// Collections.sort(fsTree);
-					// Collections.sort(fsTreePatchFiles);
-					// fsTree = ListUtils.mergeWithIterator(fsTree, fsTreePatchFiles);
 					fsTree.addAll(fsTreePatchFiles);
 					Collections.sort(fsTree);
 				}
@@ -546,10 +512,10 @@ public class Installer {
 			} else {
 				fileContents = FileUtils.readFileToString(file, overrideEncoding);
 			}
-			
+
 			// replace text contents based on regular expression if configured
 			fileContents = configManager.doTextReplacements(relativeFilename, fileContents);
-			
+
 			SQLclUtil.redirectErrStreamToString();
 			sqlcl.setStmt(fileContents);
 			sqlcl.run();
@@ -572,7 +538,7 @@ public class Installer {
 			} else {
 				fileContents = FileUtils.readFileToString(file, overrideEncoding);
 			}
-			
+
 			// replace text contents based on regular expression if configured
 			fileContents = configManager.doTextReplacements(relativeFilename, fileContents);
 
@@ -624,5 +590,4 @@ public class Installer {
 
 		}
 	}
-
 }

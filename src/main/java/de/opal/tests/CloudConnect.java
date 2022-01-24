@@ -14,7 +14,7 @@ import oracle.jdbc.pool.OracleDataSource;
 public class CloudConnect {
 	// The recommended format of a connection URL is the long format with the
 	// connection descriptor.
-	final static String DB_URL = "jdbc:oracle:thin:@db201909172340_high?TNS_ADMIN=/private/tmp/Wallet_DB201909172340";
+	final static String DB_URL = "jdbc:oracle:thin:@db201909172340_high?TNS_ADMIN=/Users/daust/GoogleDrive/30-Topics/Friends/@AndrejGrlica/Wallet_DB201909172340";
 	// For ATP and ADW - use the TNS Alias name along with the TNS_ADMIN when using
 	// 18.3 JDBC driver
 	// final static String

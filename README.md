@@ -55,7 +55,7 @@ It should work for most operating systems, it was tested on Windows, MacOS and L
 
 The binary files can be downloaded here: [https://github.com/daust/opal-installer/releases](https://github.com/daust/opal-installer/releases). This is the easiest way to use the opal-tools. The SQLcl libraries are already included in the binary distribution. 
 
-You can also ``git clone`` this repository. In order to create the binary release yourself, please follow the instructions for [developers](src/doc/Developers.md).
+You can also ``git clone`` this repository. In order to create the binary release yourself, please follow the instructions for [developers](src/doc/developers.md).
 
 Once downloaded and unzipped you run the command ``setup.sh`` or ``setup.cmd``. This will copy and customize the appropriate files. 
 

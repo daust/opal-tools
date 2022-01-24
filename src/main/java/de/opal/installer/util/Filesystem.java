@@ -47,6 +47,7 @@ public class Filesystem {
 
 	/**
 	 * scanTree() - load tree into memory
+	 * only the files, not the directories
 	 * 
 	 */
 	public List<PatchFileMapping> scanTree() {
@@ -58,9 +59,32 @@ public class Filesystem {
 
 		Path start = FileSystems.getDefault().getPath(this.baseDirName);
 		try {
-			// Files.walk(start).filter(path -> path.toFile().isFile()).filter(path ->
-			// path.toString().endsWith(".sql"))
 			Files.walk(start).sorted().filter(path -> path.toFile().isFile()).forEach(path -> {
+				log.debug(path.toString());
+				fileList.add(new PatchFileMapping(null, path.toFile()));
+			});
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return fileList;
+	}
+
+	/**
+	 * Return files and directories
+	 * @return
+	 */
+	public List<PatchFileMapping> scanTreeFilesAndDirectories() {
+
+		List<PatchFileMapping> fileList = new ArrayList<PatchFileMapping>();
+
+		log.debug("\n*** Scan Tree: directory: " + baseDirName);
+		// MsgLog.println("\ntraversalType: " + traversalType.toString());
+
+		Path start = FileSystems.getDefault().getPath(this.baseDirName);
+		try {
+			Files.walk(start).sorted().forEach(path -> {
 				log.debug(path.toString());
 				fileList.add(new PatchFileMapping(null, path.toFile()));
 			});
@@ -79,8 +103,7 @@ public class Filesystem {
 	 * @return
 	 * @throws IOException
 	 */
-	public List<PatchFileMapping> filterTreeInorder(List<PatchFileMapping> srcFileList, String sqlFileRegex,
-			Logfile logfile, ConfigManager configManager) throws IOException {
+	public List<PatchFileMapping> filterTreeInorder(List<PatchFileMapping> srcFileList, String sqlFileRegex, ConfigManager configManager) throws IOException {
 
 		List<PatchFileMapping> fileList = new ArrayList<PatchFileMapping>();
 
@@ -114,8 +137,6 @@ public class Filesystem {
 
 		log.debug("\n*** displayTree ");
 		log.debug("\nregex: " + sqlFileRegex);
-
-		Pattern p = Pattern.compile(sqlFileRegex, Pattern.CASE_INSENSITIVE);
 
 		for (PatchFileMapping fileMapping : srcFileList) {
 			String relativeFilename = configManager.getRelativeFilename(fileMapping.destFile.getAbsolutePath());
