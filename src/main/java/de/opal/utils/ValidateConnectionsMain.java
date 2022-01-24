@@ -95,8 +95,8 @@ public class ValidateConnectionsMain {
 	}
 
 	private void run() throws IOException {
-		Connection conn=null;
-		
+		Connection conn = null;
+
 		for (String connFilename : poolFileList) {
 			Msg.println("\n*** process connection file: " + connFilename);
 
@@ -106,7 +106,7 @@ public class ValidateConnectionsMain {
 				configManagerConnectionPools
 						.encryptPasswords(configManagerConnectionPools.getEncryptionKeyFilename(connFilename));
 				configManagerConnectionPools.writeJSONConf();
-			}else {
+			} else {
 				Msg.println("  All passwords in this file are already encrypted.");
 			}
 
@@ -115,19 +115,24 @@ public class ValidateConnectionsMain {
 
 			for (ConfigConnectionPool pool : (configManagerConnectionPools
 					.getConfigDataConnectionPool()).connectionPools) {
-				Msg.println("\n  process connection: "+pool.name);
-								
-				Msg.print("  check connection: "+pool.user+"@"+pool.connectString);
-				try {
-					conn=SQLclUtil.openConnection(pool.user, pool.password, pool.connectString);
-					DBUtils.closeQuietly(conn);
-					Msg.println(" => SUCCESS");
-				}catch(Exception e) {
-					//Msg.println(" => FAILURE\n");
-					//Msg.println(e.getLocalizedMessage());
-				} finally {
-					DBUtils.closeQuietly(conn);
-				}		
+				Msg.println("\n  process connection: " + pool.name);
+
+				if (pool.password == null) {
+					Msg.println("  empty password => skip check");
+				} else {
+					Msg.print("  check connection: " + pool.user + "@" + pool.connectString);
+					try {
+						conn = SQLclUtil.openConnection(pool.user, pool.password, pool.connectString);
+						DBUtils.closeQuietly(conn);
+						Msg.println(" => SUCCESS");
+					} catch (Exception e) {
+						// Msg.println(" => FAILURE\n");
+						// Msg.println(e.getLocalizedMessage());
+					} finally {
+						DBUtils.closeQuietly(conn);
+					}
+				}
+
 			}
 		}
 		Msg.println("");
