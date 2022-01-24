@@ -27,11 +27,11 @@ import org.gradle.internal.os.OperatingSystem
   // version of sqlcl to be used
   // download files from : https://www.oracle.com/tools/downloads/sqlcl-downloads.html
   // and register here
-  def sqlclVersion  ='20.4.1'
+  def sqlclVersion  ='21.4.1'
   // sqlclZipFile: file location to downloaded zip file, 
   // e.g. /Users/daust/Downloads/sqlcl-20.2.0.174.1557.zip
   // this is only required when using task "opalRegisterSQLclLibraries"
-  def sqlclZipFile  ='/Users/daust/Downloads/KEEP/sqlcl/sqlcl-20.4.1.351.1718.zip'  
+  def sqlclZipFile  ='/Users/daust/Downloads/sqlcl-21.4.1.17.1458.zip'  
   
 //-----------------------------------------------------------------------------
 //-- Repositories and dependencies
