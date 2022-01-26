@@ -48,6 +48,15 @@ public class SetupManager {
 	private String environmentColorListString;
 	private List<String> connFilenameList = new ArrayList<String>();
 
+	// target OS
+	public static final String osWindows = "windows";
+	public static final String osLinux = "linux";
+
+	// setup Mode
+	public static final String setupModeInstall = "install";
+	public static final String setupModeUpgrade = "upgrade";
+	public static final String setupModeScripts = "scripts";
+
 	// File encoding in Java, UTF8, Cp1252, etc.
 	// See column "Canonical Name for java.io and java.lang API" here:
 	// https://docs.oracle.com/javase/8/docs/technotes/guides/intl/encoding.doc.html
@@ -59,7 +68,7 @@ public class SetupManager {
 	String localDir = System.getProperty("user.dir");
 	String tmpSourceDir = "";
 	String tmpTargetDir = "";
-	String[] osScriptSuffixList = new String[] { getOsDependentScriptSuffix() };
+	String[] osScriptSuffixList = new String[] { getOsDependentScriptSuffix(), "sql" };
 	FileFilter osFileFilter = new FileFilter() {
 		// Override accept method
 		public boolean accept(File file) {
@@ -78,6 +87,17 @@ public class SetupManager {
 	@Option(name = "-h", aliases = "--help", usage = "display this help page")
 	private boolean showHelp = false;
 
+	// linux | windows
+	// @Option(name = "--target-os", usage = "Sets the target operating system for
+	// the installation. This way you install for Linux and Windows, but only one
+	// AFTER the other, you have to run it twice.", metaVar = "[linux|windows]",
+	// required = false)
+	// private String targetOS;
+
+	// setup-mode
+	@Option(name = "--setup-mode", usage = "Setup mode ", metaVar = "[install|upgrade|scripts]", required = false)
+	private String setupMode;
+
 	@Option(name = "--project-root-dir", usage = "Sets the root directory for the installation. Will be used to derive other parameters if not set explicitly. This directory is typically the target of a GIT or SVN export.", metaVar = "<directory>", required = false)
 	private String projectRootDir;
 
@@ -92,6 +112,9 @@ public class SetupManager {
 
 	@Option(name = "--environment-script", usage = "Local script to initialize the user environment for this project\ne.g. /local/conf-user/setProjectEnvironment.sh or c:\\local\\conf-user\\setProjectEnvironment.cmd", metaVar = "<directory>")
 	private String setProjectEnvironmentScript;
+
+	@Option(name = "--source-dir", usage = "Source directory, will have subdirectories sql, apex, rest", metaVar = "<directory>")
+	private String sourceDirectory;
 
 	@Option(name = "--db-source-dir", usage = "Database source directory (sql, has subdirectories e.g. sql/oracle_schema/tables, sql/oracle_schema/packages, etc.)\ne.g. ${PROJECT_ROOT}/src/sql or %PROJECT_ROOT%\\src\\sql", metaVar = "<directory>")
 	private String dbSourceDirectory;
@@ -155,6 +178,18 @@ public class SetupManager {
 				System.exit(0);
 			}
 
+			// targetOS - default and validation
+			// set current operating system as the default
+			// if (this.targetOS != null && !this.targetOS.equals(osLinux) &&
+			// !this.targetOS.equals(osWindows))
+			// throw new CmdLineException("Invalid option " + this.targetOS + " for
+			// --target-os");
+
+			// setupMode
+			if (this.setupMode != null && !this.setupMode.equals(setupModeInstall)
+					&& !this.setupMode.equals(setupModeUpgrade) && !this.setupMode.equals(setupModeScripts))
+				throw new CmdLineException("Invalid option " + this.setupMode + " for --setup-mode");
+
 		} catch (CmdLineException e) {
 			// if there's a problem in the command line,
 			// you'll get this exception. this will report
@@ -170,7 +205,6 @@ public class SetupManager {
 
 			System.exit(1);
 		}
-
 	}
 
 	private String promptForInput(Scanner kbd, String prompt, String defaultValue) {
@@ -187,6 +221,22 @@ public class SetupManager {
 		return input;
 	}
 
+	// get the current os in a normalized fashion,
+	// ONLY linux or windows
+	// , not mac os or other
+//	private String getCurrentOsNormalized() {
+//		String os="";
+//		
+//		// check against current os and convert to standard naming
+//		if (System.getProperty("os.name").toLowerCase().indexOf("win") >= 0)
+//			os=osWindows;
+//		else
+//			os=osLinux;
+//			
+//		return os; 
+//	}
+
+	// is the current operating system a windows environment?
 	private Boolean osIsWindows() {
 		return System.getProperty("os.name").toLowerCase().indexOf("win") >= 0;
 	}
@@ -197,7 +247,6 @@ public class SetupManager {
 		} else {
 			return "sh";
 		}
-
 	}
 
 	private String getOsDependentProjectRootVariable() {
@@ -206,7 +255,6 @@ public class SetupManager {
 		} else {
 			return "${PROJECT_ROOT}";
 		}
-
 	}
 
 	private String getFullPathResolveVariables(String path) {
@@ -308,9 +356,18 @@ public class SetupManager {
 		tmpSourceDir = getFullPathResolveVariables(localDir + File.separatorChar + "lib");
 		tmpTargetDir = getFullPathResolveVariables(swDirectory + File.separatorChar + "lib");
 
+		// first delete lib directory
+
 		Msg.println("\n----------------------------------------------------------\n");
 		Msg.println("copy sw files from: " + tmpSourceDir + "\n              to  : " + tmpTargetDir + "\n");
 		try {
+			File tmpTargetDirFile = new File(tmpTargetDir);
+
+			if (tmpTargetDirFile.exists()) {
+				Msg.println("First delete existing target lib directory");
+				FileUtils.deleteDirectory(tmpTargetDirFile);
+			}
+
 			FileUtils.copyDirectory(new File(tmpSourceDir), new File(tmpTargetDir));
 		} catch (IOException e) {
 			Msg.println("Files will NOT be copied because an error occured: " + e.getMessage() + "\n");
@@ -508,7 +565,7 @@ public class SetupManager {
 		tmpSourceDir = getFullPathResolveVariables(
 				localDir + File.separatorChar + "configure-templates" + File.separatorChar + "src-sql");
 
-		Msg.println("db source directory from: " + tmpSourceDir + "\n                    to  : " + dbSourceDirectory
+		Msg.println("Source directory from: " + tmpSourceDir + "\n                    to  : " + dbSourceDirectory
 				+ "\n");
 
 		// loop over all schemas
@@ -517,6 +574,15 @@ public class SetupManager {
 
 			FileUtils.copyDirectory(new File(tmpSourceDir), new File(tmpTargetDir));
 		}
+	}
+	private void processSourceDirectory(Scanner kbd) throws IOException {
+		tmpSourceDir = getFullPathResolveVariables(
+				localDir + File.separatorChar + "configure-templates" + File.separatorChar + "src");
+
+		Msg.println("Source directory from: " + tmpSourceDir + "\n                    to  : " + sourceDirectory
+				+ "\n");
+		tmpTargetDir = getFullPathResolveVariables(sourceDirectory);
+		FileUtils.copyDirectory(new File(tmpSourceDir), new File(tmpTargetDir));
 	}
 
 	private void processPatchDirectory(Scanner kbd) throws IOException {
@@ -531,9 +597,15 @@ public class SetupManager {
 	}
 
 	private void processBinDirectory(Scanner kbd) throws IOException {
+		processBinDirectoryGeneric(kbd, "bin", "bin");
+		processBinDirectoryGeneric(kbd, "lib", "lib");
+	}
+
+	private void processBinDirectoryGeneric(Scanner kbd, String sourceDirectory, String targetDirectory)
+			throws IOException {
 		tmpSourceDir = getFullPathResolveVariables(
-				localDir + File.separatorChar + "configure-templates" + File.separatorChar + "bin");
-		tmpTargetDir = getFullPathResolveVariables(swDirectory + File.separator + "bin");
+				localDir + File.separatorChar + "configure-templates" + File.separatorChar + sourceDirectory);
+		tmpTargetDir = getFullPathResolveVariables(swDirectory + File.separator + targetDirectory);
 
 		Msg.println("process bin directory\n");
 
@@ -637,6 +709,7 @@ public class SetupManager {
 		newContents = newContents.replace("#OPAL_TOOLS_USER_ENV_SCRIPT#", this.setProjectEnvironmentScript);
 
 		newContents = newContents.replace("#OPAL_TOOLS_HOME_DIR#", this.swDirectory);
+		newContents = newContents.replace("#OPAL_TOOLS_SRC_DIR#", this.sourceDirectory);
 		newContents = newContents.replace("#OPAL_TOOLS_SRC_SQL_DIR#", this.dbSourceDirectory);
 		newContents = newContents.replace("#OPAL_TOOLS_PATCH_TEMPLATE_DIR#", templateDirectory);
 		newContents = newContents.replace("#OPAL_TOOLS_PATCH_DIR#", patchDirectory);
@@ -719,21 +792,35 @@ public class SetupManager {
 
 		Scanner kbd = new Scanner(System.in); // Create a Scanner object
 
+		// setupMode
+		if (this.setupMode == null)
+			this.setupMode = promptForInput(kbd, "\nSetup mode (install, upgrade, scripts): ", setupModeInstall);
+		else
+			Msg.print("\nSetup mode: " + this.setupMode);
+
+		// targetOS only required for install and scripts
+//		if (this.targetOS == null)
+//			this.targetOS = promptForInput(kbd, "\nTarget OS (linux,windows): ", getCurrentOsNormalized());
+//		else
+//			Msg.print("\nTarget OS: " + this.targetOS);
+
 		if (projectRootDir == null)
 			projectRootDir = promptForInput(kbd,
 					"\nProject root directory, typically the target of a GIT or SVN export", "");
 		else
-			Msg.println("\nProject root directory, typically the target of a GIT or SVN export: "+projectRootDir);
+			Msg.println("\nProject root directory, typically the target of a GIT or SVN export: " + projectRootDir);
 
 		if (swDirectory == null)
-			swDirectory = promptForInput(kbd, "SW install directory (contains bin and lib directories)",
-					getOsDependentProjectRootVariable() + File.separatorChar + "opal-tools");
+			swDirectory = getOsDependentProjectRootVariable() + File.separatorChar + "opal-tools";
+//			swDirectory = promptForInput(kbd, "SW install directory (contains bin and lib directories)",
+//					getOsDependentProjectRootVariable() + File.separatorChar + "opal-tools");
 		else
 			Msg.println("SW install directory (contains bin and lib directories): " + swDirectory);
 
 		if (templateDirectory == null)
-			templateDirectory = promptForInput(kbd, "Patch template directory",
-					getOsDependentProjectRootVariable() + File.separatorChar + "patch-template");
+			templateDirectory = getOsDependentProjectRootVariable() + File.separatorChar + "patch-template";
+//			templateDirectory = promptForInput(kbd, "Patch template directory",
+//					getOsDependentProjectRootVariable() + File.separatorChar + "patch-template");
 		else
 			Msg.println("Patch template directory: " + templateDirectory);
 
@@ -753,16 +840,26 @@ public class SetupManager {
 			Msg.println(
 					"Local script to initialize the user environment for this project: " + setProjectEnvironmentScript);
 
+		if (sourceDirectory == null)
+			sourceDirectory = getOsDependentProjectRootVariable() + File.separatorChar + "src";
+//			sourceDirectory = promptForInput(kbd,
+//					"Source directory",	getOsDependentProjectRootVariable() + File.separatorChar + "src");
+		else
+			Msg.println("Database source directory: " + dbSourceDirectory);
+
+		
 		if (dbSourceDirectory == null)
-			dbSourceDirectory = promptForInput(kbd,
-					"Database source directory (sql, has subdirectories e.g. sql/oracle_schema/tables, sql/oracle_schema/packages, etc.)",
-					getOsDependentProjectRootVariable() + File.separatorChar + "sql");
+			dbSourceDirectory = getOsDependentProjectRootVariable() + File.separatorChar + "src"+ File.separatorChar + "sql";
+//			dbSourceDirectory = promptForInput(kbd,
+//					"Database source directory (sql, has subdirectories e.g. sql/oracle_schema/tables, sql/oracle_schema/packages, etc.)",
+//					getOsDependentProjectRootVariable() + File.separatorChar + "sql");
 		else
 			Msg.println("Database source directory: " + dbSourceDirectory);
 
 		if (patchDirectory == null)
-			patchDirectory = promptForInput(kbd, "Patch directory (patches, has subdirectories e.g. year/patch_name)",
-					getOsDependentProjectRootVariable() + File.separatorChar + "patches");
+			patchDirectory = getOsDependentProjectRootVariable() + File.separatorChar + "patches";
+//			patchDirectory = promptForInput(kbd, "Patch directory (patches, has subdirectories e.g. year/patch_name)",
+//					getOsDependentProjectRootVariable() + File.separatorChar + "patches");
 		else
 			Msg.println("Patch directory: " + patchDirectory);
 
@@ -805,6 +902,7 @@ public class SetupManager {
 		log.debug("Patch template directory: " + templateDirectory);
 		log.debug("Local configuration directory: " + localConfigDirectory);
 		log.debug("Local script to initialize the user environment for this project: " + setProjectEnvironmentScript);
+		log.debug("Source directory: " + sourceDirectory);
 		log.debug("Database source directory: " + dbSourceDirectory);
 		log.debug("Patch directory: " + patchDirectory);
 		log.debug("List of database schemas: " + schemaListString);
@@ -820,6 +918,7 @@ public class SetupManager {
 		Msg.println("Patch template directory: " + templateDirectory);
 		Msg.println("Local configuration directory: " + localConfigDirectory);
 		Msg.println("Local script to initialize the user environment for this project: " + setProjectEnvironmentScript);
+		Msg.println("Source directory: " + sourceDirectory);
 		Msg.println("Database source directory: " + dbSourceDirectory);
 		Msg.println("Patch directory: " + patchDirectory);
 		Msg.println("List of database schemas: " + schemaListString);
@@ -847,37 +946,50 @@ public class SetupManager {
 		// ----------------------------------------------------------
 		// conf-user directory
 		// ----------------------------------------------------------
-		processUserConfDir(kbd);
+		if (this.setupMode.equals(setupModeInstall) || this.setupMode.equals(setupModeScripts))
+			processUserConfDir(kbd);
 
 		// ----------------------------------------------------------
 		// software installation
 		// ----------------------------------------------------------
-		processSoftwareInstallation(kbd);
+		if (this.setupMode.equals(setupModeInstall) || this.setupMode.equals(setupModeUpgrade))
+			processSoftwareInstallation(kbd);
 
 		// ----------------------------------------------------------
 		// conf directory
 		// ----------------------------------------------------------
-		processConfDirectory(kbd);
+		if (this.setupMode.equals(setupModeInstall) || this.setupMode.equals(setupModeUpgrade))
+			processConfDirectory(kbd);
 
 		// ----------------------------------------------------------
 		// patch template directory
 		// ----------------------------------------------------------
-		processPatchTemplateDirectory(kbd);
+		if (this.setupMode.equals(setupModeInstall) || this.setupMode.equals(setupModeScripts))
+			processPatchTemplateDirectory(kbd);
 
+		// ----------------------------------------------------------
+		// source directory
+		// ----------------------------------------------------------
+		if (this.setupMode.equals(setupModeInstall))
+			processSourceDirectory(kbd);
+		
 		// ----------------------------------------------------------
 		// db source directory
 		// ----------------------------------------------------------
-		processDBSourceDirectory(kbd);
+		if (this.setupMode.equals(setupModeInstall))
+			processDBSourceDirectory(kbd);
 
 		// ----------------------------------------------------------
 		// patch directory
 		// ----------------------------------------------------------
-		processPatchDirectory(kbd);
+		if (this.setupMode.equals(setupModeInstall))
+			processPatchDirectory(kbd);
 
 		// ----------------------------------------------------------
 		// bin directory
 		// ----------------------------------------------------------
-		processBinDirectory(kbd);
+		if (this.setupMode.equals(setupModeInstall) || this.setupMode.equals(setupModeScripts))
+			processBinDirectory(kbd);
 
 		// close keyboard input scanner
 		kbd.close();

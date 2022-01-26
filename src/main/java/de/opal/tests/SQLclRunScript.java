@@ -40,17 +40,17 @@ public class SQLclRunScript {
 		// # run a whole file
 		// adjust the path as it needs to be absolute
 		sqlcl.setStmt("@/tmp/sqlcl/test.sql");
+		
 
 		// enable prompting for variables
 		System.out.println("SubstitutionOn=" + ctx.getSubstitutionOn());
 		ctx.setSubstitutionOn(true);
 		System.out.println("SubstitutionOn=" + ctx.getSubstitutionOn());
 
-		Map<String, List<DataValue>> myBatchVarMap = ctx.getBatchVarMap();
-		Map<String, String> myMap = ctx.getMap();
-		Map<String, String> mySubVarTypeMap = ctx.getSubVarTypeMap();
+		ctx.getMap().put("1", "Dietmar");
 		
-		ctx.getMap().put("LABEL", "Dietmar");
+		System.out.println("PromptedFieldProvider: "+ctx.getPromptedFieldProvider());
+		System.out.println("SubstitutionFieldProvider: "+ctx.getSubstitutionFieldProvider());
 		
 		sqlcl.run();
 

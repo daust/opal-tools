@@ -14,7 +14,7 @@ SET CURRDIR=%~dp0
 
 @call opal-install.cmd --config-file "%CURRDIR%opal-installer.json" ^
                        --connection-pool-file "%OPAL_TOOLS_USER_CONFIG_DIR%\connections-#ENV#.json" ^
-                       --mandatory-attributes application patch author version ^
+                       --mandatory-attributes application patch author  ^
                        --source-list-file SourceFilesReference.conf ^
                        --source-dir "%OPAL_TOOLS_SRC_SQL_DIR%" 
 

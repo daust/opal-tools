@@ -117,7 +117,7 @@ public class ValidateConnectionsMain {
 					.getConfigDataConnectionPool()).connectionPools) {
 				Msg.println("\n  process connection: " + pool.name);
 
-				if (pool.password == null) {
+				if (pool.password == null || pool.password.equals("")) {
 					Msg.println("  empty password => skip check");
 				} else {
 					Msg.print("  check connection: " + pool.user + "@" + pool.connectString);

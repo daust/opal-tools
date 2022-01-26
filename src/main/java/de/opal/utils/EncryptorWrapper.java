@@ -47,7 +47,7 @@ public class EncryptorWrapper {
 
 	public String decryptPWD(String pwd, String encryptionKeyFilename) {
 		pwd = pwd.trim();
-		if (pwd != null) {
+		if (pwd != null && !pwd.equals("")) {
 			if (pwd.startsWith("1:")) {
 
 				File encryptionKeyFile = new File(encryptionKeyFilename);
@@ -75,7 +75,7 @@ public class EncryptorWrapper {
 	public Boolean isEncrypted(String pwd) {
 		Boolean isEncrypted = false;
 
-		if (pwd != null) {
+		if (pwd != null && !pwd.equals("")) {
 			if (pwd.startsWith("1:")) {
 				isEncrypted = true;
 			} else {
