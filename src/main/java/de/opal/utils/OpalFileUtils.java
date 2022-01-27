@@ -23,30 +23,32 @@ public class OpalFileUtils {
 	public static int copyDirectory(String srcDir, String targetDir, String filterString) throws IOException {
 		File srcDirFile = new File(srcDir);
 		File targetDirFile = new File(targetDir);
-		
-		int cnt=0;
+
+		int cnt = 0;
 
 		IOFileFilter filter = new WildcardFileFilter(filterString);
 
 		// exclude all files from subdirectories
 		// else use as directory filter: TrueFileFilter.INSTANCE
 		Collection<File> files = FileUtils.listFiles(srcDirFile, filter, null);
-		
+
 		// raise exception when the files were not found!
 		if (files.isEmpty()) {
-			throw new RuntimeException("File(s) \"" + filterString + "\" could not be found in directory \"" + srcDir + "\"." );
+			throw new RuntimeException(
+					"File(s) \"" + filterString + "\" could not be found in directory \"" + srcDir + "\".");
 		}
-		
+
 		for (File file : files) {
-			Msg.println("  - "+ file.getName());
-			FileUtils.copyFileToDirectory(file, targetDirFile);
+			Msg.println("  - " + file.getName());
+			if (file.isDirectory())
+				FileUtils.copyDirectoryToDirectory(file, targetDirFile);
+			else
+				FileUtils.copyFileToDirectory(file, targetDirFile);
+
 			cnt++;
 		}
 
-		// return number 
+		// return number of files copied
 		return cnt;
 	}
-
-	
-	
 }

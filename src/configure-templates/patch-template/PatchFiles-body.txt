@@ -40,7 +40,10 @@
 # Scripts, also data scripts - will be done manually => #SCHEMA#/120_scripts
 
 # APEX 
-./apex => #SCHEMA#/130_apex
+../apex => #SCHEMA#/130_apex
+
+# REST
+../rest => #SCHEMA#/140_rest
 
 # Drop Scripts - will be done manually => #SCHEMA#/190_drop_scripts
 
