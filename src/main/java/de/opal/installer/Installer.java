@@ -256,6 +256,8 @@ public class Installer {
 				}
 			}
 			fs.displayTree(fsTree, configManager.getConfigData().sqlFileRegex, configManager);
+			
+			
 
 			if (this.isSilent)
 				MsgLog.println("\nStart the process (" + this.configManager.getConfigData().runMode

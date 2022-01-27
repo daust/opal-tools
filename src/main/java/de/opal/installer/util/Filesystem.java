@@ -132,9 +132,12 @@ public class Filesystem {
 		return fileList;
 	}
 
+	// display empty files at the end
 	public void displayTree(List<PatchFileMapping> srcFileList, String sqlFileRegex, ConfigManager configManager)
 			throws IOException {
 
+		ArrayList<String> emptyFiles=new ArrayList<String>();
+		
 		log.debug("\n*** displayTree ");
 		log.debug("\nregex: " + sqlFileRegex);
 
@@ -147,13 +150,33 @@ public class Filesystem {
 			
 			String overrideEncoding = configManager.getEncoding(relativeFilename);
 			if (overrideEncoding.isEmpty()) {
-				MsgLog.println("file: (system encoding) - " + relativeFilename + referenceFileString);
+				MsgLog.println("   file: (system encoding) - " + relativeFilename + referenceFileString);
 			} else {
-				MsgLog.println("file: (override encoding: " + overrideEncoding + ") - " + relativeFilename + referenceFileString);
+				MsgLog.println("   file: (override encoding: " + overrideEncoding + ") - " + relativeFilename + referenceFileString);
 			}
+						
+			// check for empty files
+			if (fileMapping.srcFile != null) {
+				if (Files.size(fileMapping.srcFile.toPath())==0){
+					emptyFiles.add(relativeFilename);
+				}
+			} else {
+				if (Files.size(fileMapping.destFile.toPath())==0){
+					emptyFiles.add(relativeFilename);
+				}
+			}
+		}
+		
+		// display empty files if any exist
+		if (emptyFiles.size()>0) {
+			MsgLog.println("\n!!! WARNING: The following files are empty, please check: ");
+			for (int i = 0; i < emptyFiles.size(); i++) {
+				MsgLog.println("   " + emptyFiles.get(i));
+			}			
 		}
 	}
 
+	
 	/**
 	 * 
 	 * 
