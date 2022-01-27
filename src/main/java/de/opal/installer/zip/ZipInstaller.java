@@ -30,6 +30,7 @@ import de.opal.installer.config.ConfigConnectionMapping;
 import de.opal.installer.config.ConfigManager;
 import de.opal.installer.util.Filesystem;
 import de.opal.utils.MsgLog;
+import de.opal.utils.StringUtils;
 import de.opal.utils.VersionInfo;
 
 public class ZipInstaller {
@@ -406,7 +407,22 @@ public class ZipInstaller {
 		// first find matching dataSource
 		connectionMappings = this.configManager.getConfigData().connectionMappings;
 		for (ConfigConnectionMapping configConnectionMapping : connectionMappings) {
-			Pattern p = Pattern.compile(configConnectionMapping.fileRegex, Pattern.CASE_INSENSITIVE);
+			Pattern p;
+			
+			if (configConnectionMapping.fileRegex != null &&
+					configConnectionMapping.fileFilter != null)
+				throw new RuntimeException("You cannot use both fileFilter AND fileRegex at the same time, you have to choose one.");
+			
+			// use regular expression to map file path to connection pool
+			// PREFER fileRegex if both fileFilter and fileRegex are defined
+			if (configConnectionMapping.fileRegex != null) {
+				// use fileRegex
+				p = Pattern.compile(configConnectionMapping.fileRegex, Pattern.CASE_INSENSITIVE);
+			} else {
+				// use fileFilter
+				String fileRegex = StringUtils.convertFileFilterToFileRegex(configConnectionMapping.fileFilter);
+				p = Pattern.compile(fileRegex, Pattern.CASE_INSENSITIVE);
+			}
 
 			log.debug("test mapping: " + configConnectionMapping.connectionPoolName + " with "
 					+ configConnectionMapping.fileRegex);

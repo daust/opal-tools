@@ -177,5 +177,34 @@ public class FileIO {
 		// The directory is now empty so now it can be smoked
 		return dir.delete();
 	}
+	
+	/**
+	 * Delete files with certain suffixes from a directory, recursively
+	 * 
+	 * @param dir
+	 * @return
+	 */
+	public static void deleteFiles(File dir, String[] fileFilter) {
+		if (dir.isDirectory()) {
+			String[] children = dir.list();
+			
+			for (int i=0; i<children.length; i++) {
+				deleteFiles(new File(dir, children[i]), fileFilter);
+			}
+		}else {
+			// check matching filename, then delete
+			for (int i = 0; i < fileFilter.length; i++) {
+				if (dir.getName().matches(fileFilter[i])){
+					System.out.println("delete " + dir.getName());
+					dir.delete();
+				}
+			}
+		}
+	}
+	
+	public static void main(String[] args) {
+		//deleteFiles(new File("/Users/daust/Downloads/sample2/opal-tools/lib"), new String[] {".*\\.jar"});
+		deleteFiles(new File("/private/tmp/sample2/opal-tools/lib"), new String[] {".*\\.jar"});
+	}
 
 }

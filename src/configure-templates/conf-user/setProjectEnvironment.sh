@@ -34,4 +34,4 @@ export DATE_STRING=`date +"%Y-%m-%d"`
 #echo DATE_STRING: $DATE_STRING
 #echo YEAR: $YEAR
 
-export PATH="${OPAL_TOOLS_HOME_DIR}/bin":"${OPAL_TOOLS_HOME_DIR}/lib":${PATH}
+export PATH="${OPAL_TOOLS_HOME_DIR}/bin":"${OPAL_TOOLS_HOME_DIR}/bin/internal":"${OPAL_TOOLS_HOME_DIR}/lib":${PATH}

@@ -23,6 +23,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import de.opal.installer.db.DBUtils;
+import de.opal.utils.StringUtils;
 
 /**
  * @author daust
@@ -310,7 +311,21 @@ public class ConfigManager {
 			return "";
 		}
 		for (ConfigEncodingMapping configEncodingMapping : encodingMappings) {
-			Pattern p = Pattern.compile(configEncodingMapping.fileRegex, Pattern.CASE_INSENSITIVE);
+			if (configEncodingMapping.fileRegex != null &&
+					configEncodingMapping.fileFilter != null)
+				throw new RuntimeException("You cannot use both fileFilter AND fileRegex at the same time, you have to choose one.");
+			
+			Pattern p;
+			// use regular expression to map file path to connection pool
+			// PREFER fileRegex if both fileFilter and fileRegex are defined
+			if (configEncodingMapping.fileRegex != null) {
+				// use fileRegex
+				p = Pattern.compile(configEncodingMapping.fileRegex, Pattern.CASE_INSENSITIVE);
+			} else {
+				// use fileFilter
+				String fileRegex = StringUtils.convertFileFilterToFileRegex(configEncodingMapping.fileFilter);
+				p = Pattern.compile(fileRegex, Pattern.CASE_INSENSITIVE);
+			}
 
 			log.debug("test mapping: " + configEncodingMapping.encoding + " with " + configEncodingMapping.fileRegex);
 			if (p.matcher(filename).find()) {

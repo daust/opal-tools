@@ -37,6 +37,7 @@ import de.opal.installer.config.ConfigManager;
 import de.opal.installer.config.ConfigManagerConnectionPool;
 import de.opal.installer.util.Msg;
 import de.opal.installer.util.Utils;
+import de.opal.utils.FileIO;
 import de.opal.utils.OSDetector;
 
 public class SetupManager {
@@ -54,7 +55,7 @@ public class SetupManager {
 
 	// setup Mode
 	public static final String setupModeInstall = "install";
-	public static final String setupModeUpgrade = "upgrade";
+//	public static final String setupModeUpgrade = "upgrade";
 	public static final String setupModeScripts = "scripts";
 
 	// File encoding in Java, UTF8, Cp1252, etc.
@@ -87,15 +88,8 @@ public class SetupManager {
 	@Option(name = "-h", aliases = "--help", usage = "display this help page")
 	private boolean showHelp = false;
 
-	// linux | windows
-	// @Option(name = "--target-os", usage = "Sets the target operating system for
-	// the installation. This way you install for Linux and Windows, but only one
-	// AFTER the other, you have to run it twice.", metaVar = "[linux|windows]",
-	// required = false)
-	// private String targetOS;
-
 	// setup-mode
-	@Option(name = "--setup-mode", usage = "Setup mode ", metaVar = "[install|upgrade|scripts]", required = false)
+	@Option(name = "--setup-mode", usage = "Setup mode ", metaVar = "[install|scripts]", required = false)
 	private String setupMode;
 
 	@Option(name = "--project-root-dir", usage = "Sets the root directory for the installation. Will be used to derive other parameters if not set explicitly. This directory is typically the target of a GIT or SVN export.", metaVar = "<directory>", required = false)
@@ -187,7 +181,7 @@ public class SetupManager {
 
 			// setupMode
 			if (this.setupMode != null && !this.setupMode.equals(setupModeInstall)
-					&& !this.setupMode.equals(setupModeUpgrade) && !this.setupMode.equals(setupModeScripts))
+					&&  !this.setupMode.equals(setupModeScripts))
 				throw new CmdLineException("Invalid option " + this.setupMode + " for --setup-mode");
 
 		} catch (CmdLineException e) {
@@ -364,8 +358,8 @@ public class SetupManager {
 			File tmpTargetDirFile = new File(tmpTargetDir);
 
 			if (tmpTargetDirFile.exists()) {
-				Msg.println("First delete existing target lib directory");
-				FileUtils.deleteDirectory(tmpTargetDirFile);
+				Msg.println("First delete all jar files existing target lib directory");
+				FileIO.deleteFiles(tmpTargetDirFile, new String[] {".*\\.jar"});
 			}
 
 			FileUtils.copyDirectory(new File(tmpSourceDir), new File(tmpTargetDir));
@@ -531,32 +525,43 @@ public class SetupManager {
 		// loop over all schemas for the current environment
 		for (String schema : schemaListArr) {
 			ConfigConnectionMapping map = null;
-			if (osIsWindows()) {
-				map = new ConfigConnectionMapping(schema, "\\\\sql\\\\.*" + schema + ".*", null);
-			} else {
-				map = new ConfigConnectionMapping(schema, "/sql/.*" + schema + ".*", null);
-			}
+
+			map = new ConfigConnectionMapping(schema, null, "/sql/*" + schema + "*", null);
+
+//			if (osIsWindows()) {
+//				map = new ConfigConnectionMapping(schema, "\\\\sql\\\\.*" + schema + ".*", null, null);
+//			} else {
+//				map = new ConfigConnectionMapping(schema, "/sql/.*" + schema + ".*", null, null);
+//			}
 
 			// add connection to configFile
 			confMgrInst.getConfigData().connectionMappings.add(map);
 		}
 		// add encoding mapping
 		ConfigEncodingMapping map = null;
-		if (osIsWindows()) {
-			map = new ConfigEncodingMapping(utf8_default, "\\\\sql\\\\.*apex.*\\\\.*f.*sql",
-					"encoding for APEX files is always UTF8");
-			confMgrInst.getConfigData().encodingMappings.add(map);
-			map = new ConfigEncodingMapping(this.fileEncoding, "\\\\sql\\\\.*",
-					"all other files will get this explicit mapping");
-			confMgrInst.getConfigData().encodingMappings.add(map);
-		} else {
-			map = new ConfigEncodingMapping(utf8_default, "/sql/.*apex.*/.*f.*sql",
-					"encoding for APEX files is always UTF8");
-			confMgrInst.getConfigData().encodingMappings.add(map);
-			map = new ConfigEncodingMapping(this.fileEncoding, "/sql/.*",
-					"all other files will get this explicit mapping");
-			confMgrInst.getConfigData().encodingMappings.add(map);
-		}
+
+		map = new ConfigEncodingMapping(utf8_default, null, "/sql/*apex*/*f*sql",
+				"encoding for APEX files is always UTF8");
+		confMgrInst.getConfigData().encodingMappings.add(map);
+		map = new ConfigEncodingMapping(this.fileEncoding, null, "/sql/*",
+				"all other files will get this explicit mapping");
+		confMgrInst.getConfigData().encodingMappings.add(map);
+
+//		if (osIsWindows()) {
+//			map = new ConfigEncodingMapping(utf8_default, "\\\\sql\\\\.*apex.*\\\\.*f.*sql",
+//					"encoding for APEX files is always UTF8");
+//			confMgrInst.getConfigData().encodingMappings.add(map);
+//			map = new ConfigEncodingMapping(this.fileEncoding, "\\\\sql\\\\.*",
+//					"all other files will get this explicit mapping");
+//			confMgrInst.getConfigData().encodingMappings.add(map);
+//		} else {
+//			map = new ConfigEncodingMapping(utf8_default, "/sql/.*apex.*/.*f.*sql",
+//					"encoding for APEX files is always UTF8");
+//			confMgrInst.getConfigData().encodingMappings.add(map);
+//			map = new ConfigEncodingMapping(this.fileEncoding, "/sql/.*",
+//					"all other files will get this explicit mapping");
+//			confMgrInst.getConfigData().encodingMappings.add(map);
+//		}
 		// write opal-installer.json file
 		confMgrInst.writeJSONConfInitFile();
 	}
@@ -565,8 +570,8 @@ public class SetupManager {
 		tmpSourceDir = getFullPathResolveVariables(
 				localDir + File.separatorChar + "configure-templates" + File.separatorChar + "src-sql");
 
-		Msg.println("Source directory from: " + tmpSourceDir + "\n                    to  : " + dbSourceDirectory
-				+ "\n");
+		Msg.println(
+				"Source directory from: " + tmpSourceDir + "\n                    to  : " + dbSourceDirectory + "\n");
 
 		// loop over all schemas
 		for (String schema : schemaListArr) {
@@ -575,12 +580,12 @@ public class SetupManager {
 			FileUtils.copyDirectory(new File(tmpSourceDir), new File(tmpTargetDir));
 		}
 	}
+
 	private void processSourceDirectory(Scanner kbd) throws IOException {
 		tmpSourceDir = getFullPathResolveVariables(
 				localDir + File.separatorChar + "configure-templates" + File.separatorChar + "src");
 
-		Msg.println("Source directory from: " + tmpSourceDir + "\n                    to  : " + sourceDirectory
-				+ "\n");
+		Msg.println("Source directory from: " + tmpSourceDir + "\n                    to  : " + sourceDirectory + "\n");
 		tmpTargetDir = getFullPathResolveVariables(sourceDirectory);
 		FileUtils.copyDirectory(new File(tmpSourceDir), new File(tmpTargetDir));
 	}
@@ -598,7 +603,7 @@ public class SetupManager {
 
 	private void processBinDirectory(Scanner kbd) throws IOException {
 		processBinDirectoryGeneric(kbd, "bin", "bin");
-		processBinDirectoryGeneric(kbd, "lib", "lib");
+		processBinDirectoryGeneric(kbd, "bin"+ File.separatorChar + "internal", "bin"+ File.separatorChar +"internal");
 	}
 
 	private void processBinDirectoryGeneric(Scanner kbd, String sourceDirectory, String targetDirectory)
@@ -794,15 +799,9 @@ public class SetupManager {
 
 		// setupMode
 		if (this.setupMode == null)
-			this.setupMode = promptForInput(kbd, "\nSetup mode (install, upgrade, scripts): ", setupModeInstall);
+			this.setupMode = promptForInput(kbd, "\nSetup mode (install=full install, scripts=Only scripts for multi-OS installation): ", setupModeInstall);
 		else
 			Msg.print("\nSetup mode: " + this.setupMode);
-
-		// targetOS only required for install and scripts
-//		if (this.targetOS == null)
-//			this.targetOS = promptForInput(kbd, "\nTarget OS (linux,windows): ", getCurrentOsNormalized());
-//		else
-//			Msg.print("\nTarget OS: " + this.targetOS);
 
 		if (projectRootDir == null)
 			projectRootDir = promptForInput(kbd,
@@ -847,9 +846,9 @@ public class SetupManager {
 		else
 			Msg.println("Database source directory: " + dbSourceDirectory);
 
-		
 		if (dbSourceDirectory == null)
-			dbSourceDirectory = getOsDependentProjectRootVariable() + File.separatorChar + "src"+ File.separatorChar + "sql";
+			dbSourceDirectory = getOsDependentProjectRootVariable() + File.separatorChar + "src" + File.separatorChar
+					+ "sql";
 //			dbSourceDirectory = promptForInput(kbd,
 //					"Database source directory (sql, has subdirectories e.g. sql/oracle_schema/tables, sql/oracle_schema/packages, etc.)",
 //					getOsDependentProjectRootVariable() + File.separatorChar + "sql");
@@ -952,19 +951,19 @@ public class SetupManager {
 		// ----------------------------------------------------------
 		// software installation
 		// ----------------------------------------------------------
-		if (this.setupMode.equals(setupModeInstall) || this.setupMode.equals(setupModeUpgrade))
+		if (this.setupMode.equals(setupModeInstall) )
 			processSoftwareInstallation(kbd);
 
 		// ----------------------------------------------------------
 		// conf directory
 		// ----------------------------------------------------------
-		if (this.setupMode.equals(setupModeInstall) || this.setupMode.equals(setupModeUpgrade))
+		if (this.setupMode.equals(setupModeInstall) )
 			processConfDirectory(kbd);
 
 		// ----------------------------------------------------------
 		// patch template directory
 		// ----------------------------------------------------------
-		if (this.setupMode.equals(setupModeInstall) || this.setupMode.equals(setupModeScripts))
+		if (this.setupMode.equals(setupModeInstall) )
 			processPatchTemplateDirectory(kbd);
 
 		// ----------------------------------------------------------
@@ -972,7 +971,7 @@ public class SetupManager {
 		// ----------------------------------------------------------
 		if (this.setupMode.equals(setupModeInstall))
 			processSourceDirectory(kbd);
-		
+
 		// ----------------------------------------------------------
 		// db source directory
 		// ----------------------------------------------------------

@@ -27,4 +27,25 @@ public class StringUtils {
 
 		return newArr;
 	}
+
+	// Turn the simple syntax for fileFilters into a regular expression, 
+	// e.g. 
+	// "fileFilter": "/sql/*schema1*"
+	// =>
+	// "fileRegex": "\\\\sql\\\\.*schema1.*",
+	public static String convertFileFilterToFileRegex(String fileFilter) {
+		String fileRegex = fileFilter;
+
+		fileRegex = fileRegex.replace("*", ".*");
+		if (osIsWindows())
+			fileRegex = fileRegex.replace("/", "\\\\");
+
+		return fileRegex;
+	}
+
+	// is the current operating system a windows environment?
+	private static Boolean osIsWindows() {
+		return System.getProperty("os.name").toLowerCase().indexOf("win") >= 0;
+	}
+
 }

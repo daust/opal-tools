@@ -9,7 +9,7 @@ source "#OPAL_TOOLS_USER_ENV_SCRIPT#"
 # go to the right directory for exporing APEX and/or REST applications through the 
 # script: opal-tools/export-scripts/opal-export-post-script.sql
 cd "${OPAL_TOOLS_SRC_APEX_DIR}"
-CURRDIR=$PWD
+CURRDIR=`dirname $0`
 
 # don't export schema objects (--skip-export), only run the pre-script and post-script
 opal-export.sh  --config-file "${OPAL_TOOLS_HOME_DIR}/conf/opal-export.conf" \
