@@ -158,7 +158,7 @@ help rest
 
 # Troubleshooting
 
-Information on troubleshooting can be found [here](src/doc/Troubleshooting.md).
+Information on troubleshooting can be found [here](src/doc/Customization.md#troubleshooting).
 
 # Licenses
 
