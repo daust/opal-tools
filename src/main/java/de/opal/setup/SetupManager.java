@@ -89,7 +89,7 @@ public class SetupManager {
 	private boolean showHelp = false;
 
 	// setup-mode
-	@Option(name = "--setup-mode", usage = "Setup mode ", metaVar = "[install|scripts]", required = false)
+	@Option(name = "--setup-mode", usage = "Setup mode (install=full install, scripts=Only scripts for multi-OS installation) ", metaVar = "[install|scripts]", required = false)
 	private String setupMode;
 
 	@Option(name = "--project-root-dir", usage = "Sets the root directory for the installation. Will be used to derive other parameters if not set explicitly. This directory is typically the target of a GIT or SVN export.", metaVar = "<directory>", required = false)
@@ -181,7 +181,7 @@ public class SetupManager {
 
 			// setupMode
 			if (this.setupMode != null && !this.setupMode.equals(setupModeInstall)
-					&&  !this.setupMode.equals(setupModeScripts))
+					&& !this.setupMode.equals(setupModeScripts))
 				throw new CmdLineException("Invalid option " + this.setupMode + " for --setup-mode");
 
 		} catch (CmdLineException e) {
@@ -359,7 +359,7 @@ public class SetupManager {
 
 			if (tmpTargetDirFile.exists()) {
 				Msg.println("First delete all jar files existing target lib directory");
-				FileIO.deleteFiles(tmpTargetDirFile, new String[] {".*\\.jar"});
+				FileIO.deleteFiles(tmpTargetDirFile, new String[] { ".*\\.jar" });
 			}
 
 			FileUtils.copyDirectory(new File(tmpSourceDir), new File(tmpTargetDir));
@@ -409,22 +409,26 @@ public class SetupManager {
 	}
 
 	private void processPatchTemplateDirectory(Scanner kbd) throws IOException {
-		tmpSourceDir = getFullPathResolveVariables(
-				localDir + File.separatorChar + "configure-templates" + File.separatorChar + "patch-template");
-		tmpTargetDir = getFullPathResolveVariables(templateDirectory);
+		// only for clean install: copy subdirectories
+		if (this.setupMode.equals(setupModeInstall)) {
 
-		Msg.println("copy template directory from: " + tmpSourceDir + "\n                        to  : " + tmpTargetDir
-				+ "\n");
-		FileUtils.forceMkdir(new File(tmpTargetDir));
-
-		// loop over all schemas to create sql subdirectories
-		for (String schema : schemaListArr) {
 			tmpSourceDir = getFullPathResolveVariables(
-					localDir + File.separatorChar + "configure-templates" + File.separatorChar + "patch-template-sql");
-			tmpTargetDir = getFullPathResolveVariables(
-					templateDirectory + File.separator + "sql" + File.separator + schema);
+					localDir + File.separatorChar + "configure-templates" + File.separatorChar + "patch-template");
+			tmpTargetDir = getFullPathResolveVariables(templateDirectory);
 
-			FileUtils.copyDirectory(new File(tmpSourceDir), new File(tmpTargetDir));
+			Msg.println("copy template directory from: " + tmpSourceDir + "\n                        to  : "
+					+ tmpTargetDir + "\n");
+			FileUtils.forceMkdir(new File(tmpTargetDir));
+
+			// loop over all schemas to create sql subdirectories
+			for (String schema : schemaListArr) {
+				tmpSourceDir = getFullPathResolveVariables(localDir + File.separatorChar + "configure-templates"
+						+ File.separatorChar + "patch-template-sql");
+				tmpTargetDir = getFullPathResolveVariables(
+						templateDirectory + File.separator + "sql" + File.separator + schema);
+
+				FileUtils.copyDirectory(new File(tmpSourceDir), new File(tmpTargetDir));
+			}
 		}
 
 		// create new patch-install files for each environment
@@ -469,14 +473,18 @@ public class SetupManager {
 
 				} else {
 					// nothing special here
-					FileUtils.writeStringToFile(new File(tmpTargetDir + File.separator + path.getFileName()), contents,
-							Charset.defaultCharset());
+					if (this.setupMode.equals(setupModeInstall) || (!filename.startsWith("opal-installer.json")
+							&& !filename.startsWith("ReleaseNotes.txt")))
+						FileUtils.writeStringToFile(new File(tmpTargetDir + File.separator + path.getFileName()),
+								contents, Charset.defaultCharset());
 				}
-				// write the patchFile.txt
-				FileUtils.writeStringToFile(new File(tmpTargetDir + File.separator + "SourceFilesCopy.conf"),
-						patchFileHeader + "\n" + patchFileContent, Charset.defaultCharset());
-				FileUtils.writeStringToFile(new File(tmpTargetDir + File.separator + "SourceFilesReference.conf"),
-						patchFileHeader + "\n" + patchFileContent, Charset.defaultCharset());
+				// write the patchFile.txt only in install mode, not scripts mode
+				if (this.setupMode.equals(setupModeInstall)) {
+					FileUtils.writeStringToFile(new File(tmpTargetDir + File.separator + "SourceFilesCopy.conf"),
+							patchFileHeader + "\n" + patchFileContent, Charset.defaultCharset());
+					FileUtils.writeStringToFile(new File(tmpTargetDir + File.separator + "SourceFilesReference.conf"),
+							patchFileHeader + "\n" + patchFileContent, Charset.defaultCharset());
+				}
 			}
 		}
 		// process validation files and installation files "#var#..."
@@ -513,20 +521,22 @@ public class SetupManager {
 					Charset.defaultCharset());
 		}
 
-		// add connection pool mappings to file system paths
-		// read opal-installer.json file
-		String fileContents = FileUtils.readFileToString(
-				new File(tmpSourceDir + File.separator + "opal-installer.json"), Charset.defaultCharset());
+		// only for clean install
+		if (this.setupMode.equals(setupModeInstall)) {
+			// add connection pool mappings to file system paths
+			// read opal-installer.json file
+			String fileContents = FileUtils.readFileToString(
+					new File(tmpSourceDir + File.separator + "opal-installer.json"), Charset.defaultCharset());
 
-		FileUtils.writeStringToFile(new File(tmpTargetDir + File.separator + "opal-installer.json"), fileContents,
-				Charset.defaultCharset());
-		ConfigManager confMgrInst = new ConfigManager(tmpTargetDir + File.separator + "opal-installer.json");
+			FileUtils.writeStringToFile(new File(tmpTargetDir + File.separator + "opal-installer.json"), fileContents,
+					Charset.defaultCharset());
+			ConfigManager confMgrInst = new ConfigManager(tmpTargetDir + File.separator + "opal-installer.json");
 
-		// loop over all schemas for the current environment
-		for (String schema : schemaListArr) {
-			ConfigConnectionMapping map = null;
+			// loop over all schemas for the current environment
+			for (String schema : schemaListArr) {
+				ConfigConnectionMapping map = null;
 
-			map = new ConfigConnectionMapping(schema, null, "/sql/*" + schema + "*", null);
+				map = new ConfigConnectionMapping(schema, null, "/sql/*" + schema + "*", null);
 
 //			if (osIsWindows()) {
 //				map = new ConfigConnectionMapping(schema, "\\\\sql\\\\.*" + schema + ".*", null, null);
@@ -534,18 +544,18 @@ public class SetupManager {
 //				map = new ConfigConnectionMapping(schema, "/sql/.*" + schema + ".*", null, null);
 //			}
 
-			// add connection to configFile
-			confMgrInst.getConfigData().connectionMappings.add(map);
-		}
-		// add encoding mapping
-		ConfigEncodingMapping map = null;
+				// add connection to configFile
+				confMgrInst.getConfigData().connectionMappings.add(map);
+			}
+			// add encoding mapping
+			ConfigEncodingMapping map = null;
 
-		map = new ConfigEncodingMapping(utf8_default, null, "/sql/*apex*/*f*sql",
-				"encoding for APEX files is always UTF8");
-		confMgrInst.getConfigData().encodingMappings.add(map);
-		map = new ConfigEncodingMapping(this.fileEncoding, null, "/sql/*",
-				"all other files will get this explicit mapping");
-		confMgrInst.getConfigData().encodingMappings.add(map);
+			map = new ConfigEncodingMapping(utf8_default, null, "/sql/*apex*/*f*sql",
+					"encoding for APEX files is always UTF8");
+			confMgrInst.getConfigData().encodingMappings.add(map);
+			map = new ConfigEncodingMapping(this.fileEncoding, null, "/sql/*",
+					"all other files will get this explicit mapping");
+			confMgrInst.getConfigData().encodingMappings.add(map);
 
 //		if (osIsWindows()) {
 //			map = new ConfigEncodingMapping(utf8_default, "\\\\sql\\\\.*apex.*\\\\.*f.*sql",
@@ -562,8 +572,10 @@ public class SetupManager {
 //					"all other files will get this explicit mapping");
 //			confMgrInst.getConfigData().encodingMappings.add(map);
 //		}
-		// write opal-installer.json file
-		confMgrInst.writeJSONConfInitFile();
+			// write opal-installer.json file
+			confMgrInst.writeJSONConfInitFile();
+		}
+
 	}
 
 	private void processDBSourceDirectory(Scanner kbd) throws IOException {
@@ -603,7 +615,8 @@ public class SetupManager {
 
 	private void processBinDirectory(Scanner kbd) throws IOException {
 		processBinDirectoryGeneric(kbd, "bin", "bin");
-		processBinDirectoryGeneric(kbd, "bin"+ File.separatorChar + "internal", "bin"+ File.separatorChar +"internal");
+		processBinDirectoryGeneric(kbd, "bin" + File.separatorChar + "internal",
+				"bin" + File.separatorChar + "internal");
 	}
 
 	private void processBinDirectoryGeneric(Scanner kbd, String sourceDirectory, String targetDirectory)
@@ -799,7 +812,9 @@ public class SetupManager {
 
 		// setupMode
 		if (this.setupMode == null)
-			this.setupMode = promptForInput(kbd, "\nSetup mode (install=full install, scripts=Only scripts for multi-OS installation): ", setupModeInstall);
+			this.setupMode = promptForInput(kbd,
+					"\nSetup mode (install=full install, scripts=Only scripts for multi-OS installation): ",
+					setupModeInstall);
 		else
 			Msg.print("\nSetup mode: " + this.setupMode);
 
@@ -951,19 +966,19 @@ public class SetupManager {
 		// ----------------------------------------------------------
 		// software installation
 		// ----------------------------------------------------------
-		if (this.setupMode.equals(setupModeInstall) )
+		if (this.setupMode.equals(setupModeInstall))
 			processSoftwareInstallation(kbd);
 
 		// ----------------------------------------------------------
 		// conf directory
 		// ----------------------------------------------------------
-		if (this.setupMode.equals(setupModeInstall) )
+		if (this.setupMode.equals(setupModeInstall))
 			processConfDirectory(kbd);
 
 		// ----------------------------------------------------------
 		// patch template directory
 		// ----------------------------------------------------------
-		if (this.setupMode.equals(setupModeInstall) )
+		if (this.setupMode.equals(setupModeInstall) || this.setupMode.equals(setupModeScripts))
 			processPatchTemplateDirectory(kbd);
 
 		// ----------------------------------------------------------
