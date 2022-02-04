@@ -145,7 +145,7 @@ public class ExporterMain {
 	@Option(name = "--export-template-dir", usage = "directory for object templates, e.g. /u01/project/opal-tools/export-templates", metaVar = "<directory>", required = false)
 	private String exportTemplateDir;
 
-	@Option(name = "--config-file", usage = "configuration file\ne.g.: connections-dev.json", metaVar = "<file>")
+	@Option(name = "--config-file", usage = "configuration file\ne.g.: ${OPAL_TOOLS_HOME_DIR}/conf/opal-export.conf", metaVar = "<file>")
 	private String configFileName;
 
 	@Option(name = "--parallel-degree", usage = "the database statements are executed in parallel, e.g. 10", metaVar = "<parallel degree>")

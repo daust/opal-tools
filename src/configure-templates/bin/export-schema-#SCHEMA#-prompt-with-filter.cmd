@@ -16,6 +16,7 @@ cd "%OPAL_TOOLS_SRC_SQL_DIR%"
                       --output-dir "%OPAL_TOOLS_SRC_SQL_DIR%" ^
                       --pre-scripts "%OPAL_TOOLS_HOME_DIR%\export-scripts\opal-export-pre-script.sql" ^
                       --connection-pool-name #SCHEMA# ^
+                      --silent ^
                       --connection-pool-file "%OPAL_TOOLS_USER_CONFIG_DIR%\connections-#ENV#.json" ^
                       --includes %FILTER%
 

@@ -7,10 +7,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.Writer;
+import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -21,6 +23,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import de.opal.installer.db.DBUtils;
+import de.opal.utils.StringUtils;
 
 /**
  * @author daust
@@ -38,7 +41,7 @@ public class ConfigManager {
 
 	// definitions off all connection pools
 	private ConfigData configData;
-
+	
 	/*
 	 * INORDER_ALL_FILES: INORDER: only sql files
 	 */
@@ -47,8 +50,8 @@ public class ConfigManager {
 	}
 
 	private TraversalType traversalType;
-
-	private String replacePlaceholders(String value) {
+	
+	public String replacePlaceholders(String value) {
 		// abort when value is null
 		if (value == null || value.isEmpty())
 			return value;
@@ -308,7 +311,21 @@ public class ConfigManager {
 			return "";
 		}
 		for (ConfigEncodingMapping configEncodingMapping : encodingMappings) {
-			Pattern p = Pattern.compile(configEncodingMapping.fileRegex, Pattern.CASE_INSENSITIVE);
+			if (configEncodingMapping.fileRegex != null &&
+					configEncodingMapping.fileFilter != null)
+				throw new RuntimeException("You cannot use both fileFilter AND fileRegex at the same time, you have to choose one.");
+			
+			Pattern p;
+			// use regular expression to map file path to connection pool
+			// PREFER fileRegex if both fileFilter and fileRegex are defined
+			if (configEncodingMapping.fileRegex != null) {
+				// use fileRegex
+				p = Pattern.compile(configEncodingMapping.fileRegex, Pattern.CASE_INSENSITIVE);
+			} else {
+				// use fileFilter
+				String fileRegex = StringUtils.convertFileFilterToFileRegex(configEncodingMapping.fileFilter);
+				p = Pattern.compile(fileRegex, Pattern.CASE_INSENSITIVE);
+			}
 
 			log.debug("test mapping: " + configEncodingMapping.encoding + " with " + configEncodingMapping.fileRegex);
 			if (p.matcher(filename).find()) {
@@ -321,6 +338,24 @@ public class ConfigManager {
 
 		return encoding;
 	}
+	
+	public String convertOSEncodingToNLS_LANG(String encoding) {
+		String nls_lang=""; // default?
+		
+		if (this.configData.encodingNLSMappings == null)
+			throw new RuntimeException("Encoding to NLS_LANG mappings are missing in defaults config file.");
+		
+		for (EncodingNLSMapping mapping : this.configData.encodingNLSMappings) {
+			if (mapping.encoding.toLowerCase().equals(encoding.toLowerCase())){
+				nls_lang=mapping.NLS_LANG;
+			}
+		}
+		
+		if (nls_lang.isEmpty())
+			throw new RuntimeException("Encoding to NLS_LANG mapping for encoding " + encoding + " is missing in defaults config file.");
+				
+		return nls_lang;
+	}
 
 	public String getRelativeFilename(String filename) {
 		String relativeFilename = null;
@@ -332,5 +367,29 @@ public class ConfigManager {
 
 		return relativeFilename;
 	}
+	
+	public void validateMandatoryAttributes(List<String> mandatoryAttributes) {
+		ConfigData data = this.getConfigData();
+		Class<?> configDataclass = data.getClass();
+
+		for (String attr : mandatoryAttributes) {
+			try {
+				Field field = configDataclass.getDeclaredField(attr);
+
+				String strValue = (String) field.get(data);
+
+				if (strValue == null || strValue.isEmpty()) {
+					throw new RuntimeException(
+							"Attribute \"" + attr + "\" in file " + this.configFileName + " cannot be empty.");
+				}
+
+			} catch (Exception e) {
+				System.err.println(e.getLocalizedMessage());
+				System.exit(1);
+			}
+		}
+
+	}
+
 
 }

@@ -1,9 +1,9 @@
 * [What are the OPAL Tools?](#what-are-the-opal-tools)
 * [Youtube Demo Videos](#youtube-demo-videos)
-* [Download and Setup](#download-and-setup)
+* [Download and Installation](#download-and-installation)
 * [Quickstart opal-install](#quickstart-opal-install)
 * [Quickstart opal-export](#quickstart-opal-export)
-* [Advanced Customization](#advanced-customization)
+* [Documentation and Customization](#documentation-and-customization)
 * [Troubleshooting](#troubleshooting)
 * [Licenses](#licenses)
 
@@ -51,13 +51,15 @@ It should work for most operating systems, it was tested on Windows, MacOS and L
 * In this video you can see a short description and a longer demo on how to actually use the project, understand the possible workflows and how to set it up: https://youtu.be/gdudGocohpk.
 * Here is a fun interview with Jürgen Schuster for the **APEX World for Dummies series**: https://www.youtube.com/watch?v=YkVbXfF5hZI&list=PL3S33P01ea06WdgNtuFvGd-f8PvP54-g0&index=1
 
-# Download and Setup
+# Download and Installation
 
 The binary files can be downloaded here: [https://github.com/daust/opal-installer/releases](https://github.com/daust/opal-installer/releases). This is the easiest way to use the opal-tools. The SQLcl libraries are already included in the binary distribution. 
 
-You can also ``git clone`` this repository. In order to create the binary release yourself, please follow the instructions for [developers](src/doc/Developers.md).
+You can also ``git clone`` this repository. In order to create the binary release yourself, please follow the instructions for [developers](src/doc/developers.md).
 
 Once downloaded and unzipped you run the command ``setup.sh`` or ``setup.cmd``. This will copy and customize the appropriate files. 
+
+[More information for installing the software can be found here](src/doc/Customization.md).
 
 # Quickstart opal-install
 
@@ -100,7 +102,7 @@ By starting the script ``3.install-<environment>.cmd|sh`` (on Windows you can ju
 
 ## Export database objects to the filesystem
 
-You can export database objects into the filesystem using the scripts ``export-schema-<schema name>.cmd`` and ``export-schema-<schema name>-prompt-with-filter.cmd``.
+You can export database objects into the filesystem using the scripts ``export-schema-<schema name>.cmd`` and ``export-schema-<schema name>-prompt-with-filter.cmd``. You can find the files in the directory ``opal-tools/bin/``. 
 
 ![patch directory](src/doc/resources/opal-tools-export.png)
 
@@ -110,9 +112,11 @@ This will spool the files into the SQL source tree based on their object type. T
 
 ## Export Oracle APEX and Oracle ORDS applications to the filesystem
 
-You can export Oracle APEX and Oracle ORDS applications into the filesystem using the scripts ``opal-tools/bin/export-apex-<schema name>.cmd``.
+The basic idea is that the export functionality is used from SQLcl: ``apex export`` and ``rest export``. This is continuously enhanced by Oracle, thus, we don't have to keep up with changes. 
 
-By default, it will call the script ``opal-tools/export-scripts/opal-export-post-script.sql``. There are examples for APEX and ORDS that you can use (it uses SQLcl functionality): 
+Our batch files are simply invoking a sql file to export the applications using native functionality. 
+
+There are examples for APEX and ORDS that you can use (it uses SQLcl functionality): 
 ```
 -- Sample APEX export
 apex export -applicationid 344
@@ -125,15 +129,25 @@ prompt /
 spool off
 ```
 
-# Advanced Customization
+### Behaviour from version 2.8.0 and above
 
-The solution can be customized to suit your needs. You can find more information [here](src/doc/Customization.md).
+Starting with the release 2.8.0 it has become even easier, for each shell script ``export-apex-<schema name>.cmd`` there is a corresponding ``export-apex-<schema name>.sql`` generated in the same directory. In the shell script it will pick up the local .sql file and run it. You only need to configure it, or copy and adapt it. 
+
+### Behaviour until version 2.7.3
+
+Until version 2.7.3, the batch files ``opal-tools/bin/export-apex-<schema name>.cmd`` were all calling the same central sql file for exporting the applications by default.
+
+You could change it in the batch file but it is easier now, having the file in the same directory as the batch file. 
+
+# Documentation and Customization
+
+[The solution can be customized to suit your needs. You can find more information here](src/doc/Customization.md).
 
 It is best to start with the patch template. Modify the shell scripts you find there. Remove the ones that you don't need, add elements to the ``sql`` folder structure that you would need in all patches. Also, look at the command line switches in the shell scripts and adapt them to suit your needs.
 
 In the beginning, the logging in the database tables is disabled. Check the documentation on [how to activate it](src/doc/Customization.md#database-log-tables). 
 
-Here is an overview of SQLcl commands that you can use: https://docs.oracle.com/en/database/oracle/sql-developer-command-line/20.3/sqcug/working-sqlcl.html. 
+Here is an overview of SQLcl commands that you can use: https://docs.oracle.com/en/database/oracle/sql-developer-command-line/21.4/sqcug/working-sqlcl.html. 
 
 When running a standalone SQLcl client you can get more help, especially on the APEX and ORDS commands: 
 ```
@@ -144,7 +158,7 @@ help rest
 
 # Troubleshooting
 
-Information on troubleshooting can be found [here](src/doc/Troubleshooting.md).
+Information on troubleshooting can be found [here](src/doc/Customization.md#troubleshooting).
 
 # Licenses
 

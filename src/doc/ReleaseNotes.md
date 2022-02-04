@@ -1,6 +1,41 @@
 [//]: # (Infos about this file)
 [//]: # (Markdown Syntax: https://guides.github.com/features/mastering-markdown/)
 
+# Version 2.8.0 (release: 04.02.2022)
+
+You can see the full list of issues with details in the [milestones page](https://github.com/daust/opal-tools/milestone/15?closed=1). 
+
+## New features
+  * see [milestones page](https://github.com/daust/opal-tools/milestone/15?closed=1)
+  * the documentation has been updated and expanded significantly
+
+## Bug fixes
+  * see [milestones page](https://github.com/daust/opal-tools/milestone/15?closed=1)
+
+## Changed behaviour
+  * No behaviour has changed so that your existing environment will not break. You only have to replace the ``opal-tools/lib`` directory. 
+  * Nevertheless, a number of changes will affect a new and clean installation which are very helpful. This is why we advise to do a new, clean install: 
+    * scripts that should not be modified have been moved from ``opal-tools/bin`` to ``opal-tools/bin/internal``
+    * **all** target directories for apex, rest, sql sources will have their own environment variable defined in the ``setProjectEnvironment.[cmd|sh]`` file. This is also picked up in all of the generated scripts making them even more transparent and easier to use
+    * the source directory has been reorganized, a new level ``src`` has been introduced
+    * also, the generated scripts will call their respective .sql files in the same directory which simplifies things a lot. 
+    * you can use the parameter ``fileFilter`` instead of ``fileRegex`` for connection mappings as well as encoding mappings with a simplified syntax. This also simplifies cross-platform development for both MacOS/Linux and Windows. You can still use ``fileRegex``, your existing environment will not break. 
+
+## Upgrade instructions
+
+Upgrade from version 2.7.3 to 2.8.0
+
+  * replace all files in the directory ``opal-tools/lib``, your existing environment will continue to work
+
+## Deprecated features (still available but will go away eventually)
+  * *none*
+
+## Obsoleted features (no longer available)
+  * *none*
+
+## Known issues
+  * Please check the current list of open issues: https://github.com/daust/opal-tools/issues . 
+
 # Version 2.7.3 (release: 19.02.2021)
 
 You can see the full list of issues with details in the [milestones page](https://github.com/daust/opal-tools/milestone/14?closed=1). 
