@@ -208,6 +208,9 @@ public class Exporter {
 		// always exclude all generated objects
 		whereClause += "\n   and /* exclude generated objects */ generated='N'";
 
+		// always exclude all secondary objects
+		whereClause += "\n   and /* exclude secondary objects */ secondary='N'";
+
 		// exclude nested tables
 		whereClause += "\n   and /* exclude nested tables */ (owner,object_name,object_type) not in (select owner, table_name, 'TABLE' from all_nested_tables )";
 
@@ -257,9 +260,9 @@ public class Exporter {
 				String whereClause = computeWhereClause(includeFilters, excludeFilters, schemas, includeTypes,
 						excludeTypes);
 				String objectQuery = "select owner, object_name, object_type\n"
-						+ "    from (select owner, object_name, object_type, generated \n"
+						+ "    from (select owner, object_name, object_type, generated, secondary \n"
 						+ "            from all_objects \n" + "          union all \n"
-						+ "          select owner, constraint_name as object_name, 'REF_CONSTRAINT' as object_type, 'N' as generated\n"
+						+ "          select owner, constraint_name as object_name, 'REF_CONSTRAINT' as object_type, 'N' as generated, 'N' as secondary\n"
 						+ "            from all_constraints \n" + "           where constraint_type = 'R') \n"
 						+ " where " + whereClause + "\n" + " order by 1,2,3";
 				log.debug("execute query: " + objectQuery);

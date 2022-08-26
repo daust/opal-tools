@@ -26,15 +26,21 @@ prompt *** Currently, nothing is exported.
     - Basic export of application 100:
         - "apex export -applicationid 100"
     - Typical command that we often use
-        - "apex export -applicationid 100 -expOriginalIds -expComments -expSupportingObjects Y -expACLAssignments -skipExportDate"
+        - "apex export -applicationid 100 -expComments -expSupportingObjects Y -expACLAssignments -skipExportDate"
         when you have translations: 
-        - "apex export -applicationid 100 -expOriginalIds -expComments -expSupportingObjects Y -expACLAssignments -skipExportDate -expTranslations"
+        - "apex export -applicationid 100 -expComments -expSupportingObjects Y -expACLAssignments -skipExportDate -expTranslations"
 
     - Splitting the application into multiple files for seeing differences using version control: 
-        - "apex export -applicationid 100 -expOriginalIds -expComments -expSupportingObjects Y -expACLAssignments -skipExportDate -split"
+        - "apex export -applicationid 100 -expComments -expSupportingObjects Y -expACLAssignments -skipExportDate -split"
 
     - Export of all applications in the current workspace
         - "apex export -workspaceid 9999999"
-        - "apex export -workspaceid 9999999 -expOriginalIds -expComments -expSupportingObjects Y -expACLAssignments -skipExportDate"
+        - "apex export -workspaceid 9999999 -expComments -expSupportingObjects Y -expACLAssignments -skipExportDate"
+
+    - Export of an application in differerent formats
+        - Comma delimited list of export types: APPLICATION_SOURCE (default), READABLE_YAML, READABLE_JSON, EMBEDDED_CODE, CHECKSUM-SH1 or CHECKSUM-SH256
+        - apex export -applicationid 201 -expType READABLE_YAML
+        - see: https://docs.oracle.com/en/database/oracle/apex/22.1/aeadm/exporting-one-or-more-applications.html#GUID-EC03A6A5-9C99-491F-9EFA-A00AAA1E8F9F
+        - Requirement: APEX 22.1 and above installed
 
 */
