@@ -17,21 +17,21 @@ import org.gradle.internal.os.OperatingSystem
 //-----------------------------------------------------------------------------
 
   project.description       = "OPAL Tools - more details here: https://github.com/daust/opal-tools"
-  project.version           = '2.8.0'
+  project.version           = '2.9.0'
   
-  sourceCompatibility       = 1.8
-  targetCompatibility       = 1.8
+  sourceCompatibility       = 11
+  targetCompatibility       = 11
 
   archivesBaseName          = "opal-tools"
 
   // version of sqlcl to be used
   // download files from : https://www.oracle.com/tools/downloads/sqlcl-downloads.html
   // and register here
-  def sqlclVersion  ='21.4.1'
+  def sqlclVersion  ='22.1.1'
   // sqlclZipFile: file location to downloaded zip file, 
   // e.g. /Users/daust/Downloads/sqlcl-20.2.0.174.1557.zip
   // this is only required when using task "opalRegisterSQLclLibraries"
-  def sqlclZipFile  ='/Users/daust/Downloads/sqlcl-21.4.1.17.1458.zip'  
+  def sqlclZipFile  ='/Users/daust/Downloads/KEEP/sqlcl/sqlcl-22.1.1.131.0820.zip'  
   
 //-----------------------------------------------------------------------------
 //-- Repositories and dependencies
