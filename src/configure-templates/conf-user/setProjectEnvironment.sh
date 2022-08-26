@@ -22,10 +22,10 @@ export OPAL_TOOLS_PATCH_DIR="#OPAL_TOOLS_PATCH_DIR#"
 # General configuration settings, typically unchanged 
 #--------------------------------------------------------------------------
 
-export OPAL_TOOLS_JAVA_ARGS="-Dlog4j.configurationFile=${OPAL_TOOLS_HOME_DIR}/conf/log4j2.xml -Djava.util.logging.config.file=${OPAL_TOOLS_HOME_DIR}/conf/logging.properties -Dfile.encoding=#FILE.ENCODING#"
+export OPAL_TOOLS_JAVA_ARGS="-Dlog4j.configurationFile=${OPAL_TOOLS_HOME_DIR}/conf/log4j2.xml -Djava.util.logging.config.file=${OPAL_TOOLS_HOME_DIR}/conf/logging.properties -Dfile.encoding=#FILE.ENCODING# -Duser.language=en"
 
 # for debugging, use these log file settings
-# export OPAL_TOOLS_JAVA_ARGS="-Dlog4j.configurationFile=${OPAL_TOOLS_HOME_DIR}/conf/log4j2-debug.xml -Djava.util.logging.config.file=${OPAL_TOOLS_HOME_DIR}/conf/logging-debug.properties -Dfile.encoding=#FILE.ENCODING#"
+# export OPAL_TOOLS_JAVA_ARGS="-Dlog4j.configurationFile=${OPAL_TOOLS_HOME_DIR}/conf/log4j2-debug.xml -Djava.util.logging.config.file=${OPAL_TOOLS_HOME_DIR}/conf/logging-debug.properties -Dfile.encoding=#FILE.ENCODING# -Duser.language=en"
 
 # --- typically unchanged ---
 # Date Strings to be used in scripts

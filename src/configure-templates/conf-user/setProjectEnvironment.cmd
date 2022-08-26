@@ -25,10 +25,10 @@ set OPAL_TOOLS_PATCH_DIR=#OPAL_TOOLS_PATCH_DIR#
 @REM General configuration settings, typically unchanged
 @REM --------------------------------------------------------------------------
 
-set OPAL_TOOLS_JAVA_ARGS=-Dlog4j.configurationFile="%OPAL_TOOLS_HOME_DIR%\conf\log4j2.xml" -Djava.util.logging.config.file="%OPAL_TOOLS_HOME_DIR%\conf\logging.properties" -Dfile.encoding=#FILE.ENCODING#
+set OPAL_TOOLS_JAVA_ARGS=-Dlog4j.configurationFile="%OPAL_TOOLS_HOME_DIR%\conf\log4j2.xml" -Djava.util.logging.config.file="%OPAL_TOOLS_HOME_DIR%\conf\logging.properties" -Dfile.encoding=#FILE.ENCODING# -Duser.language=en
 
 @REM DEBUG: for debugging, use these log file settings
-@REM set OPAL_TOOLS_JAVA_ARGS=-Dlog4j.configurationFile="%OPAL_TOOLS_HOME_DIR%\conf\log4j2-debug.xml" -Djava.util.logging.config.file="%OPAL_TOOLS_HOME_DIR%\conf\logging-debug.properties" -Dfile.encoding=#FILE.ENCODING#
+@REM set OPAL_TOOLS_JAVA_ARGS=-Dlog4j.configurationFile="%OPAL_TOOLS_HOME_DIR%\conf\log4j2-debug.xml" -Djava.util.logging.config.file="%OPAL_TOOLS_HOME_DIR%\conf\logging-debug.properties" -Dfile.encoding=#FILE.ENCODING# -Duser.language=en
 
 @REM --- typically unchanged ---
 @REM Date Strings to be used in scripts
