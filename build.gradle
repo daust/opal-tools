@@ -27,11 +27,11 @@ import org.gradle.internal.os.OperatingSystem
   // version of sqlcl to be used
   // download files from : https://www.oracle.com/tools/downloads/sqlcl-downloads.html
   // and register here
-  def sqlclVersion  ='22.1.1'
+  def sqlclVersion  ='23.3.0'
   // sqlclZipFile: file location to downloaded zip file, 
   // e.g. /Users/daust/Downloads/sqlcl-20.2.0.174.1557.zip
   // this is only required when using task "opalRegisterSQLclLibraries"
-  def sqlclZipFile  ='/Users/daust/Downloads/KEEP/sqlcl/sqlcl-22.1.1.131.0820.zip'  
+  def sqlclZipFile  ='/Users/daust/Downloads/sqlcl-23.3.0.270.1251.zip'  
   
 //-----------------------------------------------------------------------------
 //-- Repositories and dependencies
@@ -69,8 +69,8 @@ dependencies {
     // https://mvnrepository.com/artifact/commons-io/commons-io
     compile group: 'commons-io', name: 'commons-io', version: '2.+'
 
-    // https://mvnrepository.com/artifact/commons-io/commons-io
-    // compile group: 'commons-io', name: 'commons-io', version: '2.8.0'
+    // https://mvnrepository.com/artifact/commons-codec/commons-codec
+    compile group: 'commons-codec', name: 'commons-codec', version: '1.+'
 
     // https://mvnrepository.com/artifact/com.googlecode.json-simple/json-simple
     compile group: 'com.googlecode.json-simple', name: 'json-simple', version: '+'
@@ -78,6 +78,13 @@ dependencies {
     // parser for command line options: args4j
     // https://mvnrepository.com/artifact/args4j/args4j
     compile group: 'args4j', name: 'args4j', version: '+'
+
+    // https://mvnrepository.com/artifact/com.oracle.database.jdbc/ucp11
+    // find the matching one for the ojdbc libraries in sqlcl
+    // look in file sqlcl/bin/dependencies.txt:
+    //    ucp11.jar=21.0.0.0_220912
+    //    => took 21.5 because 21.0 didn't exist in Mavencentral
+    compile group: 'com.oracle.database.jdbc', name: 'ucp11', version: '21.10.+'
 
     // dependencies from sqlcl
     compile fileTree(dir: "lib/sqlcl-$sqlclVersion", include: ['*.jar'])

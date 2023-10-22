@@ -11,7 +11,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.ServiceLoader;
 import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
@@ -25,15 +27,15 @@ import de.opal.installer.config.ConfigManagerConnectionPool;
 import de.opal.installer.db.ConnectionManager;
 import de.opal.installer.util.Filesystem;
 import de.opal.installer.util.Utils;
-import de.opal.installer.zip.ZipInstaller;
 import de.opal.utils.MsgLog;
 import de.opal.utils.StringUtils;
 import de.opal.utils.VersionInfo;
 import oracle.dbtools.db.ResultSetFormatter;
+import oracle.dbtools.extension.SQLCLService;
 import oracle.dbtools.raptor.newscriptrunner.CommandRegistry;
-import oracle.dbtools.raptor.newscriptrunner.SQLCommand.StmtSubType;
 import oracle.dbtools.raptor.newscriptrunner.ScriptExecutor;
 import oracle.dbtools.raptor.newscriptrunner.ScriptRunnerContext;
+import oracle.dbtools.raptor.newscriptrunner.SQLCommand.StmtSubType;
 import oracle.dbtools.raptor.scriptrunner.commands.rest.RESTCommand;
 
 public class Installer {
@@ -499,8 +501,16 @@ public class Installer {
 
 		String relativeFilename = configManager.getRelativeFilename(file.getAbsolutePath());
 
-		// enable all REST commands
+        // enable all REST commands
 		CommandRegistry.addForAllStmtsListener(RESTCommand.class, StmtSubType.G_S_FORALLSTMTS_STMTSUBTYPE);
+		// enable all other extensions
+		ServiceLoader<SQLCLService> loader=ServiceLoader.load(SQLCLService.class);
+		Iterator<SQLCLService> commands = loader.iterator();
+		while (commands.hasNext()) {
+			SQLCLService s = commands.next();
+			//System.out.println("Enable " + s.getExtensionName() + " Class: " + s.getClass().getName() + " Version: "+ s.getExtensionVersion());
+			CommandRegistry.addForAllStmtsListener(s.getCommandListener());
+		}
 
 		// register patch file if registry targets are defined in config file and
 		// EXECUTE-mode, not
@@ -587,8 +597,16 @@ public class Installer {
 		BufferedOutputStream buf = new BufferedOutputStream(bout);
 		sqlcl.setOut(buf);
 
-		// enable all REST commands
+        // enable all REST commands
 		CommandRegistry.addForAllStmtsListener(RESTCommand.class, StmtSubType.G_S_FORALLSTMTS_STMTSUBTYPE);
+		// enable all other extensions
+		ServiceLoader<SQLCLService> loader=ServiceLoader.load(SQLCLService.class);
+		Iterator<SQLCLService> commands = loader.iterator();
+		while (commands.hasNext()) {
+			SQLCLService s = commands.next();
+			//System.out.println("Enable " + s.getExtensionName() + " Class: " + s.getClass().getName() + " Version: "+ s.getExtensionVersion());
+			CommandRegistry.addForAllStmtsListener(s.getCommandListener());
+		}
 
 		// only execute if flag is set in config file
 		if (this.configManager.getConfigData().runMode.equals("EXECUTE")) {

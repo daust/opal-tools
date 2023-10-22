@@ -29,26 +29,37 @@ rollback;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
-import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Iterator;
+import java.util.ServiceLoader;
 
 import de.opal.db.SQLclUtil;
 import de.opal.installer.util.Msg;
 import oracle.dbtools.db.ResultSetFormatter;
+import oracle.dbtools.extension.SQLCLService;
 import oracle.dbtools.raptor.newscriptrunner.CommandRegistry;
-import oracle.dbtools.raptor.newscriptrunner.SQLCommand.StmtSubType;
 import oracle.dbtools.raptor.newscriptrunner.ScriptExecutor;
 import oracle.dbtools.raptor.newscriptrunner.ScriptRunnerContext;
+import oracle.dbtools.raptor.newscriptrunner.SQLCommand.StmtSubType;
 import oracle.dbtools.raptor.scriptrunner.commands.rest.RESTCommand;
 
 public class SQLclTestParserError {
 
 	public static void main(String[] args) throws SQLException, UnsupportedEncodingException, FileNotFoundException {
+        // enable all REST commands
 		CommandRegistry.addForAllStmtsListener(RESTCommand.class, StmtSubType.G_S_FORALLSTMTS_STMTSUBTYPE);
+		// enable all other extensions
+		ServiceLoader<SQLCLService> loader=ServiceLoader.load(SQLCLService.class);
+		Iterator<SQLCLService> commands = loader.iterator();
+		while (commands.hasNext()) {
+			SQLCLService s = commands.next();
+			System.out.println("Enable " + s.getExtensionName() + " Class: " + s.getClass().getName() + " Version: "+ s.getExtensionVersion());
+			CommandRegistry.addForAllStmtsListener(s.getCommandListener());
+		}
+
 		Connection conn = DriverManager.getConnection("jdbc:oracle:thin:@//vm1:1521/XE", "jri_test", "oracle1");
 		conn.setAutoCommit(false);
 
@@ -64,7 +75,7 @@ public class SQLclTestParserError {
 		sqlcl.setScriptRunnerContext(ctx);
 		ctx.setBaseConnection(conn);
 
-		SQLclUtil.setWorkingDirectory("/private/tmp/project1/sql", sqlcl);
+		//SQLclUtil.setWorkingDirectory("/private/tmp/project1/sql", sqlcl);
 
 		// Capture the results without this it goes to STDOUT
 		ByteArrayOutputStream bout = new ByteArrayOutputStream();

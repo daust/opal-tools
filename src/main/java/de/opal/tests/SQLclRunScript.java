@@ -6,18 +6,15 @@ import java.io.UnsupportedEncodingException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.List;
-import java.util.Map;
 
 import oracle.dbtools.db.ResultSetFormatter;
-import oracle.dbtools.raptor.datatypes.DataValue;
 import oracle.dbtools.raptor.newscriptrunner.ScriptExecutor;
 import oracle.dbtools.raptor.newscriptrunner.ScriptRunnerContext;
 
 public class SQLclRunScript {
 
 	public static void main(String[] args) throws SQLException, UnsupportedEncodingException {
-		Connection conn = DriverManager.getConnection("jdbc:oracle:thin:@//vm1:1521/XE", "ordstest", "oracle1");
+		Connection conn = DriverManager.getConnection("jdbc:oracle:thin:@//win11:1521/orclpdb", "demo", "oracle1");
 		conn.setAutoCommit(false);
 
 		// #create sqlcl
@@ -39,7 +36,7 @@ public class SQLclRunScript {
 
 		// # run a whole file
 		// adjust the path as it needs to be absolute
-		sqlcl.setStmt("@/tmp/sqlcl/test.sql");
+		sqlcl.setStmt("@/tmp/test.sql");
 		
 
 		// enable prompting for variables

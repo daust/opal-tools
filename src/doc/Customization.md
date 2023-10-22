@@ -833,10 +833,20 @@ Here are some links for specifying Oracle connect strings:
 * [Oracle 19c JDBC urls](https://docs.oracle.com/en/database/oracle/oracle-database/19/jjdbc/data-sources-and-URLs.html#GUID-6F729E4D-064B-4FD9-AE92-1BD44B8BE5EF)
 * [Oracle Cloud connect strings](https://medium.com/@FranckPachot/easy-oracle-cloud-wallet-location-in-the-jdbc-connection-string-c782d2011252)
 
+On Windows, you might use ``/`` instead of ``\`` for the path separator, because it needs to be escaped as ``\\``. 
+
 Consider a few general use cases for connect strings: 
 * Local database on port 1521 and SID orcl: ``"connectString": "127.0.0.1:1521:xe"``
 * Local database on port 1521 and service name ``myService``: ``"connectString": "127.0.0.1:1521/myService"``
 * Cloud database connect with tns names connect string ``db201909172340_high`` and the Oracle wallet in directory ``/oracle/wallet``: ``"connectString": "jdbc:oracle:thin:@db201909172340_high?TNS_ADMIN=/oracle/wallet"``
+* Cloud connect string on MacOS / Linux with a blank in the path, this requires quotes for the parameter ``TNS_ADMIN``, e.g.: 
+```
+"connectString": "jdbc:oracle:thin:@db202202011911_high?TNS_ADMIN=\"/Users/daust/Meine Ablage/Wallet_DB202202011911\""
+```
+* Cloud connect string on Windows with a blank in the path, this requires quotes for the parameter ``TNS_ADMIN``, e.g.: 
+```
+"connectString": "jdbc:oracle:thin:@dbapp_low?TNS_ADMIN=\"C:/opal-conf-user/oracert test/andrejgr-dbapp\""
+```
 
 
 ### ``opal-installer.json``

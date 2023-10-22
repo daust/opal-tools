@@ -30,14 +30,15 @@ import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Iterator;
+import java.util.ServiceLoader;
 
 import de.opal.installer.util.Msg;
+import oracle.dbtools.extension.SQLCLService;
 import oracle.dbtools.raptor.newscriptrunner.CommandRegistry;
 import oracle.dbtools.raptor.newscriptrunner.ISQLCommand;
 import oracle.dbtools.raptor.newscriptrunner.SQLCommand.StmtSubType;
@@ -49,7 +50,17 @@ import oracle.dbtools.raptor.scriptrunner.commands.rest.RESTCommand;
 public class SQLclTestParserError2 {
 
 	public static void main(String[] args) throws SQLException, IOException {
+        // enable all REST commands
 		CommandRegistry.addForAllStmtsListener(RESTCommand.class, StmtSubType.G_S_FORALLSTMTS_STMTSUBTYPE);
+		// enable all other extensions
+		ServiceLoader<SQLCLService> loader=ServiceLoader.load(SQLCLService.class);
+		Iterator<SQLCLService> commands = loader.iterator();
+		while (commands.hasNext()) {
+			SQLCLService s = commands.next();
+			System.out.println("Enable " + s.getExtensionName() + " Class: " + s.getClass().getName() + " Version: "+ s.getExtensionVersion());
+			CommandRegistry.addForAllStmtsListener(s.getCommandListener());
+		}
+
 		Connection conn = DriverManager.getConnection("jdbc:oracle:thin:@//vm1:1521/XE", "jri_test", "oracle1");
 		conn.setAutoCommit(false);
 
