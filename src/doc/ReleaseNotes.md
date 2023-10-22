@@ -1,6 +1,37 @@
 [//]: # (Infos about this file)
 [//]: # (Markdown Syntax: https://guides.github.com/features/mastering-markdown/)
 
+# Version 2.9.0 (release: 22.10.2023)
+
+You can see the full list of issues with details in the [milestones page](https://github.com/daust/opal-tools/milestone/16?closed=1). 
+
+## New features
+  * see [milestones page](https://github.com/daust/opal-tools/milestone/16?closed=1)
+
+## Bug fixes
+  * see [milestones page](https://github.com/daust/opal-tools/milestone/16?closed=1)
+
+## Changed behaviour
+  * In an existing project, update the files ``conf/opal-export.conf`` and ``scripts/opal-export-pre-script.sql`` as described in [issue 111](https://github.com/daust/opal-tools/issues/111). 
+  * Update files ``setProjectEnvironment.sh`` and ``setProjectEnvironment.cmd`` as described in [issue 114](https://github.com/daust/opal-tools/issues/114).
+
+## Upgrade instructions
+
+Upgrade from version 2.8.0 to 2.9.0
+
+  * replace all files in the directory ``opal-tools/lib``, your existing environment will continue to work
+  * In an existing project, update the files ``conf/opal-export.conf`` and ``scripts/opal-export-pre-script.sql`` as described in [issue 111](https://github.com/daust/opal-tools/issues/111). 
+  * Update files ``setProjectEnvironment.sh`` and ``setProjectEnvironment.cmd`` as described in [issue 114](https://github.com/daust/opal-tools/issues/114).
+
+## Deprecated features (still available but will go away eventually)
+  * *none*
+
+## Obsoleted features (no longer available)
+  * *none*
+
+## Known issues
+  * Please check the current list of open issues: https://github.com/daust/opal-tools/issues . 
+
 # Version 2.8.0 (release: 04.02.2022)
 
 You can see the full list of issues with details in the [milestones page](https://github.com/daust/opal-tools/milestone/15?closed=1). 

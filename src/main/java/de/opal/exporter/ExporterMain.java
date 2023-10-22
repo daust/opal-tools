@@ -186,10 +186,6 @@ public class ExporterMain {
 
 		Exporter exporter = new Exporter(params, dbExporter.user, dbExporter.pwd, dbExporter.connectStr,
 				dbExporter.outputDir, dbExporter.skipErrors, dbExporter.dependentObjectsMap, dbExporter.isSilent,
-				/*
-				 * dbExporter.extensionMappingsMap, dbExporter.directoryMappingsMap,
-				 * dbExporter.filenameTemplate,
-				 */
 				dbExporter.filenameReplaceBlanks, dbExporter.workingDirectorySQLcl, dbExporter.skipExport,
 				dbExporter.filenameTemplatesMap, dbExporter.exportTemplateDir, dbExporter.parallelThreads);
 		exporter.export(dbExporter.preScriptsFiles, dbExporter.postScriptsFiles, dbExporter.includeFilters,

@@ -11,8 +11,10 @@ import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.ServiceLoader;
 import java.util.regex.Pattern;
 
 import javax.sql.PooledConnection;
@@ -25,10 +27,11 @@ import de.opal.installer.db.DBUtils;
 import de.opal.installer.util.Msg;
 import de.opal.installer.util.Utils;
 import oracle.dbtools.db.ResultSetFormatter;
+import oracle.dbtools.extension.SQLCLService;
 import oracle.dbtools.raptor.newscriptrunner.CommandRegistry;
-import oracle.dbtools.raptor.newscriptrunner.SQLCommand.StmtSubType;
 import oracle.dbtools.raptor.newscriptrunner.ScriptExecutor;
 import oracle.dbtools.raptor.newscriptrunner.ScriptRunnerContext;
+import oracle.dbtools.raptor.newscriptrunner.SQLCommand.StmtSubType;
 import oracle.dbtools.raptor.scriptrunner.commands.rest.RESTCommand;
 import oracle.jdbc.pool.OracleConnectionPoolDataSource;
 
@@ -56,8 +59,16 @@ public class SQLclUtil {
 		sqlcl.setOut(buf);
 		SQLclUtil.redirectErrStreamToString();
 
-		// enable all REST commands
+        // enable all REST commands
 		CommandRegistry.addForAllStmtsListener(RESTCommand.class, StmtSubType.G_S_FORALLSTMTS_STMTSUBTYPE);
+		// enable all other extensions
+		ServiceLoader<SQLCLService> loader=ServiceLoader.load(SQLCLService.class);
+		Iterator<SQLCLService> commands = loader.iterator();
+		while (commands.hasNext()) {
+			SQLCLService s = commands.next();
+			//System.out.println("Enable " + s.getExtensionName() + " Class: " + s.getClass().getName() + " Version: "+ s.getExtensionVersion());
+			CommandRegistry.addForAllStmtsListener(s.getCommandListener());
+		}
 
 		// only execute if flag is set in config file
 		// sqlcl.setStmt(new FileInputStream(file));
@@ -95,13 +106,21 @@ public class SQLclUtil {
 	 */
 	public void executeStatement(String statement, ScriptExecutor sqlcl) throws SQLException, IOException {
 
+        // enable all REST commands
+		CommandRegistry.addForAllStmtsListener(RESTCommand.class, StmtSubType.G_S_FORALLSTMTS_STMTSUBTYPE);
+		// enable all other extensions
+		ServiceLoader<SQLCLService> loader=ServiceLoader.load(SQLCLService.class);
+		Iterator<SQLCLService> commands = loader.iterator();
+		while (commands.hasNext()) {
+			SQLCLService s = commands.next();
+			//System.out.println("Enable " + s.getExtensionName() + " Class: " + s.getClass().getName() + " Version: "+ s.getExtensionVersion());
+			CommandRegistry.addForAllStmtsListener(s.getCommandListener());
+		}
+
 		// Capture the results without this it goes to STDOUT
 		ByteArrayOutputStream bout = new ByteArrayOutputStream();
 		BufferedOutputStream buf = new BufferedOutputStream(bout);
 		sqlcl.setOut(buf);
-
-		// enable all REST commands
-		CommandRegistry.addForAllStmtsListener(RESTCommand.class, StmtSubType.G_S_FORALLSTMTS_STMTSUBTYPE);
 
 		sqlcl.setStmt(statement);
 		sqlcl.run();

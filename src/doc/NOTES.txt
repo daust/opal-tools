@@ -1,3 +1,15 @@
+- Projekt als Parameter abfragen
+  - wird dann eingetragen in opal-install.json im Projektnamen
+  - Batch-File: setEnv-<project name>
+
+- %USERPROFILE% ist Default für das opal-tools-config Verzeichnis
+
+- Wenn ich multiple Connection Pools verwenden möchte: 
+  %USERPROFILE%\opal-tools-config\connpool-project1
+  %USERPROFILE%\opal-tools-config\connpool-project2
+  %USERPROFILE%\opal-tools-config\setEnv-project1.cmd
+  %USERPROFILE%\opal-tools-config\setEnv-project2.cmd
+
 -----------------------------------------------------------------------------
 -- new stuff
 -----------------------------------------------------------------------------
