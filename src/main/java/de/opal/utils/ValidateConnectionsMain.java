@@ -70,7 +70,8 @@ public class ValidateConnectionsMain {
 				}
 			} else {
 				if (poolFileList.isEmpty() && this.showHelp == false)
-					throw new CmdLineException(parser, "No connection pool filename is provided.");
+					throw new CmdLineException(parser, "No connection pool filename is provided.",
+						    (Throwable) null);
 			}
 		} catch (CmdLineException e) {
 			System.err.println(e.getMessage());

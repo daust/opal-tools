@@ -9,6 +9,10 @@ import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.ServiceLoader;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import de.opal.exporter.Exporter;
 import oracle.dbtools.db.ResultSetFormatter;
 import oracle.dbtools.extension.SQLCLService;
 import oracle.dbtools.raptor.newscriptrunner.CommandRegistry;
@@ -18,8 +22,16 @@ import oracle.dbtools.raptor.newscriptrunner.ScriptRunnerContext;
 import oracle.dbtools.raptor.scriptrunner.commands.rest.RESTCommand;
 
 public class SQLclTest {
+	private static final Logger log = LogManager.getLogger(Exporter.class.getName());
 
 	public static void main(String[] args) throws SQLException, UnsupportedEncodingException {
+		String sqlScript;
+		
+		log.debug("Start");
+		sqlScript = (args.length == 0) ? "@/tmp/test.sql" : args[0];
+		log.debug("filename: "+sqlScript);
+				
+		
 		/* OLD approach
 		CommandRegistry.addForAllStmtsListener(RESTCommand.class, StmtSubType.G_S_FORALLSTMTS_STMTSUBTYPE);
 		CommandRegistry.addForAllStmtsListener(ApexCommand.class);
@@ -51,10 +63,6 @@ public class SQLclTest {
 		// #set the context
 		sqlcl.setScriptRunnerContext(ctx);
 		ctx.setBaseConnection(conn);
-		//System.out.println("*** ctx.getOutputStream");
-		//System.out.println(ctx.getOutputStream());
-
-		// SQLclUtil.setWorkingDirectory("/private/tmp/project1/sql", sqlcl);
 
 		// Capture the results without this it goes to STDOUT
 		ByteArrayOutputStream bout = new ByteArrayOutputStream();
@@ -73,7 +81,7 @@ public class SQLclTest {
 		//sqlcl.getScriptRunnerContext().putProperty("script.runner.commandlineconnect", Boolean.TRUE);
 		
 		
-		sqlcl.setStmt("@/tmp/test.sql");
+		sqlcl.setStmt(sqlScript);
 		sqlcl.run();
 
 		String results = bout.toString("UTF8");

@@ -1,6 +1,11 @@
 /*
   File    : build.gradle
   Purpose : Build file for opal-tools
+
+
+  Change History:  
+  2025-06-04: Updated sqlcl version to 25.1.1; Removed UCP dependency from maven, as it is now included in sqlcl; now ALL Oracle libraries are included from the sqlcl distribution
+
  */
 
 plugins {
@@ -17,7 +22,7 @@ import org.gradle.internal.os.OperatingSystem
 //-----------------------------------------------------------------------------
 
   project.description       = "OPAL Tools - more details here: https://github.com/daust/opal-tools"
-  project.version           = '2.9.0'
+  project.version           = '2.10.0'
   
   sourceCompatibility       = 11
   targetCompatibility       = 11
@@ -27,11 +32,11 @@ import org.gradle.internal.os.OperatingSystem
   // version of sqlcl to be used
   // download files from : https://www.oracle.com/tools/downloads/sqlcl-downloads.html
   // and register here
-  def sqlclVersion  ='23.3.0'
+  def sqlclVersion  ='25.1.1' // die Probleme (this.sqlcl is null) begannen mit SQLcl 24.3.0
   // sqlclZipFile: file location to downloaded zip file, 
   // e.g. /Users/daust/Downloads/sqlcl-20.2.0.174.1557.zip
   // this is only required when using task "opalRegisterSQLclLibraries"
-  def sqlclZipFile  ='/Users/daust/Downloads/sqlcl-23.3.0.270.1251.zip'  
+  def sqlclZipFile  ='/Users/daust/Downloads/KEEP/sqlcl/sqlcl-25.1.1.113.2054.zip'  
   
 //-----------------------------------------------------------------------------
 //-- Repositories and dependencies
@@ -52,10 +57,8 @@ dependencies {
 
     // https://mvnrepository.com/artifact/log4j/log4j
     //compile group: 'log4j', name: 'log4j', version: '1.2.+'
-    compile group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.+'
-    compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.+'
-    // https://mvnrepository.com/artifact/commons-logging/commons-logging
-    //implementation group: 'commons-logging', name: 'commons-logging', version: '1.2'
+    //compile group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.+'
+    //compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.+'
 
     // https://mvnrepository.com/artifact/org.apache.commons/commons-text
     compile group: 'org.apache.commons', name: 'commons-text', version: '1.9'
@@ -82,9 +85,12 @@ dependencies {
     // https://mvnrepository.com/artifact/com.oracle.database.jdbc/ucp11
     // find the matching one for the ojdbc libraries in sqlcl
     // look in file sqlcl/bin/dependencies.txt:
-    //    ucp11.jar=21.0.0.0_220912
-    //    => took 21.5 because 21.0 didn't exist in Mavencentral
-    compile group: 'com.oracle.database.jdbc', name: 'ucp11', version: '21.10.+'
+    //    ucp11.jar=25.1.1.113.2054
+    //compile group: 'com.oracle.database.jdbc', name: 'ucp11', version: '23.+'
+    //compile group: 'com.oracle.database.jdbc', name: 'ucp11', version: '21.10.+'
+    // https://mvnrepository.com/artifact/com.oracle.database.jdbc/ojdbc11
+    //implementation group: 'com.oracle.database.jdbc', name: 'ojdbc11', version: '23.+'
+    // now fully included in sqlcl, so no need to add it here
 
     // dependencies from sqlcl
     compile fileTree(dir: "lib/sqlcl-$sqlclVersion", include: ['*.jar'])
@@ -95,6 +101,16 @@ dependencies {
 //-----------------------------------------------------------------------------
 //-- Groovy helper functions
 //-----------------------------------------------------------------------------
+
+
+//-----------------------------------------------------------------------------
+//-- Compile with warnings for deprecation
+//-- this is useful to see if we use deprecated methods
+//-- and to be able to remove them in the future
+//-----------------------------------------------------------------------------
+tasks.withType(JavaCompile) {
+    options.compilerArgs << '-Xlint:deprecation'
+}
 
 //-----------------------------------------------------------------------------
 //-- task definitions

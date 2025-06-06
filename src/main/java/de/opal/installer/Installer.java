@@ -4,6 +4,7 @@ import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
@@ -288,7 +289,7 @@ public class Installer {
 					File releaseNotesFile = new File(releaseNotesFilename);
 					String releaseNotesContents = "";
 					if (releaseNotesFile.exists()) {
-						releaseNotesContents = FileUtils.readFileToString(releaseNotesFile);
+						releaseNotesContents = FileUtils.readFileToString(releaseNotesFile, Charset.defaultCharset());
 						log.debug("ReleaseNotes.txt : \n");
 					}
 

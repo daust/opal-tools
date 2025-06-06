@@ -307,7 +307,7 @@ public class ExporterMain {
 			parser.parseArgument(args);
 
 			if (!this.skipExport && this.outputDir == null)
-				throw new CmdLineException("Option \"--output-dir\" is required");
+				throw new CmdLineException(parser, "Option \"--output-dir\" is required", (Throwable) null);
 
 			// help can be displayed without -url being given
 			// else -url is required
@@ -349,8 +349,9 @@ public class ExporterMain {
 			if (this.jdbcURL != null || (this.connectionPoolFile != null && this.connectionPoolName != null)) {
 				// ok
 			} else {
-				throw new CmdLineException(parser,
-						"Specify either --url or (--connection-pool-file and --connection-pool-name)");
+					throw new CmdLineException(parser,
+							"Specify either --url or (--connection-pool-file and --connection-pool-name)",
+						    (Throwable) null);
 			}
 
 			// jdbcURL
@@ -366,7 +367,8 @@ public class ExporterMain {
 			} else {
 				if (!(new File(this.connectionPoolFile)).exists())
 					throw new CmdLineException(parser,
-							"connection pool file " + this.connectionPoolFile + " not found");
+							"connection pool file " + this.connectionPoolFile + " not found",
+						    (Throwable) null);
 				ConfigManagerConnectionPool configManagerConnectionPools = new ConfigManagerConnectionPool(
 						this.connectionPoolFile);
 				if (configManagerConnectionPools.hasUnencryptedPasswords()) {
@@ -387,7 +389,8 @@ public class ExporterMain {
 				}
 				if (this.user == null)
 					throw new CmdLineException(parser, "connection pool " + this.connectionPoolName
-							+ " could not be found in file " + this.connectionPoolFile);
+							+ " could not be found in file " + this.connectionPoolFile,
+						    (Throwable) null);
 
 				log.debug("get connection " + this.connectionPoolName + " from " + this.connectionPoolFile);
 				log.debug("user: " + this.user);
