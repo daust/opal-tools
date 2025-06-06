@@ -1,8 +1,13 @@
+/*
+  Custom DDL for Synonym
+  The remove of emit_schema is not working correctly. 
+  Thus, after the DDL is generated, the schema name is removed using replace(). 
+*/ 
 declare
   function get_ddl return clob is
-    l_schema varchar2(100) := ?;
-    l_object_type varchar2(100) := ?;
-    l_object_name varchar2(100) := ?;
+    l_schema varchar2(100) := :schema_name;
+    l_object_type varchar2(100) := :object_type;
+    l_object_name varchar2(100) := :object_name;
     
     l_clob clob;
   begin

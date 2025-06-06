@@ -17,7 +17,7 @@ class Worker implements Callable<Integer> {
 
 	@Override
 	public Integer call() throws Exception {
-		Integer retVal=new Integer(0); //0=success
+		Integer retVal=0; //0=success
 		
 		System.out.println("schema:"+this.schema);
 		System.out.println("objectType:"+this.objectType);

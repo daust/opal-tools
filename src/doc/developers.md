@@ -2,7 +2,7 @@
 
 ## Requirements
 
-* Java JDK >= **Java 8**
+* Java JDK >= **Java 11**
 * Gradle (https://gradle.org/) (this is optional and not required, only when upgrading the gradle environment). Currently, we are using Gradle 6.6.1 and a gradle wrapper is provided.
 
 ## Best practices

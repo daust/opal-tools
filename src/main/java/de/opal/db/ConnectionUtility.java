@@ -30,7 +30,7 @@ public class ConnectionUtility {
 		return instance;
 	}
 
-	public void initializeConnPool(int poolSize, String user, String pwd, String connectStr) throws SQLException {
+	public synchronized void initializeConnPool(int poolSize, String user, String pwd, String connectStr) throws SQLException {
 		this.poolSize = poolSize;
 		this.user = user;
 		this.pwd = pwd;
@@ -69,7 +69,7 @@ public class ConnectionUtility {
 		pds.setInactiveConnectionTimeout(10);
 	}
 
-	public Connection getConnection() throws SQLException {
+	public synchronized Connection getConnection() throws SQLException {
 		OracleConnection conn = null;
 
 		// Get the database connection from UCP.
@@ -89,7 +89,7 @@ public class ConnectionUtility {
 		return conn;
 	}
 
-	public static String transformJDBCConnectString(String connectString) {
+	public static synchronized String transformJDBCConnectString(String connectString) {
 		String transformedURL = connectString;
 
 		// already contains the full url

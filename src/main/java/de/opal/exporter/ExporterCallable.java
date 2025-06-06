@@ -67,7 +67,7 @@ public class ExporterCallable implements Callable<Integer> {
 
 	@Override
 	public Integer call() throws SQLException, IOException {
-		Integer retVal = new Integer(0); // 0=success
+		Integer retVal = 0; // 0=success
 		ScriptExecutor sqlcl = this.sqlcl;
 
 		try {
@@ -93,13 +93,13 @@ public class ExporterCallable implements Callable<Integer> {
 				try {
 					String ddlQuery = templateQuery;
 					ddlStmtCallable = sqlcl.getConn().prepareCall(ddlQuery);
-					ddlStmtCallable.setString(1, schemaName);
-					ddlStmtCallable.setString(2, actualObjectType);
-					ddlStmtCallable.setString(3, objectName);
-					ddlStmtCallable.registerOutParameter(4, Types.CLOB);
+					ddlStmtCallable.setString("schema_name", schemaName);
+					ddlStmtCallable.setString("object_type", actualObjectType);
+					ddlStmtCallable.setString("object_name", objectName);
+					ddlStmtCallable.registerOutParameter("retval", Types.CLOB);
 
 					ddlStmtCallable.execute();
-					Clob cl = ddlStmtCallable.getClob(4);
+					Clob cl = ddlStmtCallable.getClob("retval");
 					content = DBUtils.clobToString(cl);
 					log.debug(content);
 				} catch (Exception e) {

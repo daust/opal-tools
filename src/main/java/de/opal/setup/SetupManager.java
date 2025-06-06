@@ -182,7 +182,8 @@ public class SetupManager {
 			// setupMode
 			if (this.setupMode != null && !this.setupMode.equals(setupModeInstall)
 					&& !this.setupMode.equals(setupModeScripts))
-				throw new CmdLineException("Invalid option " + this.setupMode + " for --setup-mode");
+				throw new CmdLineException(parser, "Invalid option " + this.setupMode + " for --setup-mode",
+					    (Throwable) null);
 
 		} catch (CmdLineException e) {
 			// if there's a problem in the command line,

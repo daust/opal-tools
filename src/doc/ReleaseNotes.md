@@ -1,6 +1,35 @@
 [//]: # (Infos about this file)
 [//]: # (Markdown Syntax: https://guides.github.com/features/mastering-markdown/)
 
+# Version 2.10.0 (release: 06.06.2025)
+
+You can see the full list of issues with details in the [milestones page](https://github.com/daust/opal-tools/milestone/17?closed=1). 
+
+## New features
+  * see [milestones page](https://github.com/daust/opal-tools/milestone/17?closed=1)
+
+## Bug fixes
+  * see [milestones page](https://github.com/daust/opal-tools/milestone/17?closed=1)
+
+## Changed behaviour
+  * All custom export files in `opal-tools/export-templates` need to be changed to work with the newer JDBC layer [issue 122](https://github.com/daust/opal-tools/issues/122). 
+
+## Upgrade instructions
+
+Upgrade from version 2.9.0 to 2.10.0
+
+  * replace all files in the directory ``opal-tools/lib``, your existing environment will continue to work
+  * In an existing project, update all custom export files in `opal-tools/export-templates` to work with the newer JDBC layer [issue 122](https://github.com/daust/opal-tools/issues/122). 
+
+## Deprecated features (still available but will go away eventually)
+  * *none*
+
+## Obsoleted features (no longer available)
+  * *none*
+
+## Known issues
+  * Please check the current list of open issues: https://github.com/daust/opal-tools/issues. 
+
 # Version 2.9.0 (release: 22.10.2023)
 
 You can see the full list of issues with details in the [milestones page](https://github.com/daust/opal-tools/milestone/16?closed=1). 

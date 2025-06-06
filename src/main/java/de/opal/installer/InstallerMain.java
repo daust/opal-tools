@@ -127,7 +127,8 @@ public class InstallerMain {
 			// check conn pool file
 			// encrypt if it contains unencrypted passwords
 			if (!new File(this.connectionPoolFile).exists()) {
-				throw new CmdLineException(parser, "connection pool file " + this.connectionPoolFile + " not found");
+				throw new CmdLineException(parser, "connection pool file " + this.connectionPoolFile + " not found",
+					    (Throwable) null);
 			}
 
 			ConfigManagerConnectionPool configManagerConnectionPools = new ConfigManagerConnectionPool(this.connectionPoolFile);
