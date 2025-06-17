@@ -22,7 +22,7 @@ import org.gradle.internal.os.OperatingSystem
 //-----------------------------------------------------------------------------
 
   project.description       = "OPAL Tools - more details here: https://github.com/daust/opal-tools"
-  project.version           = '2.10.0'
+  project.version           = '2.11.0'
   
   sourceCompatibility       = 11
   targetCompatibility       = 11

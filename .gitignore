@@ -20,6 +20,7 @@ build/**
 gradle.properties
 /build/
 /bin/
+/_LocalFilesUnversioned/
 
 # include gradle into the build for other developers
 #/gradle/
@@ -39,3 +40,4 @@ gradle-app.setting
 
 # ignore sqlcl libraries
 lib/sqlcl-*
+README-DietmarOnly.md

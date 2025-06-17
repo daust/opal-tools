@@ -1,6 +1,36 @@
 [//]: # (Infos about this file)
 [//]: # (Markdown Syntax: https://guides.github.com/features/mastering-markdown/)
 
+# Version 2.11.0 (release: ??.??.2025)
+
+You can see the full list of issues with details in the [milestones page](https://github.com/daust/opal-tools/milestone/18?closed=1). 
+
+## New features
+  * see [milestones page](https://github.com/daust/opal-tools/milestone/18?closed=1)
+
+## Bug fixes
+  * see [milestones page](https://github.com/daust/opal-tools/milestone/18?closed=1)
+
+## Changed behaviour
+  * *none* 
+
+## Upgrade instructions
+
+Upgrade from version 2.10.0 to 2.11.0
+
+  * replace all files in the directory ``opal-tools/lib``, your existing environment will continue to work
+
+## Deprecated features (still available but will go away eventually)
+  * *none*
+
+## Obsoleted features (no longer available)
+  * *none*
+
+## Known issues
+  * Please check the current list of open issues: https://github.com/daust/opal-tools/issues. 
+
+---
+
 # Version 2.10.0 (release: 06.06.2025)
 
 You can see the full list of issues with details in the [milestones page](https://github.com/daust/opal-tools/milestone/17?closed=1). 
@@ -29,6 +59,8 @@ Upgrade from version 2.9.0 to 2.10.0
 
 ## Known issues
   * Please check the current list of open issues: https://github.com/daust/opal-tools/issues. 
+
+---
 
 # Version 2.9.0 (release: 22.10.2023)
 
