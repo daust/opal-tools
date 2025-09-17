@@ -875,6 +875,7 @@ Consider a few use cases with regards to users:
 This is the password for the Oracle user as specified under ``"user"``. The password is encrypted and can be replaced in this file with a clear text password. The ``1:`` indicates that this password is already encrypted. When you use the connection pool for the next time, all unencrypted passwords will be encrypted automatically. 
 
 When you start the script ``opal-tools/bin/validate-connections`` (on Windows you can just double-click it), the connection pools are all verified and the passwords are encrypted. 
+To show the version information (OPAL Tools; Oracle DB; Oracle APEX; Oracle ORDS), you have to set the command line switch `-v` or `--version`. 
 
 #### ``"connectString"``
 

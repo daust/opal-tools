@@ -8,7 +8,7 @@ You can see the full list of issues with details in the [milestones page](https:
 ## New features
   * #125: [Upgrade sqlcl libraries to 25.2](https://github.com/daust/opal-tools/issues/125)
   * #126: [Environment specific deployment of files](https://github.com/daust/opal-tools/issues/126)
-
+  * #118: [Add version of OPAL TOOLS in validateConnections](https://github.com/daust/opal-tools/issues/118)
 
 ## Bug fixes
   * #124: [Export scripts for manual install - bug on Windows](https://github.com/daust/opal-tools/issues/124)

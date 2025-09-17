@@ -22,6 +22,7 @@ import de.opal.installer.config.ConfigManagerConnectionPool;
 import de.opal.installer.db.DBUtils;
 import de.opal.installer.util.Msg;
 
+
 public class ValidateConnectionsMain {
 
 	public static final Logger log = LogManager.getLogger(ExporterMain.class.getName());
@@ -29,7 +30,7 @@ public class ValidateConnectionsMain {
 	@Option(name = "-h", aliases = "--help", usage = "show this help page", help = true)
 	private boolean showHelp;
 
-	@Option(name = "-v", aliases = "--version", usage = "show version information", help = true)
+	@Option(name = "-v", aliases = "--version", usage = "show version information for each connection", help = true)
 	private boolean showVersion;
 
 	// all arguments, not options. This is the list of connection pools to work with
@@ -55,21 +56,18 @@ public class ValidateConnectionsMain {
 
 			// parse the arguments.
 			parser.parseArgument(args);
+			
+			if (this.showVersion) {
+				VersionInfo.showVersionInfo(this.getClass(), "OPAL Tools", false);
+			}
 
 			// after parsing arguments, you should check
 			// if enough arguments are given.
-			if (this.showHelp || this.showVersion) {
-				if (this.showVersion) {
-					VersionInfo.showVersionInfo(this.getClass(), "OPAL Tools", true);
-				}
-
-				// check whether jdbcURL OR connection pool is specified correctly
-				if (this.showHelp) {
-					showUsage(System.out, parser);
-					System.exit(0);
-				}
+			if (this.showHelp) {
+				showUsage(System.out, parser);
+				System.exit(0);
 			} else {
-				if (poolFileList.isEmpty() && this.showHelp == false)
+				if (poolFileList.isEmpty() && this.showHelp == false && this.showVersion == false)
 					throw new CmdLineException(parser, "No connection pool filename is provided.",
 						    (Throwable) null);
 			}
@@ -93,6 +91,9 @@ public class ValidateConnectionsMain {
 		// print option sample. This is useful some time
 		out.println("  Example: java de.opal.exporter.ValidateConnectionsMain"
 				+ parser.printExample(OptionHandlerFilter.PUBLIC));
+		
+		out.println();
+		out.println("  Use -v flag to display Oracle Database, APEX, and ORDS version information for each connection");
 	}
 
 	private void run() throws IOException {
@@ -124,16 +125,23 @@ public class ValidateConnectionsMain {
 					Msg.print("  check connection: " + pool.user + "@" + pool.connectString);
 					try {
 						conn = SQLclUtil.openConnection(pool.user, pool.password, pool.connectString);
-						DBUtils.closeQuietly(conn);
 						Msg.println(" => SUCCESS");
+						
+						// Display version information if -v flag is set
+						if (this.showVersion) {
+							Msg.println("  Version Information:");
+							DatabaseVersionUtil.displayVersionInfo(conn);
+						}
+						
+						DBUtils.closeQuietly(conn);
 					} catch (Exception e) {
-						// Msg.println(" => FAILURE\n");
-						// Msg.println(e.getLocalizedMessage());
+						Msg.println(" => FAILURE");
+						Msg.println("    Error: " + e.getLocalizedMessage());
+						log.debug("Connection failed for " + pool.user + "@" + pool.connectString, e);
 					} finally {
 						DBUtils.closeQuietly(conn);
 					}
 				}
-
 			}
 		}
 		Msg.println("");
