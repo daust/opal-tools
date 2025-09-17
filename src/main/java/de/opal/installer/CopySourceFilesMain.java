@@ -1,12 +1,12 @@
 package de.opal.installer;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.sql.SQLException;
+import java.util.List;
 
+import org.apache.commons.io.FileUtils;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
@@ -16,14 +16,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.opal.installer.util.Msg;
-import de.opal.utils.OpalFileUtils;
 import de.opal.utils.VersionInfo;
 
 public class CopySourceFilesMain {
 	public static final Logger log = LoggerFactory.getLogger(CopySourceFilesMain.class.getName());
-
-	private String currentSourcePathName = "";
-	private String currentTargetPathName = "";
 
 	// build process
 	private int fileCopyCount = 0;
@@ -48,7 +44,6 @@ public class CopySourceFilesMain {
 
 	@Option(name = "--target-dir", usage = "target directory, e.g. ./sql", metaVar = "<directory>", required = true)
 	private String targetPathName;
-
 
 	public CopySourceFilesMain() {
 
@@ -100,12 +95,14 @@ public class CopySourceFilesMain {
 		// trim() parameters
 		this.sourcePathName = this.sourcePathName.trim();
 		this.targetPathName = this.targetPathName.trim();
+		this.sourceFilesName = this.sourceFilesName.trim();
 	}
 
 	private void dumpParameters() {
 		log.debug("*** Options");
 		log.debug("sourcePathName: " + this.sourcePathName);
 		log.debug("targetPathName: " + this.targetPathName);
+		log.debug("sourceFilesName: " + this.sourceFilesName);
 	}
 
 	private void showUsage(PrintStream out, CmdLineParser parser) {
@@ -129,25 +126,25 @@ public class CopySourceFilesMain {
 		transformParams();
 		dumpParameters();
 
-		// initially the source and target path names are derived from the starting
-		// point,
-		// the base directories for source and target
-		setRelativePaths(null, null);
-
 		Msg.println("copy files from:" + this.sourcePathName + "\n           to  :" + this.targetPathName + "\n");
 		Msg.println("process source file listing in: " + this.sourceFilesName + "\n");
 
-		// read file line by line
-		try (BufferedReader br = new BufferedReader(new FileReader(this.sourceFilesName))) {
-
-			String line;
-			while ((line = br.readLine()) != null) {
-				processLine(line.trim());
-			}
-
-		} catch (IOException e) {
-			e.printStackTrace();
+		// Use PatchFilesTxtWrapper to get the file list
+		PatchFilesTxtWrapper wrapper = new PatchFilesTxtWrapper(
+			this.sourceFilesName, 
+			this.sourcePathName, 
+			this.targetPathName
+		);
+		
+		List<PatchFileMapping> fileList = wrapper.getFileList();
+		
+		log.debug("Found " + fileList.size() + " files to copy");
+		
+		// Copy all files from the list
+		for (PatchFileMapping fileMapping : fileList) {
+			copyFile(fileMapping);
 		}
+
 		displayStatsFooter(this.fileCopyCount, startTime);
 
 		Msg.println("\n*** done.\n");
@@ -155,57 +152,67 @@ public class CopySourceFilesMain {
 		log.info("END run()");
 	}
 
-	private void setRelativePaths(String source, String target) {
-		if (source != null) {
-			this.currentSourcePathName = this.sourcePathName + File.separator + source;
-		} else {
-			this.currentSourcePathName = this.sourcePathName;
+	/**
+	 * Copy a single file from source to target as defined in PatchFileMapping
+	 * 
+	 * @param fileMapping The file mapping containing source and target information
+	 * @throws IOException if copy operation fails
+	 */
+	private void copyFile(PatchFileMapping fileMapping) throws IOException {
+		try {
+			// Ensure target directory exists
+			File targetDir = fileMapping.destFile.getParentFile();
+			if (!targetDir.exists()) {
+				targetDir.mkdirs();
+				log.debug("Created target directory: " + targetDir.getAbsolutePath());
+			}
+			
+			// Copy the file
+			FileUtils.copyFile(fileMapping.srcFile, fileMapping.destFile);
+			
+			// Log the copy operation
+			String envInfo = fileMapping.hasEnvDirective 
+				? " (env: " + String.join(",", fileMapping.envList) + ")"
+				: "";
+			
+			Msg.println(" - " + fileMapping.srcFile.getName() + " -> " + fileMapping.destFile.getName() + envInfo);
+			log.debug("Copied: " + fileMapping.srcFile.getAbsolutePath() + " -> " + fileMapping.destFile.getAbsolutePath());
+			
+			this.fileCopyCount++;
+			
+		} catch (IOException e) {
+			log.error("Failed to copy file: " + fileMapping.srcFile.getAbsolutePath() + " -> " + fileMapping.destFile.getAbsolutePath(), e);
+			throw e;
 		}
-		if (target != null) {
-			this.currentTargetPathName = this.targetPathName + File.separator + target;
-		} else {
-			this.currentTargetPathName = this.targetPathName;
-		}
-
-		log.debug("*** New Source Path: #" + source + "#" + " - " + this.currentSourcePathName);
-		log.debug("*** New Target Path: #" + target + "#" + " - " + this.currentTargetPathName);
-
 	}
 
 	/**
-	 * 
-	 * @param line (should already be trimmed())
-	 * @throws IOException
+	 * Legacy method - kept for backward compatibility but renamed
+	 * This method contains the old implementation for reference
 	 */
-	private void processLine(String line) throws IOException {
-		// is this a comment line? Then it will be skipped
-		if (line.startsWith("#")) {
-			// skip line => comment
-			return;
-		}
+	public void runOldImplementation(String[] args) throws IOException {
 
-		// is this a path mapping directive?
-		// then it will change the current from and to directories
-		if (line.contains("=>")) {
-			log.debug("line contains path mapping: " + line);
+		long startTime = System.currentTimeMillis();
 
-			String source = line.substring(0, line.indexOf("=>")).trim();
-			String target = line.substring(line.indexOf("=>") + "=>".length() + 1).trim();
+		parseParameters(args);
+		transformParams();
+		dumpParameters();
 
-			Msg.println("Mapping: " + source + " => " + target);
-			setRelativePaths(source, target);
+		// This is the old implementation - now replaced by PatchFilesTxtWrapper usage
+		// Keeping it for reference/comparison purposes
+		
+		Msg.println("*** Using legacy implementation ***");
+		Msg.println("copy files from:" + this.sourcePathName + "\n           to  :" + this.targetPathName + "\n");
+		Msg.println("process source file listing in: " + this.sourceFilesName + "\n");
 
-			return;
-		}
+		// Old direct file processing would go here...
+		// This has been replaced by the PatchFilesTxtWrapper approach
 
-		// process file
-		if (!line.isEmpty()) {
-			log.debug("process line: " + line);
-			Msg.println("  process directive: " + line);
-			// copy files and return number of files copied
-			this.fileCopyCount += OpalFileUtils.copyDirectory(this.currentSourcePathName, this.currentTargetPathName,
-					line);
-		}
+		displayStatsFooter(this.fileCopyCount, startTime);
+
+		Msg.println("\n*** done.\n");
+
+		log.info("END runOldImplementation()");
 	}
 
 	private void displayStatsFooter(int totalObjectCnt, long startTime) {
@@ -216,7 +223,5 @@ public class CopySourceFilesMain {
 		String timeElapsedString = String.format("%d:%02d", minutes, seconds);
 
 		Msg.println("\n*** The script copied " + totalObjectCnt + " files in " + timeElapsedString + " [mm:ss].");
-
 	}
-
 }

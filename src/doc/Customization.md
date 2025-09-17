@@ -16,6 +16,7 @@
   * [Validate Patch](#validate-patch)
   * [Install Patch](#install-patch)
   * [Create Distribution Zip File for Manual Installation](#create-distribution-zip-file-for-manual-installation)
+  * [Environment Specific Deployment of Files](#environment-specific-deployment-of-files)
 * [Troubleshooting](#troubleshooting)
   * [Turn on Debugging](#turn-on-debugging)
   * [Kown Issues](#known-issues)
@@ -524,6 +525,54 @@ This is very useful when you want to add documentation or your own instructions 
 
 For details see: [opal-export-scripts-for-manual-install](#opal-export-scripts-for-manual-install).
 
+Since the introduction of the feature [Environment Specific Deployment of Files](#environment-specific-deployment-of-files), we now can specify the target environment in the script to generate the zip file. It is done with the parameter `--target-system`, e.g. `--target-system prod`. This will only add files that are tagged for the environment `prod` or are not tagged at all. 
+
+## Environment Specific Deployment of Files
+
+Depending on the environment (e.g. `dev`, `int`, `prod`) we want to install different files.
+
+The naming convention is: 
+- `script1.sql` (will be installed on all environments)
+- `script1-env(dev)` (will only be installed on environment `dev`)
+- `script1-env(int,prod)` (will only be installed on environments `int` and `prod`)
+
+We will achieve this through a naming convention based on the filename or directory name. 
+When we use it on the directory level, this will be used for all included files and subdirectories. 
+Local configurations will override this. 
+
+E.g. Directory `install-env(int,prod)` will determine that all files will be installed on the environments `int` and `prod`. Yet, the file `script1-env(prod).sql` will only be installed on `prod`, not `int`. 
+
+We can specify this in the files `SourceFilesCopy.conf` and `SourceFilesReference.conf` using a new directive `/env <environment1>,<environment2>`
+e.g.
+```
+# Package Bodies
+demo/packages => europipe/100_package_bodies
+fu_apex.pkb /env int,prod
+
+# Preinstall => demo/010_preinstall
+../sql-manual => demo/010_preinstall
+
+-- all .sql files in the directory analysis (and all subdirectories) 
+--   are tagged for the environment int only
+analysis/*.sql /env int
+
+-- the subdirectory ddl-int (including all files and subdirectories) 
+--   is tagged for the environment int only
+ddl-int /env int
+
+-- the subdirectory ddl-prod (including all files and subdirectories) 
+--  is tagged for the environment prod only
+ddl-prod /env prod
+```
+
+This also works when this naming convention is applied to a directory. When the directory is tagged and the including file is having a different tag, then the more local configuration will override the more generic one, e.g. 
+```
+-- this file file-env(int).sql will be installed on int and not prod, 
+-- even if the directory says so. 
+/directory-env(prod)/file-env(int).sql
+```
+
+
 # Troubleshooting
 
 ## Turn on Debugging
@@ -990,6 +1039,7 @@ Only tables (i.e. files) which match the wildcard ``xlib*.sql`` will be copied t
 The mappings have a predefined structure, so that the number of possible Oracle errors are minimized, e.g. we install the tables before the referential constraints, we install the package specifications before the package bodies and so forth. 
 
 If you use a different layout, then you can easily modify the file ``SourceFilesCopy.conf`` in the patch template. The Java application will only create the directories when there are files to be copied. 
+
 
 ### ``SourceFilesReference.conf``
 

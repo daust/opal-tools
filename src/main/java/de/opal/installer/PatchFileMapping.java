@@ -1,18 +1,23 @@
 package de.opal.installer;
 
 import java.io.File;
+import java.util.ArrayList;
 
 public class PatchFileMapping implements Comparable<PatchFileMapping> {
 	public File srcFile;
 	public File destFile;
+	public Boolean hasEnvDirective=false;
+	public ArrayList<String> envList=new ArrayList<String>();
 
-	public PatchFileMapping(File srcFile, File destFile) {
+	public PatchFileMapping(File srcFile, File destFile, Boolean hasEnvDirective, ArrayList<String> envList) {
 		this.srcFile = srcFile;
 		this.destFile = destFile;
+		this.hasEnvDirective=hasEnvDirective;
+		this.envList=envList;		
 	}
 
 	public String toString() {
-		return "{" + this.srcFile + " -> " + this.destFile + "}";
+		return "{" + this.srcFile + " -> " + this.destFile + (this.hasEnvDirective?"/env " + String.join(",", envList):"") +  "}";
 	}
 
 

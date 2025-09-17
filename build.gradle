@@ -5,6 +5,7 @@
 
   Change History:  
   2025-06-04: Updated sqlcl version to 25.1.1; Removed UCP dependency from maven, as it is now included in sqlcl; now ALL Oracle libraries are included from the sqlcl distribution
+  2025-09-15: Updated sqlcl version to 25.2.2
 
  */
 
@@ -32,11 +33,11 @@ import org.gradle.internal.os.OperatingSystem
   // version of sqlcl to be used
   // download files from : https://www.oracle.com/tools/downloads/sqlcl-downloads.html
   // and register here
-  def sqlclVersion  ='25.1.1' // die Probleme (this.sqlcl is null) begannen mit SQLcl 24.3.0
+  def sqlclVersion  ='25.2.2' // die Probleme (this.sqlcl is null) begannen mit SQLcl 24.3.0
   // sqlclZipFile: file location to downloaded zip file, 
   // e.g. /Users/daust/Downloads/sqlcl-20.2.0.174.1557.zip
   // this is only required when using task "opalRegisterSQLclLibraries"
-  def sqlclZipFile  ='/Users/daust/Downloads/KEEP/sqlcl/sqlcl-25.1.1.113.2054.zip'  
+  def sqlclZipFile  ='/Users/daust/Downloads/KEEP/sqlcl/sqlcl-25.2.2.199.0918.zip'  
   
 //-----------------------------------------------------------------------------
 //-- Repositories and dependencies

@@ -65,6 +65,8 @@ public class ZipInstallerMain {
 	@Option(name = "--convert-files-to-utf8", usage = "all sql files are converted to utf8 before adding them to the .zip file ")
 	private boolean bConvertToUTF8 = false;
 
+	@Option(name = "--target-system", usage = "target environment system (e.g. int, prod, dev). If not specified, ALL files will be included regardless of environment directives", metaVar = "<system>")
+	private String targetSystem;
 
 	/**
 	 * Main entry point to the ZipInstaller
@@ -83,7 +85,7 @@ public class ZipInstallerMain {
 
 		ZipInstaller zipInstaller = new ZipInstaller(installerMain.zipFileName, installerMain.configFileName, installerMain.mandatoryAttributes,
 				installerMain.noLogging, installerMain.patchFilesName, installerMain.patchFilesSourceDir,
-				installerMain.isSilent, installerMain.zipIncludeFiles, installerMain.defaultsConfigFileName, installerMain.bConvertToUTF8);
+				installerMain.isSilent, installerMain.zipIncludeFiles, installerMain.defaultsConfigFileName, installerMain.bConvertToUTF8, installerMain.targetSystem);
 
 		zipInstaller.zipInstallRun();
 
@@ -93,7 +95,7 @@ public class ZipInstallerMain {
 	}
 
 	private void showUsage(PrintStream out, CmdLineParser parser) {
-		out.println("\njava de.opal.installer.InstallerMain [options...]");
+		out.println("\njava de.opal.installer.ZipInstallerMain [options...]");
 
 		// print the list of available options
 		parser.printUsage(out);
@@ -102,7 +104,7 @@ public class ZipInstallerMain {
 
 		// print option sample. This is useful some time
 		out.println(
-				"  Example: java de.opal.installer.InstallerMain" + parser.printExample(OptionHandlerFilter.PUBLIC));
+				"  Example: java de.opal.installer.ZipInstallerMain" + parser.printExample(OptionHandlerFilter.PUBLIC));
 	}
 
 	/**
@@ -138,10 +140,14 @@ public class ZipInstallerMain {
 	public void transformParams() {
 		// trim() parameters
 		this.configFileName = this.configFileName.trim();
+		if (this.targetSystem != null) {
+			this.targetSystem = this.targetSystem.trim();
+		}
 	}
 
 	private void dumpParameters() {
 		log.debug("*** Options");
 		log.debug("configFileName: " + this.configFileName);
+		log.debug("targetSystem: " + this.targetSystem);
 	}
 }

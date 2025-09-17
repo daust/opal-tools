@@ -6,10 +6,12 @@
 You can see the full list of issues with details in the [milestones page](https://github.com/daust/opal-tools/milestone/18?closed=1). 
 
 ## New features
-  * see [milestones page](https://github.com/daust/opal-tools/milestone/18?closed=1)
+  * #125: [Upgrade sqlcl libraries to 25.2](https://github.com/daust/opal-tools/issues/125)
+  * #126: [Environment specific deployment of files](https://github.com/daust/opal-tools/issues/126)
+
 
 ## Bug fixes
-  * see [milestones page](https://github.com/daust/opal-tools/milestone/18?closed=1)
+  * #124: [Export scripts for manual install - bug on Windows](https://github.com/daust/opal-tools/issues/124)
 
 ## Changed behaviour
   * *none* 
