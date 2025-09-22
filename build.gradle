@@ -117,12 +117,22 @@ tasks.withType(JavaCompile) {
 //-- task definitions
 //-----------------------------------------------------------------------------
 jar {
-  manifest {
-    attributes(
-      //'Class-Path': configurations.compile.collect { it.getName() }.join(' '),
-      'Main-Class': 'de.opal.Main'
-    )
-  }
+    manifest {
+        attributes(
+            'Main-Class': 'de.opal.Main'
+        )
+    }
+    
+    // Add version properties directly to the JAR
+    doFirst {
+        ["de/opal/installer", "de/opal/installer/zip", "de/opal/exporter", "de/opal/utils"].each { path ->
+            def versionFile = new File("${project.buildDir}/tmp/jar-version/${path}/version.properties")
+            versionFile.parentFile.mkdirs()
+            versionFile.text = "version=" + project.version
+        }
+    }
+    
+    from "${project.buildDir}/tmp/jar-version"
 }
 
 distZip.setArchiveName("${archivesBaseName}-${project.version}-sqlcl-${sqlclVersion}.zip")
@@ -147,15 +157,6 @@ distributions {
     }
 }
 
-task postCompileJava {
-    doLast{
-      println 'do it before jar'
-      new File("${project.buildDir}/classes/java/main/de/opal/installer/version.properties").text="version="+project.version
-      new File("${project.buildDir}/classes/java/main/de/opal/installer/zip/version.properties").text="version="+project.version
-      new File("${project.buildDir}/classes/java/main/de/opal/exporter/version.properties").text="version="+project.version
-    }
-}
-jar.dependsOn postCompileJava
 
 println "\n***********************************************"
 println "Version: " + project.version
