@@ -59,6 +59,8 @@ public class ValidateConnectionsMain {
 			
 			if (this.showVersion) {
 				VersionInfo.showVersionInfo(this.getClass(), "OPAL Tools", false);
+				// Display environment information once
+				displayEnvironmentInfo();
 			}
 
 			// after parsing arguments, you should check
@@ -145,5 +147,36 @@ public class ValidateConnectionsMain {
 			}
 		}
 		Msg.println("");
+	}
+
+	/**
+	 * Displays environment information including project path, user identity, and Java version
+	 */
+	private void displayEnvironmentInfo() {
+		Msg.println("\nEnvironment Information:");
+		
+		// Project path from PROJECT_ROOT environment variable
+		String projectRoot = System.getenv("PROJECT_ROOT");
+		if (projectRoot != null && !projectRoot.trim().isEmpty()) {
+			Msg.println("  Project Path    : " + projectRoot);
+		} else {
+			Msg.println("  Project Path    : Not set (PROJECT_ROOT environment variable)");
+		}
+		
+		// User identity from OPAL_TOOLS_USER_IDENTITY environment variable
+		String userIdentity = System.getenv("OPAL_TOOLS_USER_IDENTITY");
+		if (userIdentity != null && !userIdentity.trim().isEmpty()) {
+			Msg.println("  User Identity   : " + userIdentity);
+		} else {
+			Msg.println("  User Identity   : Not set (OPAL_TOOLS_USER_IDENTITY environment variable)");
+		}
+		
+		// Java version information
+		String javaVersion = System.getProperty("java.version");
+		String javaVendor = System.getProperty("java.vendor");
+		String javaHome = System.getProperty("java.home");
+		
+		Msg.println("  Java Version    : " + javaVersion + " (" + javaVendor + ")");
+		Msg.println("  Java Home       : " + javaHome);
 	}
 }

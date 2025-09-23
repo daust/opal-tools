@@ -14,13 +14,14 @@ You can see the full list of issues with details in the [milestones page](https:
   * #124: [Export scripts for manual install - bug on Windows](https://github.com/daust/opal-tools/issues/124)
 
 ## Changed behaviour
-  * *none* 
+  * With sqlcl 25.2, by default, APEX application exports will no longer **overwritten**, you have to specify the command line switch `-overwrite-files`: e.g. `apex export-application -applicationid 121 -overwrite-files`
 
 ## Upgrade instructions
 
 Upgrade from version 2.10.0 to 2.11.0
 
   * replace all files in the directory ``opal-tools/lib``, your existing environment will continue to work
+  * make changes to your APEX export files and include the `-overwrite-files switch as needed` 
 
 ## Deprecated features (still available but will go away eventually)
   * *none*
