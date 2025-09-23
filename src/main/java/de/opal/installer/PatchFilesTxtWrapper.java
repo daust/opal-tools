@@ -14,6 +14,8 @@ import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.opal.installer.util.EnvironmentUtils;
+
 public class PatchFilesTxtWrapper {
 
 	public static final Logger log = LoggerFactory.getLogger(PatchFilesTxtWrapper.class.getName());
@@ -108,33 +110,119 @@ public class PatchFilesTxtWrapper {
 		return files;
 	}
 	
-	public static List<PatchFileMapping> getFileListFromLine(String srcDir, String targetDir, String filterString) throws IOException {
-		List<PatchFileMapping> fileList=new ArrayList<PatchFileMapping>();
+	public static List<PatchFileMapping> getFileListFromLine(String srcDir, String targetDir, String line) throws IOException {
+		List<PatchFileMapping> fileList = new ArrayList<PatchFileMapping>();
 		File srcDirFile = new File(srcDir);
-		//File targetDirFile = new File(targetDir);
 		
-		IOFileFilter filter = new WildcardFileFilter(filterString);
-
-		// exclude all files from subdirectories
-		// else use as directory filter: TrueFileFilter.INSTANCE
-		Collection<File> files = FileUtils.listFiles(srcDirFile, filter, null);
+		// Extract clean filename and environment directive using EnvironmentUtils
+		String filterString = EnvironmentUtils.removeDirectivesFromFilename(line);
+		ArrayList<String> envList = EnvironmentUtils.extractEnvironmentList(line);
+		Boolean hasEnvDirective = !envList.isEmpty();
 		
-		// raise exception when the files were not found!
-		if (files.isEmpty()) {
-			throw new RuntimeException("File(s) \"" + filterString + "\" could not be found in directory \"" + srcDir + "\"." );
+		log.debug("Filter string: " + filterString);
+		if (hasEnvDirective) {
+			log.debug("Environment directive found: " + String.join(",", envList));
 		}
-
 		
-		for (File file : files) {
-			log.debug("  - "+ file.getName());
-			//fileList.add(new PatchFileMapping(file, new File(targetDir+File.separator+file.getName())));
-			fileList.add(new PatchFileMapping(file, new File(targetDir+File.separator+file.getName())));
+		// Check if filterString refers to a specific directory (only if it doesn't contain wildcards)
+		File potentialDir = new File(srcDirFile, filterString);
+		if (!filterString.contains("*") && !filterString.contains("?") && 
+		    potentialDir.exists() && potentialDir.isDirectory()) {
+			log.debug("Filter string refers to directory: " + potentialDir.getPath());
 			
+			// Handle directory copying - get all files recursively from the specified directory
+			Collection<File> files = FileUtils.listFiles(potentialDir, 
+				org.apache.commons.io.filefilter.TrueFileFilter.INSTANCE, 
+				org.apache.commons.io.filefilter.TrueFileFilter.INSTANCE);
+			
+			// Also include the directory itself for structure preservation
+			String targetDirName = EnvironmentUtils.buildTargetFileName(filterString, envList);
+			
+			for (File file : files) {
+				log.debug("  - " + file.getPath());
+				
+				// Calculate relative path from the matched directory (not from srcDir)
+				String relativePath = potentialDir.toPath().relativize(file.toPath()).toString();
+				
+				// Create target file preserving structure under the renamed directory
+				File targetFile = new File(targetDir + File.separator + targetDirName + File.separator + relativePath);
+				
+				// Create PatchFileMapping with environment information
+				fileList.add(new PatchFileMapping(file, targetFile, hasEnvDirective, envList));
+			}
+			
+		} else {
+			// Handle file pattern matching (including wildcards like f1/*.sql)
+			Collection<File> files;
+			
+			if (filterString.contains("/") || filterString.contains("\\")) {
+				// Pattern contains directory separators (like f1/*.sql)
+				// We need to handle this differently
+				String dirPart = "";
+				String filePart = "";
+				
+				// Split the pattern into directory and file parts
+				int lastSeparator = Math.max(filterString.lastIndexOf('/'), filterString.lastIndexOf('\\'));
+				if (lastSeparator != -1) {
+					dirPart = filterString.substring(0, lastSeparator);
+					filePart = filterString.substring(lastSeparator + 1);
+				} else {
+					filePart = filterString;
+				}
+				
+				log.debug("Directory part: '" + dirPart + "', File part: '" + filePart + "'");
+				
+				// Create the subdirectory to search in
+				File searchDir = dirPart.isEmpty() ? srcDirFile : new File(srcDirFile, dirPart);
+				
+				if (!searchDir.exists()) {
+					throw new RuntimeException("Directory \"" + dirPart + "\" could not be found in \"" + srcDir + "\".");
+				}
+				
+				IOFileFilter fileFilter = new WildcardFileFilter(filePart);
+				
+				// Search in the specific subdirectory
+				files = FileUtils.listFiles(searchDir, fileFilter, null); // null = don't recurse into subdirs
+				
+			} else {
+				// Simple pattern without directory separators (like *.sql)
+				IOFileFilter filter = new WildcardFileFilter(filterString);
+				
+				// Include all files from subdirectories recursively
+				files = FileUtils.listFiles(srcDirFile, filter, 
+					org.apache.commons.io.filefilter.TrueFileFilter.INSTANCE);
+			}
+			
+			// raise exception when the files were not found!
+			if (files.isEmpty()) {
+				throw new RuntimeException("File(s) matching pattern \"" + filterString + "\" could not be found in directory \"" + srcDir + "\".");
+			}
+			
+			for (File file : files) {
+				log.debug("  - "+ file.getPath());
+				
+				// Calculate the relative path to preserve directory structure
+				String relativePath = srcDirFile.toPath().relativize(file.toPath()).toString();
+				
+				// Create target filename with environment directive if present using EnvironmentUtils
+				String targetFileName = EnvironmentUtils.buildTargetFileName(file.getName(), envList);
+				
+				// Preserve directory structure in target
+				File targetFile;
+				if (relativePath.contains(File.separator)) {
+					// File is in a subdirectory, preserve the structure but rename the file
+					String parentPath = relativePath.substring(0, relativePath.lastIndexOf(File.separator));
+					targetFile = new File(targetDir + File.separator + parentPath + File.separator + targetFileName);
+				} else {
+					// File is in root directory
+					targetFile = new File(targetDir + File.separator + targetFileName);
+				}
+				
+				// Create PatchFileMapping with environment information
+				fileList.add(new PatchFileMapping(file, targetFile, hasEnvDirective, envList));
+			}
 		}
 
-		// return number 
 		return fileList;
 	}
-
-
 }

@@ -5,6 +5,7 @@
 
   Change History:  
   2025-06-04: Updated sqlcl version to 25.1.1; Removed UCP dependency from maven, as it is now included in sqlcl; now ALL Oracle libraries are included from the sqlcl distribution
+  2025-09-15: Updated sqlcl version to 25.2.2
 
  */
 
@@ -22,7 +23,7 @@ import org.gradle.internal.os.OperatingSystem
 //-----------------------------------------------------------------------------
 
   project.description       = "OPAL Tools - more details here: https://github.com/daust/opal-tools"
-  project.version           = '2.10.0'
+  project.version           = '2.11.0'
   
   sourceCompatibility       = 11
   targetCompatibility       = 11
@@ -32,11 +33,11 @@ import org.gradle.internal.os.OperatingSystem
   // version of sqlcl to be used
   // download files from : https://www.oracle.com/tools/downloads/sqlcl-downloads.html
   // and register here
-  def sqlclVersion  ='25.1.1' // die Probleme (this.sqlcl is null) begannen mit SQLcl 24.3.0
+  def sqlclVersion  ='25.2.2' // die Probleme (this.sqlcl is null) begannen mit SQLcl 24.3.0
   // sqlclZipFile: file location to downloaded zip file, 
   // e.g. /Users/daust/Downloads/sqlcl-20.2.0.174.1557.zip
   // this is only required when using task "opalRegisterSQLclLibraries"
-  def sqlclZipFile  ='/Users/daust/Downloads/KEEP/sqlcl/sqlcl-25.1.1.113.2054.zip'  
+  def sqlclZipFile  ='/Users/daust/Downloads/KEEP/sqlcl/sqlcl-25.2.2.199.0918.zip'  
   
 //-----------------------------------------------------------------------------
 //-- Repositories and dependencies
@@ -116,12 +117,22 @@ tasks.withType(JavaCompile) {
 //-- task definitions
 //-----------------------------------------------------------------------------
 jar {
-  manifest {
-    attributes(
-      //'Class-Path': configurations.compile.collect { it.getName() }.join(' '),
-      'Main-Class': 'de.opal.Main'
-    )
-  }
+    manifest {
+        attributes(
+            'Main-Class': 'de.opal.Main'
+        )
+    }
+    
+    // Add version properties directly to the JAR
+    doFirst {
+        ["de/opal/installer", "de/opal/installer/zip", "de/opal/exporter", "de/opal/utils"].each { path ->
+            def versionFile = new File("${project.buildDir}/tmp/jar-version/${path}/version.properties")
+            versionFile.parentFile.mkdirs()
+            versionFile.text = "version=" + project.version
+        }
+    }
+    
+    from "${project.buildDir}/tmp/jar-version"
 }
 
 distZip.setArchiveName("${archivesBaseName}-${project.version}-sqlcl-${sqlclVersion}.zip")
@@ -146,15 +157,6 @@ distributions {
     }
 }
 
-task postCompileJava {
-    doLast{
-      println 'do it before jar'
-      new File("${project.buildDir}/classes/java/main/de/opal/installer/version.properties").text="version="+project.version
-      new File("${project.buildDir}/classes/java/main/de/opal/installer/zip/version.properties").text="version="+project.version
-      new File("${project.buildDir}/classes/java/main/de/opal/exporter/version.properties").text="version="+project.version
-    }
-}
-jar.dependsOn postCompileJava
 
 println "\n***********************************************"
 println "Version: " + project.version

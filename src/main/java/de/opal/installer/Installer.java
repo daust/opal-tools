@@ -26,6 +26,7 @@ import de.opal.installer.config.ConfigConnectionMapping;
 import de.opal.installer.config.ConfigManager;
 import de.opal.installer.config.ConfigManagerConnectionPool;
 import de.opal.installer.db.ConnectionManager;
+import de.opal.installer.util.EnvironmentUtils;
 import de.opal.installer.util.Filesystem;
 import de.opal.installer.util.Utils;
 import de.opal.utils.MsgLog;
@@ -34,9 +35,9 @@ import de.opal.utils.VersionInfo;
 import oracle.dbtools.db.ResultSetFormatter;
 import oracle.dbtools.extension.SQLCLService;
 import oracle.dbtools.raptor.newscriptrunner.CommandRegistry;
+import oracle.dbtools.raptor.newscriptrunner.SQLCommand.StmtSubType;
 import oracle.dbtools.raptor.newscriptrunner.ScriptExecutor;
 import oracle.dbtools.raptor.newscriptrunner.ScriptRunnerContext;
-import oracle.dbtools.raptor.newscriptrunner.SQLCommand.StmtSubType;
 import oracle.dbtools.raptor.scriptrunner.commands.rest.RESTCommand;
 
 public class Installer {
@@ -174,7 +175,9 @@ public class Installer {
 		long startTime = System.currentTimeMillis();
 		List<PatchFileMapping> fsTree, fsTreeFull;
 		List<PatchFileMapping> fsTreePatchFiles;
+		List<PatchFileMapping> fsTreeFiltered; // For environment filtering
 		PatchFilesTxtWrapper patchFilesTxtWrapper = null;
+		String targetSystem = this.configManagerConnectionPools.getConfigDataConnectionPool().targetSystem;
 
 		// run application
 		log.debug("run()");
@@ -189,8 +192,7 @@ public class Installer {
 			MsgLog.println("** Author                : " + this.configManager.getConfigData().author);
 
 			MsgLog.println("**");
-			MsgLog.println("** Target system         : "
-					+ this.configManagerConnectionPools.getConfigDataConnectionPool().targetSystem);
+			MsgLog.println("** Target system         : " + targetSystem);
 			MsgLog.println("** Run mode              : " + this.configManager.getConfigData().runMode);
 			MsgLog.println("**");
 			MsgLog.println("** Config File           : " + this.configManager.getConfigFileName());
@@ -224,7 +226,7 @@ public class Installer {
 
 				this.patchRegistry.checkPatchDependencies(configManager.getConfigData().application,
 						configManager.getConfigData().patch, configManager.getConfigData().version,
-						configManagerConnectionPools.getConfigDataConnectionPool().targetSystem,
+						targetSystem,
 						configManager.getConfigData().dependencies);
 			} else {
 				log.debug(
@@ -242,25 +244,43 @@ public class Installer {
 
 			// different traversal strategies, generate ordered list of files to process
 			if (configManager.getTraversalType() == ConfigManager.TraversalType.STATIC_FILES) {
-				fsTree = fs.filterTreeStaticFiles(fsTreeFull, configManager.getConfigData().staticFiles);
+				fsTree = fs.filterTreeStaticFiles(fsTreeFull, configManager.getConfigData().staticFiles, targetSystem);
 			} else {
-				fsTree = fs.filterTreeInorder(fsTreeFull, configManager.getConfigData().sqlFileRegex, configManager);
+				fsTree = fs.filterTreeInorder(fsTreeFull, configManager.getConfigData().sqlFileRegex, configManager, targetSystem);
 
 				// scan files from PatchFiles.txt and merge with list
 				if (this.patchFilesName != null) {
 					patchFilesTxtWrapper = new PatchFilesTxtWrapper(this.patchFilesName, this.patchFilesSourceDir,
 							this.patchFilesTargetDir);
 					fsTreePatchFiles = patchFilesTxtWrapper.getFileList();
-					if (fsTreePatchFiles != null)
+					if (fsTreePatchFiles != null) {
+						log.debug("Found " + fsTreePatchFiles.size() + " files from PatchFiles.txt");
 						log.debug(fsTreePatchFiles.toString());
+					}
 
 					fsTree.addAll(fsTreePatchFiles);
 					Collections.sort(fsTree);
 				}
 			}
-			fs.displayTree(fsTree, configManager.getConfigData().sqlFileRegex, configManager);
+
+			// Apply final environment filtering to the complete file list
+			fsTreeFiltered = applyEnvironmentFiltering(fsTree, targetSystem);
 			
+			// Display the filtered tree (only files that will actually be processed)
+			fs.displayTree(fsTreeFiltered, configManager.getConfigData().sqlFileRegex, configManager);
 			
+			// Log filtering statistics
+			int originalCount = fsTree.size();
+			int filteredCount = fsTreeFiltered.size();
+			int excludedCount = originalCount - filteredCount;
+			
+			MsgLog.println("\n*** Environment Filtering Results for target system: " + targetSystem);
+			MsgLog.println("*** Total files found: " + originalCount);
+			MsgLog.println("*** Files to be processed: " + filteredCount);
+			if (excludedCount > 0) {
+				MsgLog.println("*** Files excluded due to environment restrictions: " + excludedCount);
+			}
+			MsgLog.println("");
 
 			if (this.isSilent)
 				MsgLog.println("\nStart the process (" + this.configManager.getConfigData().runMode
@@ -273,7 +293,7 @@ public class Installer {
 				MsgLog.logfilePrintln("");
 
 			/*
-			 * now process all files one by one
+			 * now process all files one by one - using the environment-filtered list
 			 */
 			// initialize registry targets if defined in config file and EXECUTE-mode, not
 			// during VALIDATE_ONLY
@@ -302,13 +322,14 @@ public class Installer {
 							configManager.getConfigData().extra, configManager.getConfigData().version,
 							configManager.getConfigData().author, configManager.getConfigFileName(),
 							configManagerConnectionPools.getConfigFileName(), releaseNotesContents,
-							configManagerConnectionPools.getConfigDataConnectionPool().targetSystem);
+							targetSystem);
 				} else {
 					log.debug("*** no registry targets defined ");
 				}
 			}
 
-			processTree(fsTree);
+			// Process the environment-filtered tree instead of the original tree
+			processTree(fsTreeFiltered);
 
 			/*
 			 * Finalize patch, update column pat_ended_on
@@ -319,7 +340,7 @@ public class Installer {
 				}
 			}
 
-			displayStatsFooter(fsTree.size(), startTime);
+			displayStatsFooter(fsTreeFiltered.size(), startTime);
 			if (!this.noLogging)
 				MsgLog.logfilePrintln("\ndone.");
 
@@ -334,6 +355,36 @@ public class Installer {
 			this.connectionManager.closeAllConnections();
 			MsgLog.closeLogfile();
 		}
+	}
+
+	/**
+	 * Applies environment filtering to the complete file list
+	 * This ensures that only files appropriate for the target environment are processed
+	 * 
+	 * @param fileList The complete list of files
+	 * @param targetSystem The target environment system
+	 * @return Filtered list containing only files appropriate for the target environment
+	 * @throws IOException 
+	 */
+	private List<PatchFileMapping> applyEnvironmentFiltering(List<PatchFileMapping> fileList, String targetSystem) throws IOException {
+		List<PatchFileMapping> filteredList = new ArrayList<PatchFileMapping>();
+		
+		log.debug("Applying environment filtering for target system: " + targetSystem);
+		
+		for (PatchFileMapping fileMapping : fileList) {
+			boolean shouldInclude = true;
+			String fileName = fileMapping.destFile.getName();
+			String filePath = fileMapping.destFile.getAbsolutePath();
+			
+			// Check if this file has environment restrictions - log skipped files
+			shouldInclude = EnvironmentUtils.shouldIncludeFileForTarget(filePath, targetSystem);
+			
+			if (shouldInclude) {
+				filteredList.add(fileMapping);
+			}
+		}
+		
+		return filteredList;
 	}
 
 	private void displayStatsFooter(int totalObjectCnt, long startTime) throws IOException {

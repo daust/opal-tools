@@ -28,6 +28,7 @@ import de.opal.installer.PatchFileMapping;
 import de.opal.installer.PatchFilesTxtWrapper;
 import de.opal.installer.config.ConfigConnectionMapping;
 import de.opal.installer.config.ConfigManager;
+import de.opal.installer.util.EnvironmentUtils;
 import de.opal.installer.util.Filesystem;
 import de.opal.utils.MsgLog;
 import de.opal.utils.StringUtils;
@@ -63,10 +64,11 @@ public class ZipInstaller {
 
 	private String defaultsConfigFileName = null;
 	private boolean bConvertToUTF8 = false;
+	private String targetSystem = null; // New field for target system
 
 	public ZipInstaller(String zipFileName, String configFileName, List<String> mandatoryAttributes, boolean noLogging,
 			String patchFilesName, String patchFilesSourceDir, boolean isSilent, List<String> zipIncludeFiles,
-			String defaultsConfigFileName, boolean bConvertToUTF8) throws IOException {
+			String defaultsConfigFileName, boolean bConvertToUTF8, String targetSystem) throws IOException {
 
 		this.zipFileName = zipFileName;
 		this.configFileName = configFileName;
@@ -78,6 +80,7 @@ public class ZipInstaller {
 		this.isSilent = isSilent;
 		this.zipIncludeFiles = zipIncludeFiles;
 		this.bConvertToUTF8 = bConvertToUTF8;
+		this.targetSystem = targetSystem; // Set target system
 
 		this.configManager = new ConfigManager(this.configFileName);
 		this.defaultsConfigManager = new ConfigManager(this.defaultsConfigFileName);
@@ -452,6 +455,42 @@ public class ZipInstaller {
 	}
 
 	/**
+	 * Applies environment filtering to the complete file list
+	 * This ensures that only files appropriate for the target environment are processed
+	 * 
+	 * @param fileList The complete list of files
+	 * @param targetSystem The target environment system (null means include all files)
+	 * @return Filtered list containing only files appropriate for the target environment
+	 * @throws IOException 
+	 */
+	private List<PatchFileMapping> applyEnvironmentFiltering(List<PatchFileMapping> fileList, String targetSystem) throws IOException {
+		List<PatchFileMapping> filteredList = new ArrayList<PatchFileMapping>();
+		
+		// If no target system specified, include ALL files
+		if (targetSystem == null || targetSystem.trim().isEmpty()) {
+			log.debug("No target system specified - including ALL files regardless of environment directives");
+			return new ArrayList<PatchFileMapping>(fileList); // Return copy of original list
+		}
+		
+		log.debug("Applying environment filtering for target system: " + targetSystem);
+		
+		for (PatchFileMapping fileMapping : fileList) {
+			boolean shouldInclude = true;
+			String fileName = fileMapping.destFile.getName();
+			String filePath = fileMapping.destFile.getAbsolutePath();
+			
+			// Use EnvironmentUtils to check if file should be included - log skipped files
+			shouldInclude = EnvironmentUtils.shouldIncludeFileForTarget(filePath, targetSystem);
+			
+			if (shouldInclude) {
+				filteredList.add(fileMapping);
+			}
+		}
+		
+		return filteredList;
+	}
+
+	/**
 	 * zipInstallRun()
 	 * 
 	 * create zip file for installation by DBAs
@@ -465,6 +504,7 @@ public class ZipInstaller {
 
 		List<PatchFileMapping> fsTree, fsTreeFull;
 		List<PatchFileMapping> fsTreePatchFiles;
+		List<PatchFileMapping> fsTreeFiltered; // For environment filtering
 		PatchFilesTxtWrapper patchFilesTxtWrapper = null;
 
 		// run application
@@ -481,6 +521,11 @@ public class ZipInstaller {
 
 			MsgLog.println("**");
 			MsgLog.println("** Zip File Name         : " + this.zipFileName);
+			if (this.targetSystem != null && !this.targetSystem.trim().isEmpty()) {
+				MsgLog.println("** Target System         : " + this.targetSystem);
+			} else {
+				MsgLog.println("** Target System         : ALL (no environment filtering)");
+			}
 
 			MsgLog.println("**");
 			MsgLog.println("** Config File           : " + this.configManager.getConfigFileName());
@@ -509,23 +554,53 @@ public class ZipInstaller {
 
 			// scan all files in tree and store in TreeFull
 			fsTreeFull = fs.scanTree();
-			fsTree = fs.filterTreeInorder(fsTreeFull, configManager.getConfigData().sqlFileRegex, configManager);
+			
+			// Apply basic regex filtering - pass null for targetSystem to include all files initially
+			// We'll do environment filtering later in applyEnvironmentFiltering()
+			fsTree = fs.filterTreeInorder(fsTreeFull, configManager.getConfigData().sqlFileRegex, configManager, this.targetSystem);
 
 			// scan files from PatchFiles.txt and merge with list
 			if (this.patchFilesName != null) {
 				patchFilesTxtWrapper = new PatchFilesTxtWrapper(this.patchFilesName, this.patchFilesSourceDir,
 						this.patchFilesTargetDir);
 				fsTreePatchFiles = patchFilesTxtWrapper.getFileList();
-				if (fsTreePatchFiles != null)
+				if (fsTreePatchFiles != null) {
+					log.debug("Found " + fsTreePatchFiles.size() + " files from PatchFiles.txt");
 					log.debug(fsTreePatchFiles.toString());
+				}
 
 				fsTree.addAll(fsTreePatchFiles);
 				Collections.sort(fsTree);
 			}
 
-			createZipFromFiletree(fsTree);
+			// Apply environment filtering to the complete file list
+			fsTreeFiltered = applyEnvironmentFiltering(fsTree, this.targetSystem);
+			
+			// Log filtering statistics
+			int originalCount = fsTree.size();
+			int filteredCount = fsTreeFiltered.size();
+			int excludedCount = originalCount - filteredCount;
+			
+			if (this.targetSystem != null && !this.targetSystem.trim().isEmpty()) {
+				MsgLog.println("\n*** Environment Filtering Results for target system: " + this.targetSystem);
+				MsgLog.println("*** Total files found: " + originalCount);
+				MsgLog.println("*** Files to be processed: " + filteredCount);
+				if (excludedCount > 0) {
+					MsgLog.println("*** Files excluded due to environment restrictions: " + excludedCount);
+				}
+			} else {
+				MsgLog.println("\n*** Environment Filtering Results: ENVIRONMENT-NEUTRAL FILES ONLY");
+				MsgLog.println("*** Total files found: " + originalCount);
+				MsgLog.println("*** Environment-neutral files to be processed: " + filteredCount);
+				if (excludedCount > 0) {
+					MsgLog.println("*** Environment-specific files excluded: " + excludedCount);
+				}
+			}
+			MsgLog.println(""); 
 
-			displayStatsFooter(fsTree.size(), startTime);
+			createZipFromFiletree(fsTreeFiltered);
+
+			displayStatsFooter(fsTreeFiltered.size(), startTime);
 
 		} catch (Exception e) {
 			log.error(e.getMessage());

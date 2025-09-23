@@ -53,10 +53,10 @@ public class BatchFileWrapper {
 			for (String connPoolName : connectionPoolsSet) {
 				if (scriptRunner == ScriptRunner.sqlcl)
 					headerString += "SET /P LOGIN_" + connPoolName.toUpperCase()
-							+ "=Login for SCHEMA1 (e.g. scott/tiger@localhost:1521:xe):" + "\n";
+							+ "=Enter login for "+connPoolName.toUpperCase()+" (e.g. scott/tiger@localhost:1521:xe):" + "\n";
 				else
 					headerString += "SET /P LOGIN_" + connPoolName.toUpperCase()
-							+ "=Login for SCHEMA1 (e.g. scott/tiger@localhost:1521/xe):" + "\n";
+							+ "=Enter login for "+connPoolName.toUpperCase()+" (e.g. scott/tiger@localhost:1521/xe):" + "\n";
 			}
 			headerString += "\nFOR /f %%a in ('WMIC OS GET LocalDateTime ^| find \".\"') DO set DTS=%%a\n" + 
 					"set DATE_STRING=%DTS:~0,4%-%DTS:~4,2%-%DTS:~6,2%-%DTS:~8,2%.%DTS:~10,2%.%DTS:~12,2%\n" + 
