@@ -1,7 +1,7 @@
 [//]: # (Infos about this file)
 [//]: # (Markdown Syntax: https://guides.github.com/features/mastering-markdown/)
 
-# Version 2.11.0 (release: ??.??.2025)
+# Version 2.11.0 (release: 23.09.2025)
 
 You can see the full list of issues with details in the [milestones page](https://github.com/daust/opal-tools/milestone/18?closed=1). 
 
