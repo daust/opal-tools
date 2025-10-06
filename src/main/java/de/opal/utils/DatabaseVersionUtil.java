@@ -24,7 +24,7 @@ public class DatabaseVersionUtil {
             "       '; Instance: ' || SYS_CONTEXT('USERENV', 'INSTANCE_NAME') || " +
             "       '; Container: ' || SYS_CONTEXT('USERENV', 'CON_NAME') || " +
             "       '; Host: ' || SYS_CONTEXT('USERENV', 'SERVER_HOST') || " +
-            "       '; \n\t\t  Banner: ' || (SELECT BANNER_FULL FROM V$VERSION WHERE BANNER LIKE 'Oracle%') AS connection_banner " +
+            "       '; \n\t\t  Banner: ' || (SELECT replace(BANNER_FULL,chr(10),' ') FROM V$VERSION WHERE BANNER LIKE 'Oracle%') AS connection_banner " +
             "FROM DUAL";
 
     private static final String APEX_VERSION_SQL = 

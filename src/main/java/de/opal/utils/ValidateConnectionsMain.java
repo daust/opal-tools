@@ -21,6 +21,7 @@ import de.opal.installer.config.ConfigConnectionPool;
 import de.opal.installer.config.ConfigManagerConnectionPool;
 import de.opal.installer.db.DBUtils;
 import de.opal.installer.util.Msg;
+import de.opal.utils.SqlclVersionFromClasspath.VersionInfo;
 
 
 public class ValidateConnectionsMain {
@@ -58,7 +59,7 @@ public class ValidateConnectionsMain {
 			parser.parseArgument(args);
 			
 			if (this.showVersion) {
-				VersionInfo.showVersionInfo(this.getClass(), "OPAL Tools", false);
+				de.opal.utils.VersionInfo.showVersionInfo(this.getClass(), "OPAL Tools", false);
 				// Display environment information once
 				displayEnvironmentInfo();
 			}
@@ -175,8 +176,12 @@ public class ValidateConnectionsMain {
 		String javaVersion = System.getProperty("java.version");
 		String javaVendor = System.getProperty("java.vendor");
 		String javaHome = System.getProperty("java.home");
+        VersionInfo sqlclInfo = SqlclVersionFromClasspath.getSqlclVersionFromClasspath();
 		
 		Msg.println("  Java Version    : " + javaVersion + " (" + javaVendor + ")");
 		Msg.println("  Java Home       : " + javaHome);
+		Msg.println("  SQLcl Version   : " + sqlclInfo.getVersion());
+		Msg.println("  SQLcl Path      : " + sqlclInfo.getJarPath());
+		
 	}
 }
